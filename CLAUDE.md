@@ -122,7 +122,7 @@ choice sets (one kind of decision, reworded per scene), interruptions (`"scene"`
 story-wide triggers, modes (a flag that makes minigames harder and filling faster, e.g. hard mode),
 conditional lines, and `void` and `clock` effects. `src/story/library.js` keeps imported stories and one
 automatic save per story in `localStorage`; `src/ui/story_menu.js` is the list with import / export.
-Not built yet: a wide two-column desktop layout, and minigames that act on the dialogue itself. The original sketch, for intent:
+Not built yet: minigames that act on the dialogue itself. The original sketch, for intent:
 
 Stories are JSON files, versioned (`"schemaVersion": 1`). Sketch:
 - `meta`: title, author, rating, content tags, description.
@@ -179,6 +179,13 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 - A switched-off minigame never appears: free play skips it, a story gets another enabled game, and with
   every game off a story treats its minigames as passed.
 - Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
+
+## Desktop and phone layouts
+One page, two layouts, chosen by window size alone (the media query at the end of `src/styles/main.css`, no
+device sniffing, switches live on resize). Under 900 px wide or 520 px high: the stacked phone layout. Above: the
+panel sits beside the bladder (free play: controls left; story: text and choices left, bladder full height
+right, a minigame's controls under the text). `bladderGeom()` uses the compact story sizing only when the play
+area is a short strip (`H < W`), so it needs no knowledge of the layout. `tests/desktop-layout.spec.js` covers it.
 
 ## Deploying (step 8, prepared)
 `npm run build` writes a self-contained static site to `dist/` (relative paths, no server, no CDN): upload

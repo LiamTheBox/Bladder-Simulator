@@ -6,14 +6,15 @@
 //          minigame the screen runs view().minigame and reports minigameDone(success)
 //          ended    view().ending and the scorecard
 //          stuck    choices exist but none is available (the validator warns about stories that can do this)
-import { FULLNESS, RETURN } from './schema.js';
+import { FULLNESS, RETURN, ID_PATTERN } from './schema.js';
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 const TESTS = { lt: (a, b) => a < b, lte: (a, b) => a <= b, gt: (a, b) => a > b, gte: (a, b) => a >= b, eq: (a, b) => a === b };
 
 function clockMinutes(text) { const [h, m] = text.split(':').map(Number); return h * 60 + m; }
 
-export function createRunner(story) {
+// saved: a snapshot() from an earlier session of the same story, to continue from; ignored if it does not fit
+export function createRunner(story, saved = null) {
   const scenes = new Map(story.scenes.map((s) => [s.id, s]));
   const endings = new Map(story.endings.map((e) => [e.id, e]));
   const stats = new Map((story.stats || []).map((s) => [s.id, { min: 0, max: 100, ...s }]));
@@ -141,7 +142,37 @@ export function createRunner(story) {
     state.minigame = { id: m.id, difficulty: difficulty(m.difficulty), prompt: m.prompt ?? bladderLine, spec: m, fallback };
   }
 
-  go(story.start);
+  // The lines of a scene that are on screen, as positions in that scene's list (a snapshot must be plain data)
+  const positions = (sceneId, lines) => lines.map((l) => scenes.get(sceneId).lines.indexOf(l));
+  const linesAt = (sceneId, idx) => {
+    const all = scenes.get(sceneId)?.lines;
+    if (!all || !Array.isArray(idx) || !idx.every((i) => Number.isInteger(i) && i >= 0 && i < all.length)) return null;
+    return idx.map((i) => all[i]);
+  };
+  // Puts a snapshot back. Returns false, changing nothing, if anything in it does not fit this story.
+  function restore(s) {
+    try {
+      if (!s || s.v !== 1 || !['lines', 'choices'].includes(s.phase)) return false;
+      const lines = linesAt(s.sceneId, s.lines);
+      const stack = Array.isArray(s.stack) ? s.stack.map((e) => ({ sceneId: e?.sceneId, lines: linesAt(e?.sceneId, e?.lines) })) : null;
+      const finite = [s.fullness, s.pending, s.elapsed, s.voided].every(Number.isFinite) && (s.minutes === null || Number.isFinite(s.minutes));
+      if (!lines || !stack || stack.some((e) => !e.lines) || !finite) return false;
+      if (!Number.isInteger(s.lineIndex) || s.lineIndex < 0 || s.lineIndex > lines.length) return false;
+      if (!Array.isArray(s.fired) || !s.fired.every((k) => typeof k === 'string')) return false;
+      for (const [id, st] of stats) { const v = s.stats?.[id]; if (!Number.isFinite(v)) return false; state.stats[id] = clamp(v, st.min, st.max); }
+      state.flags = {};
+      for (const [k, v] of Object.entries(s.flags || {})) if (ID_PATTERN.test(k) && typeof v === 'boolean') state.flags[k] = v;
+      Object.assign(state, {
+        phase: s.phase, sceneId: s.sceneId, lineIndex: s.lineIndex, lines, stack, fired: new Set(s.fired),
+        fullness: clamp(s.fullness, 0, 100), pending: Math.max(0, s.pending), minutes: story.clock ? s.minutes : null,
+        elapsed: s.elapsed, voided: s.voided, ending: null, minigame: null,
+      });
+      if (state.phase === 'choices' && availableChoices().length === 0) state.phase = 'stuck';
+      return true;
+    } catch (e) { return false; }
+  }
+
+  if (!restore(saved)) go(story.start);
 
   return {
     state,
@@ -168,6 +199,18 @@ export function createRunner(story) {
       const outcome = spec[success ? 'success' : 'fail'] || {};
       state.minigame = null;
       applyThenGo(outcome.effects, outcome.next ?? fallback);
+    },
+
+    // Plain data that createRunner(story, snapshot) can continue from. Only taken at rest (reading or choosing);
+    // in the middle of a minigame it returns null and the previous snapshot stays the latest.
+    snapshot() {
+      if (state.phase !== 'lines' && state.phase !== 'choices') return null;
+      return {
+        v: 1, phase: state.phase, sceneId: state.sceneId, lineIndex: state.lineIndex, lines: positions(state.sceneId, state.lines),
+        stats: { ...state.stats }, flags: { ...state.flags }, fullness: state.fullness, pending: state.pending,
+        minutes: state.minutes, elapsed: state.elapsed, voided: state.voided, fired: [...state.fired],
+        stack: state.stack.map((e) => ({ sceneId: e.sceneId, lines: positions(e.sceneId, e.lines) })),
+      };
     },
 
     // Everything the screen needs to draw the current moment

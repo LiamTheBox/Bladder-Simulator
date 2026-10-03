@@ -117,7 +117,7 @@ test('the void effect empties the bladder; choices with no available option repo
 });
 
 test('every bundled story is valid, and a random walk through it always reaches an ending', () => {
-  for (const name of ['placeholder', 'bonnie_ch1']) {
+  for (const name of ['placeholder', 'bonnies_journey']) {
     const story = load(name);
     const checked = validateStory(story, { file: `${name}.json`, minigameIds: MINIGAMES });
     expect(checked.errors, name).toEqual([]);

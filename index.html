@@ -46,6 +46,18 @@
         <button class="close-modal" data-target="story-overlay" style="background: none; border: none; color: #94a3b8; font-size: 2rem; cursor: pointer; line-height: 1; pointer-events: auto;">&times;</button>
       </div>
       <div id="story-list"></div>
+      <div id="story-hidden-note"></div>
+      <div id="story-tools">
+        <button id="story-import-btn" class="story-btn">Import a story file</button>
+        <input type="file" id="story-file" accept=".json,application/json" style="display: none;">
+        <details>
+          <summary>Or paste a story's text</summary>
+          <textarea id="story-paste" placeholder='{ "schemaVersion": 1, ... }'></textarea>
+          <button id="story-paste-btn" class="story-btn">Import the pasted text</button>
+        </details>
+        <button id="story-template-btn" class="story-btn">Download the story template</button>
+        <div id="story-import-result"></div>
+      </div>
     </div>
   </div>
 

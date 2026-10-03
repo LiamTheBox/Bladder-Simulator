@@ -230,13 +230,20 @@
     padding: 12px 22px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.25);
     background: rgba(255,255,255,0.08); color: #f8fafc; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px; cursor: pointer;
   }
-  .story-card {
-    display: block; width: 100%; text-align: left; margin-bottom: 12px; padding: 14px 16px; border-radius: 16px; cursor: pointer;
-    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #f8fafc;
-  }
-  .story-card:disabled { opacity: 0.6; cursor: not-allowed; }
-  .story-card-title { font-weight: 800; font-size: 1rem; }
-  .story-card-about { margin-top: 6px; font-size: 0.82rem; color: #94a3b8; line-height: 1.4; white-space: pre-line; }
+  .story-card { margin-bottom: 12px; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #f8fafc; }
+  .story-card.broken { opacity: 0.7; }
+  .story-card-title { font-weight: 800; font-size: 1rem; overflow-wrap: anywhere; }
+  .story-card-about { margin-top: 6px; font-size: 0.82rem; color: #94a3b8; line-height: 1.4; white-space: pre-line; overflow-wrap: anywhere; }
+  .story-card-tags { margin-top: 6px; font-size: 0.72rem; color: #f9a8d4; overflow-wrap: anywhere; }
+  .story-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .story-btn { min-height: 40px; padding: 8px 14px; border-radius: 99px; font-weight: 800; font-size: 0.85rem; cursor: pointer; color: #e2e8f0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); }
+  .story-btn.story-play { background: linear-gradient(135deg, #38bdf8, #818cf8); border: none; color: white; }
+  #story-hidden-note { font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px; }
+  #story-tools { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--panel-border); display: flex; flex-direction: column; gap: 8px; }
+  #story-tools summary { color: #94a3b8; font-size: 0.85rem; cursor: pointer; padding: 6px 0; }
+  #story-paste { width: 100%; height: 110px; margin: 6px 0; padding: 10px; border-radius: 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--panel-border); color: white; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; user-select: text; }
+  #story-import-result { font-size: 0.8rem; line-height: 1.4; white-space: pre-line; overflow-wrap: anywhere; color: #fda4af; user-select: text; }
+  #story-import-result.ok { color: #6ee7b7; }
 
   #story-panel { display: none; }
   .story-mode #story-panel {
@@ -245,7 +252,7 @@
     border-bottom-left-radius: inherit; border-bottom-right-radius: inherit;
   }
   /* The bladder keeps the top third; the sim's own controls only appear while a minigame runs */
-  .story-mode #canvas-wrapper { flex: 0 0 32%; }
+  .story-mode #canvas-wrapper { flex: 0 0 34%; }
   .story-mode #btn-shop, .story-mode #pending-lbl, .story-mode #stamina-row, .story-mode #btn-clench, .story-mode #btn-row { display: none !important; }
   .story-mode #controls { display: none; }
   .story-mode.mg-active #controls { display: flex; border-radius: 0; }
@@ -293,3 +300,5 @@
   .setting-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; color: #94a3b8; font-size: 0.85rem; }
   .setting-check { display: flex; align-items: center; gap: 10px; min-height: 40px; color: #e2e8f0; font-size: 0.95rem; cursor: pointer; }
   .setting-check input { width: 20px; height: 20px; flex: none; accent-color: #38bdf8; }
+  /* In a story the play area is short: a more compact bubble leaves the bladder's legs visible */
+  .story-mode #bladder-bubble { bottom: 8px; max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; }

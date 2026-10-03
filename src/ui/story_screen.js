@@ -1,20 +1,17 @@
 // Story mode's screen: the bladder on top, the story text, stat meters and choices below it. It asks the
 // runner what to show and passes the player's taps back; the minigame runner and the sim do the rest.
 // Story text is user-made data: it is only ever put on the page with textContent, never as HTML.
-import placeholderText from '../../stories/placeholder.json?raw';
-import bonnieText from '../../stories/bonnie_ch1.json?raw';
-import { parseStory } from '../story/loader.js';
 import { createRunner } from '../story/runner.js';
 import { NARRATOR } from '../story/schema.js';
 import { on } from '../sim/events.js';
 import { setStoryMode, setVolume, easeVolumeToward, startVoid } from '../sim/actions.js';
 import { speakLine } from '../audio/speech.js';
 import { startMinigame } from '../minigames/index.js';
-import { minigameIds } from '../minigames/registry.js';
+import { saveProgress, clearProgress } from '../story/library.js';
 import { showBubble, hideBubble } from './bubble.js';
+import { setVolumeLabel } from './hud.js';
 import { resetGame } from './reset.js';
 
-const BUNDLED = [['stories/bonnie_ch1.json', bonnieText], ['stories/placeholder.json', placeholderText]];
 const BUBBLE_SEC = 6; // how long a bladder line stays in its bubble
 
 const toy = document.getElementById('toy-container');
@@ -30,6 +27,7 @@ let spokenKey = '';     // the last line whose bladder reply was voiced, so re-d
 let voidsSeen = 0;
 let resetting = false;  // true while this file itself resets the game
 let onExit = () => {};
+let slot = null;        // { key, hash }: where this story's progress is saved automatically (null = not saved)
 
 // Small helper: an element with a class and plain text
 function el(tag, className, text) {
@@ -44,23 +42,23 @@ function button(className, text, onTap) {
   return b;
 }
 
-// The stories shipped with the game, each checked by the validator before it can be played
-export function listStories() {
-  return BUNDLED.map(([file, text]) => ({ file, ...parseStory(text, { file, minigameIds: minigameIds() }) }));
-}
-
 export function isStoryActive() { return runner !== null; }
 export function storyView() { return runner ? runner.view() : null; }
 
-// exit: called when the player leaves the story (back to the start screen)
-export function startStory(validStory, exit = onExit) {
-  onExit = exit;
+// options: onExit (called when the player leaves, back to the start screen), slot ({ key, hash } to save progress
+// under), saved (a snapshot to continue from). Left out, the previous story's options are reused ("Play again").
+export function startStory(validStory, options = {}) {
+  if ('onExit' in options) onExit = options.onExit;
+  if ('slot' in options) slot = options.slot;
   resetting = true; resetGame(); resetting = false;
-  story = validStory; runner = createRunner(story);
+  story = validStory; runner = createRunner(story, options.saved ?? null);
   names = Object.fromEntries(story.characters.map((c) => [c.id, c.name]));
-  spokenKey = ''; voidsSeen = 0;
+  const first = runner.view();
+  spokenKey = ''; voidsSeen = first.voided; // a void that happened before the save is not replayed
   setStoryMode(true);
-  setVolume(runner.view().fullness);
+  setVolume(first.fullness);
+  const capacity = story.bladder?.capacityMl;
+  setVolumeLabel(capacity ? (percent) => `≈ ${Math.round((percent / 100) * capacity / 10) * 10} ml` : null);
   toy.classList.add('story-mode'); toy.classList.remove('mg-active');
   render();
 }
@@ -70,6 +68,7 @@ export function exitStory() {
   runner = null; story = null;
   resetting = true; resetGame(); resetting = false;
   toy.classList.remove('story-mode', 'mg-active');
+  setVolumeLabel(null);
   hideBubble();
   onExit();
 }
@@ -99,6 +98,12 @@ function beginMinigame(request) {
 
 function render() {
   const v = runner.view();
+
+  // Progress is saved by itself at every resting point; a finished story has nothing left to continue
+  if (slot) {
+    const snapshot = runner.snapshot();
+    if (v.phase === 'ended') clearProgress(slot.key); else if (snapshot) saveProgress(slot.key, slot.hash, snapshot);
+  }
 
   elChapter.textContent = [v.chapter, v.title].filter(Boolean).join(' · ');
   elClock.textContent = v.clock ?? '';
@@ -137,7 +142,7 @@ function render() {
   if (v.phase === 'lines') elChoices.append(button('story-choice story-continue', 'Continue ▸', () => { runner.next(); render(); }));
   else if (v.phase === 'choices') v.choices.forEach((text, i) => elChoices.append(button('story-choice', text, () => { runner.choose(i); render(); })));
   else if (v.phase === 'ended' || v.phase === 'stuck') {
-    elChoices.append(button('story-choice', 'Play again', () => startStory(story)), button('story-choice story-continue', 'Back to menu', exitStory));
+    elChoices.append(button('story-choice', 'Play again', () => startStory(story, { saved: null })), button('story-choice story-continue', 'Back to menu', exitStory));
   }
 
   // Keep the newest line in view (after the choices are in place: they change how tall the text area is)

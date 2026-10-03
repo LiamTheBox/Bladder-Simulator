@@ -96,7 +96,7 @@ test('a switched-off minigame never appears: not in free play, not in a story', 
   await expect(pg.locator('#start-overlay'), 'Settings offers a way back to the start screen').toBeVisible();
   expect(await pg.evaluate('st.volume')).toBe(15);
   await pg.locator('#btn-story-mode').dispatchEvent('pointerdown');
-  await pg.locator('.story-card', { hasText: /Meeting/ }).click();
+  await pg.locator('.story-card', { hasText: /Meeting/ }).locator('.story-play').click();
   await expect(pg.locator('#toy-container')).toHaveClass(/story-mode/);
   const readOn = async () => { for (let i = 0; i < 8 && await pg.locator('.story-continue', { hasText: 'Continue' }).count(); i++) await pg.locator('.story-continue').click(); };
   await readOn();

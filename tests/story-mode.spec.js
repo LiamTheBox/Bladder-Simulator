@@ -7,7 +7,7 @@ async function openStory(browser, title = /Bonnie/, size = [390, 844]) {
   const game = await openGame(browser, ...size);
   const { pg } = game;
   await pg.locator('#btn-story-mode').dispatchEvent('pointerdown');
-  await pg.locator('.story-card', { hasText: title }).click();
+  await pg.locator('.story-card', { hasText: title }).locator('.story-play').click();
   await expect(pg.locator('#toy-container')).toHaveClass(/story-mode/);
   return { ...game, ev: (js) => pg.evaluate(js), wait: (ms) => pg.waitForTimeout(ms) };
 }
@@ -157,7 +157,7 @@ test('leaving a story (Menu, or changing the difficulty) returns to the start sc
   // changing the difficulty resets the game, which ends a running story
   await pg.reload(); await wait(300);
   await pg.locator('#btn-story-mode').dispatchEvent('pointerdown');
-  await pg.locator('.story-card', { hasText: /Meeting/ }).click();
+  await pg.locator('.story-card', { hasText: /Meeting/ }).locator('.story-play').click();
   await expect(pg.locator('#toy-container')).toHaveClass(/story-mode/);
   await pg.locator('#btn-settings').dispatchEvent('pointerdown');
   await pg.locator('#difficulty-select').selectOption('4');

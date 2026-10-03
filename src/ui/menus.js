@@ -7,7 +7,8 @@ import { speak, speakDirect } from '../audio/speech.js';
 import { clearPointers } from './input.js';
 import { settings, saveSettings, isValidDifficulty } from '../config/settings.js';
 import { resetGame } from './reset.js';
-import { listStories, startStory } from './story_screen.js';
+import { startStory } from './story_screen.js';
+import { openStoryMenu, closeStoryMenu } from './story_menu.js';
 import { isAgeGateOpen, onBackToStart } from './settings_panel.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
@@ -85,31 +86,15 @@ startOverlayEl.addEventListener('pointerdown', async () => {
   startOverlayEl.style.display = 'none'; speak('casual');
 });
 
-// Story mode: pick one of the bundled stories
+// Story mode: the story list (bundled and imported stories, import / export)
 const storyOverlayEl = document.getElementById('story-overlay');
-const storyListEl = document.getElementById('story-list');
 document.getElementById('btn-story-mode').addEventListener('pointerdown', (e) => {
   e.stopPropagation(); // not a free-play start
-  storyListEl.replaceChildren(...listStories().map((entry) => {
-    const card = document.createElement('button'); card.className = 'story-card';
-    const title = document.createElement('div'); title.className = 'story-card-title';
-    const about = document.createElement('div'); about.className = 'story-card-about';
-    if (entry.ok) {
-      title.textContent = entry.story.meta.title; about.textContent = entry.story.meta.description ?? '';
-      card.addEventListener('click', async () => {
-        await unlock();
-        storyOverlayEl.style.display = 'none'; startOverlayEl.style.display = 'none';
-        startStory(entry.story, () => { startOverlayEl.style.display = 'flex'; });
-      });
-    } else {
-      // a story that fails validation is listed with the reason and cannot be started
-      title.textContent = `${entry.file} cannot be played`; about.textContent = entry.errors.slice(0, 3).join('\n');
-      card.disabled = true;
-    }
-    card.append(title, about);
-    return card;
-  }));
-  storyOverlayEl.style.display = 'flex';
+  openStoryMenu(async (entry, saved) => {
+    await unlock();
+    closeStoryMenu(); startOverlayEl.style.display = 'none';
+    startStory(entry.story, { onExit: () => { startOverlayEl.style.display = 'flex'; }, slot: { key: entry.key, hash: entry.hash }, saved });
+  });
 });
 storyOverlayEl.addEventListener('pointerdown', (e) => e.stopPropagation()); // taps in the list never start free play
 

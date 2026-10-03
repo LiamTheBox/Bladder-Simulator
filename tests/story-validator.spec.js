@@ -71,13 +71,13 @@ test('minigames must be ones the game has, at difficulty 1 to 5', () => {
 });
 
 test('stats, effects and conditions must refer to things the story defines', () => {
-  expectError((s) => { s.scenes[0].choices[0].effects[1].stat = 'charisma'; }, /effects\[1\]\.stat: "charisma" is not one of this story's stats/);
+  expectError((s) => { s.scenes[0].choices[1].effects[2].stat = 'charisma'; }, /effects\[2\]\.stat: "charisma" is not one of this story's stats/);
   expectError((s) => { s.scenes[1].triggers[0].when[0].stat = 'hunger'; }, /when\[0\]\.stat: "hunger" is not one of this story's stats/);
   expectError((s) => { s.scorecard[0].stat = 'luck'; }, /scorecard\[0\]\.stat: "luck" is not one of this story's stats/);
   expectError((s) => { s.stats.push({ id: 'fullness', label: 'Mine', start: 1 }); }, /"fullness" is built in/);
   expectError((s) => { s.stats[0].start = 500; }, /stats\[0\]\.start: must be between 0 and 100/);
   expectError((s) => { s.stats[0].min = 100; s.stats[0].max = 0; }, /"min" \(100\) must be below "max" \(0\)/);
-  expectError((s) => { s.scenes[0].choices[0].effects.push({ teleport: 'moon' }); }, /is not a known effect/);
+  expectError((s) => { s.scenes[0].choices[1].effects.push({ teleport: 'moon' }); }, /is not a known effect/);
   expectError((s) => { s.scenes[1].triggers[0].when[0] = { stat: 'fullness', gt: 70, lt: 90 }; }, /needs exactly one of lt, lte, gt, gte, eq/);
   expectError((s) => { s.scenes[0].lines[1].speaker = 'nobody'; }, /lines\[1\]\.speaker: "nobody" is not "narrator" or one of this story's characters/);
   expectError((s) => { s.clock.start = '2pm'; }, /clock\.start: must be a 24-hour time/);
@@ -122,4 +122,44 @@ test('the loader rejects anything that is not a story, without throwing', () => 
     (s) => { s.scenes[0].choices[0] = 'go'; }, (s) => { s.stats = [null]; }, (s) => { s.endings = [[]]; }, (s) => { s.scenes[1].triggers[0].minigame = 7; }, (s) => { s.scorecard = [null]; }]) {
     expect(errorsAfter(change).length, String(change)).toBeGreaterThan(0);
   }
+});
+
+test('choice sets: every use words every option, and nothing else', () => {
+  const use = (s) => s.scenes[0].choices[0];
+  expectError((s) => { delete use(s).texts.refuse; }, /scene "slide_one": choices\[0\]\.texts\.refuse: is required: write this scene's wording for the "refuse" option/);
+  expectError((s) => { use(s).texts.shrug = 'Shrug.'; }, /texts\.shrug: the set "polite_offer" has no option "shrug" \(it has: accept, refuse\)/);
+  expectError((s) => { use(s).set = 'rude_offer'; }, /choices\[0\]\.set: "rude_offer" is not one of this story's choice sets/);
+  expectError((s) => { delete use(s).next; }, /nexts\.accept: has nowhere to go/);
+  expectError((s) => { use(s).nexts = { accept: 'nowhere' }; }, /nexts\.accept: points to "nowhere"/);
+  expectError((s) => { s.choiceSets[0].options[1].key = 'accept'; }, /"accept" is used more than once in this set/);
+  expectError((s) => { s.choiceSets[0].options.pop(); }, /choiceSets\[0\]\.options: needs at least 2 entries/);
+  expectError((s) => { s.choiceSets[0].options[0].effects[1].stat = 'charm'; }, /choiceSets\[0\]\.options\[0\]\.effects\[1\]\.stat: "charm" is not one of this story's stats/);
+  // a per-option target is allowed
+  expect(errorsAfter((s) => { delete use(s).next; use(s).nexts = { accept: 'slide_twenty', refuse: 'slide_twenty' }; })).toEqual([]);
+  // sets count toward the per-scene choice limit once expanded
+  expectError((s) => { for (let i = 0; i < 4; i++) s.scenes[0].choices.push({ ...use(s) }); }, /offers too many choices once its sets are expanded \(11, limit 8\)/);
+});
+
+test('interruptions: "return" only inside a scene that interrupts, and the scene must exist', () => {
+  expectError((s) => { s.scenes[0].choices[1].next = 'return'; },
+    /scene "slide_one": uses "return" but can be reached in the ordinary flow, where there is nothing to return to/);
+  expectError((s) => { s.triggers[0].scene = 'nobody_home'; }, /triggers\[0\]\.scene: points to "nobody_home", which is not a scene/);
+  expectError((s) => { s.scenes[1].choices[1].next = 'dana_notices'; }, /scene "dana_notices": uses "return" but can be reached in the ordinary flow/);
+  expectError((s) => { s.triggers = []; }, /scene "dana_notices": can never be reached from the start/);
+  expectError((s) => { s.scenes[2].id = 'return'; s.triggers[0].scene = 'return'; }, /"return" is reserved/);
+  expectError((s) => { s.stats[0].thresholds[0].goto = 'return'; }, /thresholds\[0\]\.goto: cannot be "return"/);
+  expectError((s) => { s.triggers[0].minigame = { id: 'mash', difficulty: 1 }; }, /triggers\[0\]\.minigame: unknown field/);
+  // a scene-level trigger can cut to a scene too
+  expect(errorsAfter((s) => { s.scenes[1].triggers.push({ when: [{ stat: 'control', lt: 20 }], scene: 'dana_notices' }); s.triggers = []; })).toEqual([]);
+});
+
+test('modes, conditional lines and the void effect are checked', () => {
+  expectError((s) => { s.modes[0].minigameDifficulty = 3; }, /modes\[0\]\.minigameDifficulty: must be a whole number from -2 to 2/);
+  expectError((s) => { s.modes[0].fillMultiplier = 10; }, /modes\[0\]\.fillMultiplier: must be between 0.25 and 4/);
+  expectError((s) => { delete s.modes[0].label; }, /modes\[0\]\.label: is required/);
+  expectError((s) => { s.scenes[1].lines[2].if = [{ stat: 'mood', gt: 1 }]; }, /lines\[2\]\.if\[0\]\.stat: "mood" is not one of this story's stats/);
+  expectError((s) => { s.scenes[0].choices[1].effects.push({ void: false }); }, /\.void: must be true/);
+  expect(errorsAfter((s) => { s.scenes[0].choices[1].effects.push({ void: true }); })).toEqual([]);
+  const r = check((() => { const s = fresh(); s.modes[0].flag = 'never_set'; return s; })());
+  expect(r.warnings.join('\n')).toMatch(/modes\[0\]\.flag: flag "never_set" is checked but never set anywhere/);
 });

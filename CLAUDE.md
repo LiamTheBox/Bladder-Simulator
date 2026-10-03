@@ -14,8 +14,8 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- Roadmap steps 1 to 4 are done, and step 5 has three backlog games (`swipe_away`,
-  `distraction_popups`, `tremor_lock`) built and tested but **not yet playtested on a phone**: the game runs from `src/` as a Vite + vanilla JS static site, split into
+- Roadmap steps 1 to 6 are built (step 5: three backlog games, playtested on a phone; step 6: story mode
+  with Bonnie chapter 1, tested in a headless browser but **not yet playtested on a phone**): the game runs from `src/` as a Vite + vanilla JS static site, split into
   the module layout below, with identical behavior to the prototype. `src/main.js` wires sim events to
   audio / UI / minigames and runs the frame loop; `src/sim/events.js` lists every event with its payload.
 - `legacy/bladder_simulator_demo_(concept).html` is the original one-file prototype (tag `v12-baseline`),
@@ -109,10 +109,17 @@ Already covered, as variants worth keeping in mind: the old `mash` had a bar tha
 Prototype these in **sim mode first** (no story needed), 2–3 at a time, playtest on a phone.
 
 ## Story format (data, never code)
-**Built (step 6, part 1):** the exact format is documented at the top of `src/story/schema.js`;
+**Built (step 6):** the exact format is documented at the top of `src/story/schema.js`;
 `src/story/validator.js` enforces it and `src/story/loader.js` is the only way story text enters the game.
-`stories/placeholder.json` is a tiny valid story that uses every feature. The runner and the story screen are
-not built yet. The original sketch, for intent:
+`src/story/runner.js` plays a story (pure logic, no DOM); `src/ui/story_screen.js` is the screen: bladder on
+top, text and choices below, the bladder's replies in its bubble, minigames in place of the choices.
+In story mode (`st.storyMode`) the sim keeps animating but its stamina drain, random spikes and idle chatter
+are off; the story sets the fullness. Bundled stories: `stories/bonnie_ch1.json` (chapter 1, placeholder
+wording) and `stories/placeholder.json` (tiny, uses every feature). Beyond the sketch below, the format has
+choice sets (one kind of decision, reworded per scene), interruptions (`"scene"` triggers with `"return"`),
+story-wide triggers, modes (a flag that makes minigames harder and filling faster, e.g. hard mode),
+conditional lines and a `void` effect. Not built yet: save/load, a wide two-column desktop layout, showing
+fullness in ml, and minigames that act on the dialogue itself. The original sketch, for intent:
 
 Stories are JSON files, versioned (`"schemaVersion": 1`). Sketch:
 - `meta`: title, author, rating, content tags, description.
@@ -177,7 +184,9 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   overrides; `tests/rules.spec.js` covers rule fixes made after the refactor.
 - `tests/events.spec.js` has a test per event (payload and order); `tests/settings.spec.js` covers the
   difficulty setting and blocked storage.
-- `tests/story-validator.spec.js` covers the validator and loader (runs in Node, no browser needed).
+- `tests/story-validator.spec.js` and `tests/story-runner.spec.js` cover the validator, loader and runner (they
+  run in Node, no browser); the runner test also random-walks every bundled story to check it can always finish.
+  `tests/story-mode.spec.js` covers the story screen in the browser, including that story text is never HTML.
 - Run tests before every commit that touches `sim/`, `minigames/`, or `story/`.
 
 ## How to work in this repo

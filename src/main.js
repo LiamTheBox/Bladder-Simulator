@@ -17,6 +17,11 @@ import { pickDanceMove, updateDance } from './sim/dance.js';
 import { updateParticles } from './sim/particles.js';
 import { canvasContainer } from './render/canvas.js';
 import { renderCanvas } from './render/scene.js';
+import { startMinigame, endMinigame, updateMinigame, tapLeaks } from './minigames/index.js';
+import { mgPanel, btnRow, showMgPanel } from './minigames/panel.js';
+import { mgBtnMash } from './minigames/mash.js';
+import { mgBreatheArea } from './minigames/breathe.js';
+import { mgLeaksArea } from './minigames/leaks.js';
 import { waterState, startAudio, playWater, stopWater, stopAllWater, updateBubbles, playSnap, playPoke, playStretch, playSnapback, playHeartbeat, playGulp } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakLine, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
@@ -146,106 +151,12 @@ document.getElementById('btn-void').addEventListener('pointerdown', () => {
   st.faceTimer = 0; vibe([50, 100, 50, 100, 50]); speak('voiding', true);
 });
 
-/* --- MINIGAME SYSTEM --- */
-// The bladder announces each urge spike in its speech bubble. Any control the minigame needs
-// (mash button, breathing ring, timer) appears in the bottom panel where SPEED UP / VOID normally are.
-// Leaks are tapped directly on the bladder, so nothing covers it.
-const mgPanel = document.getElementById('mg-panel');
-const btnRow = document.getElementById('btn-row');
-const mgTimerBar = document.getElementById('mg-timer-bar');
-const mgBtnMash = document.getElementById('mg-btn-mash');
-const mgBreatheArea = document.getElementById('mg-breathe-area');
-const mgBreatheRing = document.getElementById('breathe-ring');
-const mgBreatheLabel = document.getElementById('breathe-label');
-const mgLeaksArea = document.getElementById('mg-leaks-area');
 
-function showMgPanel(on) {
-  mgPanel.style.display = on ? 'flex' : 'none';
-  btnRow.style.visibility = on ? 'hidden' : 'visible';
-}
 
-function updateLeaksHint() {
-  const left = st.minigame.leaks.filter(l => !l.patched).length;
-  mgLeaksArea.textContent = left === 1 ? 'Tap the last crack!' : `Tap the red cracks! ${left} left`;
-}
 
-function startMinigame() {
-  st.minigame.active = true;
 
-  const types = ['mash', 'leaks', 'breathe'];
-  st.minigame.type = types[Math.floor(Math.random() * types.length)];
 
-  // Reset UI
-  mgBtnMash.style.display = 'none';
-  mgBreatheArea.style.display = 'none';
-  mgLeaksArea.style.display = 'none';
-  mgTimerBar.style.background = '#fef08a';
-  mgTimerBar.style.width = '100%';
 
-  if (st.minigame.type === 'mash') {
-      st.minigame.duration = 5.0; st.minigame.clicks = 0;
-      mgBtnMash.style.display = 'block';
-      mgBtnMash.textContent = `CLENCH! (0/${st.minigame.req})`;
-  }
-  else if (st.minigame.type === 'breathe') {
-      st.minigame.duration = 6.0; st.minigame.score = 0;
-      st.minigame.phase = 'inhale'; st.minigame.phaseTimer = 1.5;
-      mgBreatheArea.style.display = 'flex';
-      mgBreatheRing.className = 'inhale'; mgBreatheLabel.textContent = 'HOLD';
-  }
-  else if (st.minigame.type === 'leaks') {
-      st.minigame.duration = 5.0;
-      st.minigame.leaks = [];
-      // Spread across the top and sides only (the legs and face are at the bottom/center)
-      for(let i=0; i<3; i++) {
-          const th = Math.PI * 0.95 + (i + 0.5) * (Math.PI * 1.1 / 3) + (Math.random() - 0.5) * 0.3;
-          st.minigame.leaks.push({ th, patched: false });
-      }
-      mgLeaksArea.style.display = 'flex';
-      updateLeaksHint();
-  }
-
-  st.minigame.timer = st.minigame.duration;
-  showMgPanel(true);
-
-  const lines = minigameLines[st.minigame.type];
-  const prompt = lines[Math.floor(Math.random() * lines.length)];
-  showBubble(prompt, Infinity, true);   // pinned until the minigame ends
-  speakLine(prompt, true);
-  vibe([100, 50, 100]);
-  st.faceState = { e: 'wide_shake', m: 'zigzag' }; st.faceTimer = st.minigame.duration;
-}
-
-function endMinigame(success, cancelled = false) {
-  st.minigame.active = false; st.minigame.cooldown = 15 + Math.random() * 10;
-  showMgPanel(false);
-  hideBubble();
-
-  if (cancelled) return;
-
-  if (success) {
-    st.stamina = Math.min(100, st.stamina + 40);
-    st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0;
-    speak('success_hold', true); vibe([50, 50]);
-  } else {
-    st.stamina = Math.max(0, st.stamina - 50);
-    st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0;
-    speak('fail', true); vibe(200);
-  }
-}
-
-// Mash Events
-mgBtnMash.addEventListener('pointerdown', (e) => {
-  e.preventDefault(); e.stopPropagation();
-  st.minigame.clicks++; vibe(15);
-  mgBtnMash.textContent = `CLENCH! (${st.minigame.clicks}/${st.minigame.req})`;
-  st.slosh.vel += (Math.random() - 0.5) * 2; 
-  if (st.minigame.clicks >= st.minigame.req) endMinigame(true);
-});
-
-// Breathe Events
-[mgBreatheArea, mgBreatheRing].forEach(el => el.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); st.minigame.holdingRing = true; }));
-['pointerup', 'pointercancel'].forEach(ev => window.addEventListener(ev, () => { st.minigame.holdingRing = false; }));
 
 function triggerAccident() {
   st.failureEvent = true; st.isClosed = false; st.isVoiding = true;
@@ -255,15 +166,6 @@ function triggerAccident() {
   vibe([200, 100, 200, 100, 200]); speak('accident', true);
 }
 
-function checkLeakHits(mx, my, cx, cy, Rr) {
-  st.minigame.leaks.forEach(leak => {
-    if (leak.patched) return;
-    const lx = cx + Math.cos(leak.th) * Rr, ly = cy + Math.sin(leak.th) * Rr;
-    if (Math.hypot(mx - lx, my - ly) < 50) { leak.patched = true; vibe(20); }
-  });
-  updateLeaksHint();
-  if (st.minigame.leaks.every(l => l.patched)) endMinigame(true);
-}
 
 /* --- INTERACTION (Squish / Stretch / Soothe) --- */
 canvasContainer.addEventListener('wheel', (e) => {
@@ -281,7 +183,7 @@ canvasContainer.addEventListener('pointerdown', (e) => {
 
   // LEAKS MINIGAME HIT DETECTION
   if (st.minigame.active && st.minigame.type === 'leaks') {
-      checkLeakHits(mx, my, cx, cy, Rr);
+      tapLeaks(mx, my, cx, cy, Rr);
       return; // Don't trigger stretch/soothe if doing minigame
   }
 
@@ -310,7 +212,7 @@ window.addEventListener('pointermove', (e) => {
   const { cx, cy, Rr } = bladderGeom();
 
   // LEAKS MINIGAME SWIPE DETECTION
-  if (st.minigame.active && st.minigame.type === 'leaks') checkLeakHits(mx, my, cx, cy, Rr);
+  if (st.minigame.active && st.minigame.type === 'leaks') tapLeaks(mx, my, cx, cy, Rr);
 
   if (keys.length === 2 && st.squeeze.active) {
     const p1 = pointers[keys[0]], p2 = pointers[keys[1]];
@@ -489,28 +391,7 @@ function gameLoop(now) {
       stmContainer.style.opacity = st.stamina >= 100 ? '0.35' : '0.8'; // dim when there is nothing to worry about
   }
 
-  // Minigame Logic Processing
-  if (st.minigame.active) {
-      st.minigame.timer -= dt;
-      mgTimerBar.style.width = `${(st.minigame.timer / st.minigame.duration) * 100}%`;
-      
-      if (st.minigame.type === 'breathe') {
-          st.minigame.phaseTimer -= dt;
-          if (st.minigame.phaseTimer <= 0) {
-              st.minigame.phaseTimer = 1.5;
-              st.minigame.phase = st.minigame.phase === 'inhale' ? 'exhale' : 'inhale';
-              mgBreatheRing.className = st.minigame.phase;
-              mgBreatheLabel.textContent = st.minigame.phase === 'inhale' ? 'HOLD' : 'RELEASE';
-          }
-          const correctAction = (st.minigame.phase === 'inhale' && st.minigame.holdingRing) || (st.minigame.phase === 'exhale' && !st.minigame.holdingRing);
-          if (correctAction) st.minigame.score += dt;
-      }
-
-      if (st.minigame.timer <= 0) {
-          if (st.minigame.type === 'breathe') endMinigame(st.minigame.score > (st.minigame.duration * 0.65));
-          else endMinigame(false); // Leaks and Mash fail on timeout
-      }
-  }
+  updateMinigame(dt);
 
   // UI Updates
   const stmShown = Math.max(0, Math.min(100, st.stamina));

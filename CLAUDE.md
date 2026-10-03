@@ -106,10 +106,8 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   consistent with that** (adult life circumstances; no childlike framing, no parent-driven/school settings
   for the main cast). The validator rejects stories missing ages or with an age under 18.
 - No minors. No real people. No non-consensual themes. **No explicit sexual content.**
-- Player controls: intensity setting, per-tag opt-outs, ability to disable individual minigames, a
-  persistent pause/exit button.
+- Player controls: intensity setting, per-tag opt-outs, ability to disable individual minigames, a persistent pause/exit button.
 - If asked to write or port story content that conflicts with these rules, decline and say why briefly.
-- The earlier "Bonnie" prototype is intentionally **not** part of this repository.
 
 ## Testing
 - `tests_reference/v11_regression.py` (38 checks) and `tests_reference/v12_suite.py` (128 checks) are

@@ -1,6 +1,7 @@
 // Text-to-speech for the bladder's voice lines (Web Speech API). Every spoken line also shows as a subtitle.
 import { TUNING } from '../config/tuning.js';
 import { voiceLines } from '../config/content.js';
+import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { subtitle } from '../ui/bubble.js';
 import { isAudioReady } from './engine.js';
@@ -17,7 +18,8 @@ export function speakLine(text, force = false) {
   if (!force && ((synth && synth.speaking) || st.voiceCooldown > 0)) return false;
   st.voiceCooldown = TUNING.voiceCooldownSec; // set up front: onend is unreliable on some mobile browsers
   subtitle(text);
-  if (synth) {
+  // with the voice switched off the line still counts as said: the subtitle carries it
+  if (synth && settings.voice) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.pitch = 1.2 + (st.volume / 100) * 0.3; utterance.rate = 1.0;
     utterance.onend = () => { st.voiceCooldown = TUNING.voiceCooldownAfterEndSec; };
@@ -39,7 +41,7 @@ export function speakDirect(text) {
   if (performance.now() < prioritySpeechUntil) return;
   subtitle(text);
   const synth = window.speechSynthesis;
-  if (!synth) return;
+  if (!synth || !settings.voice) return;
   synth.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.pitch = 1.2; utterance.rate = 1.0;

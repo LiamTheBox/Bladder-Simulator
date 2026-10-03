@@ -13,7 +13,7 @@ import { vibe } from '../audio/haptics.js';
 import { speak, speakLine } from '../audio/speech.js';
 import { showBubble, hideBubble } from '../ui/bubble.js';
 import { mgTimerBar, showMgPanel } from './panel.js';
-import { registerMinigame, getMinigame, clampDifficulty } from './registry.js';
+import { registerMinigame, getMinigame, minigameIds, clampDifficulty } from './registry.js';
 import mash from './mash.js';
 import leaks from './leaks.js';
 import breathe from './breathe.js';
@@ -31,11 +31,22 @@ on('gameReset', () => { recent.length = 0; });
 
 // Random game for a sim-mode spike: anything in the pool except the last few played
 function pickFromPool() {
-  const pool = TUNING.simSpikePool;
+  const pool = TUNING.simSpikePool.filter(isEnabled);
+  if (pool.length === 0) return null; // the player switched every game off
   const blocked = TUNING.simSpikeNoRepeat > 0 ? recent.slice(-TUNING.simSpikeNoRepeat) : [];
   const fresh = pool.filter((id) => !blocked.includes(id));
   const choices = fresh.length ? fresh : pool; // a pool too small to honor the rule still has to produce a game
   return choices[Math.floor(Math.random() * choices.length)];
+}
+
+const isEnabled = (id) => !settings.disabledMinigames.includes(id);
+
+// A game the player switched off is never shown. A caller that asked for it by name gets another enabled
+// game instead; with every game off there is nothing to play (null).
+function substituteFor(id) {
+  if (isEnabled(id)) return id;
+  const others = minigameIds().filter(isEnabled);
+  return others.length ? others[Math.floor(Math.random() * others.length)] : null;
 }
 
 function retireCurrent() {
@@ -46,11 +57,12 @@ function retireCurrent() {
 
 // request: { id, difficulty, duration, text, onResult }, all optional. Without an id, sim mode picks at random;
 // without a difficulty, the player's Settings choice is used.
-// Returns false (and starts nothing) if the id is unknown.
+// Returns false (and starts nothing) if the id is unknown, or if the player has switched every minigame off.
 export function startMinigame(request = {}) {
-  const id = request.id ?? pickFromPool();
+  if (request.id !== undefined && !getMinigame(request.id)) { console.warn(`Unknown minigame "${request.id}"`); return false; }
+  const id = request.id !== undefined ? substituteFor(request.id) : pickFromPool();
+  if (id === null) { st.minigame.cooldown = TUNING.spikeCooldownMin; return false; } // nothing enabled: try again later
   const game = getMinigame(id);
-  if (!game) { console.warn(`Unknown minigame "${id}"`); return false; }
 
   // One at a time: a request during a running game cancels that game first (its caller hears "cancelled")
   if (st.minigame.active && current) endMinigame(false, true);

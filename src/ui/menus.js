@@ -8,6 +8,7 @@ import { clearPointers } from './input.js';
 import { settings, saveSettings, isValidDifficulty } from '../config/settings.js';
 import { resetGame } from './reset.js';
 import { listStories, startStory } from './story_screen.js';
+import { isAgeGateOpen, onBackToStart } from './settings_panel.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
 const shopOverlayEl = document.getElementById('shop-overlay');
@@ -15,7 +16,7 @@ const settingsOverlayEl = document.getElementById('settings-overlay');
 
 /* --- PAUSE: menus, start screen, hidden tab --- */
 export function isPaused() {
-  return document.hidden ||
+  return document.hidden || isAgeGateOpen() ||
     startOverlayEl.style.display !== 'none' ||
     shopOverlayEl.style.display === 'flex' ||
     settingsOverlayEl.style.display === 'flex';
@@ -111,3 +112,5 @@ document.getElementById('btn-story-mode').addEventListener('pointerdown', (e) =>
   storyOverlayEl.style.display = 'flex';
 });
 storyOverlayEl.addEventListener('pointerdown', (e) => e.stopPropagation()); // taps in the list never start free play
+
+onBackToStart(() => { startOverlayEl.style.display = 'flex'; });

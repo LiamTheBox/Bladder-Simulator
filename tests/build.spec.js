@@ -12,6 +12,9 @@ test('production build starts and loads nothing from other hosts', async ({ brow
   pg.on('request', (r) => { const u = r.url(); if (!u.startsWith(BUILD_URL) && !u.startsWith('data:') && !u.startsWith('blob:')) foreign.push(u); });
 
   await pg.goto(BUILD_URL);
+  await expect(pg.locator('#age-gate'), 'a first visit meets the 18+ gate').toBeVisible();
+  await pg.locator('#age-yes').click();
+  await expect(pg.locator('#age-gate')).toBeHidden();
   await expect(pg.locator('#start-overlay')).toBeVisible();
   expect(await pg.evaluate('typeof window.st'), 'test hook is absent from the production build').toBe('undefined');
 

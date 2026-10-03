@@ -8,6 +8,21 @@
 <body>
 
 <div id="toy-container">
+
+  <div id="age-gate" style="display: none;">
+    <div class="modal-box" style="text-align: center;">
+      <div id="age-ask">
+        <h2 style="margin: 0 0 12px; font-size: 1.5rem; font-weight: 800; color: white;">Adults only</h2>
+        <p style="color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">This is an 18+ desperation-endurance game with adult themes. It contains no explicit sexual content. Please confirm your age to continue.</p>
+        <button id="age-yes" class="age-btn primary">I am 18 or older</button>
+        <button id="age-no" class="age-btn">I am under 18</button>
+      </div>
+      <div id="age-refused" style="display: none; color: #cbd5e1; line-height: 1.5;">
+        <h2 style="margin: 0 0 12px; font-size: 1.5rem; font-weight: 800; color: white;">Sorry</h2>
+        This game is only for adults. Please close this page.
+      </div>
+    </div>
+  </div>
   
   <div id="start-overlay">
     <div class="start-btn-visual">TAP TO START</div>
@@ -61,6 +76,12 @@
         </select>
         <div style="color: #94a3b8; font-size: 0.8rem;">Sets how demanding the urge-spike minigames are. Changing it restarts the game.</div>
       </div>
+      <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Comfort</h3>
+      <div id="settings-comfort" class="setting-group"></div>
+      <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Minigames that may appear</h3>
+      <div id="settings-minigames" class="setting-group"></div>
+      <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Hide stories tagged</h3>
+      <div id="settings-tags" class="setting-group"></div>
       <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Custom Voice Lines</h3>
       <div class="custom-tts-row">
         <input type="text" id="tts-input" placeholder="Type custom phrase here...">
@@ -80,6 +101,7 @@
         </select>
         <button id="tts-add">Add Phrase</button>
       </div>
+      <button id="btn-back-to-start" class="age-btn" style="margin-top: 24px;">Back to the start screen</button>
     </div>
   </div>
 

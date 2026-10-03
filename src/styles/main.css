@@ -285,3 +285,11 @@
   }
   .story-choice:active { background: rgba(255,255,255,0.15); }
   .story-choice.story-continue { text-align: center; border-color: rgba(255,255,255,0.2); color: #e2e8f0; }
+
+  /* ---------- AGE GATE AND SETTINGS ---------- */
+  #age-gate { position: absolute; inset: 0; z-index: 300; background: rgba(10, 5, 15, 0.97); flex-direction: column; justify-content: center; align-items: center; }
+  .age-btn { display: block; width: 100%; min-height: 48px; margin-top: 10px; padding: 12px; border-radius: 12px; font-weight: 800; font-size: 1rem; cursor: pointer; color: #e2e8f0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); }
+  .age-btn.primary { background: linear-gradient(135deg, #38bdf8, #818cf8); border: none; color: white; }
+  .setting-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; color: #94a3b8; font-size: 0.85rem; }
+  .setting-check { display: flex; align-items: center; gap: 10px; min-height: 40px; color: #e2e8f0; font-size: 0.95rem; cursor: pointer; }
+  .setting-check input { width: 20px; height: 20px; flex: none; accent-color: #38bdf8; }

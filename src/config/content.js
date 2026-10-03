@@ -40,6 +40,12 @@ export const minigameLines = {
   tremor_lock: ["I'm shaking! Tap with my heartbeat to steady me!", "Steady... tap on the beat!"]
 };
 
+// Names shown in Settings, where each minigame can be switched off
+export const minigameNames = {
+  mash: 'Clench (rapid tapping)', leaks: 'Leaks (tap the cracks)', breathe: 'Breathe (hold and release)',
+  swipe_away: 'Swipe away (flick the card)', distraction_popups: 'Distractions (tap the popups)', tremor_lock: 'Steady (tap on the beat)',
+};
+
 // Placeholder wording for the UI-intrusion minigames
 export const swipeCardTexts = ["JUST LET GO", "Nobody would know", "Open up, it's fine", "Give in already"];
 export const popupWords = ["Spasm!", "Ache!", "Twinge!", "Cramp!", "Throb!"];

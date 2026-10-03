@@ -35,7 +35,7 @@ test('changing difficulty restarts the game and is remembered', async ({ browser
     .toEqual({ panel: 'none', row: 'visible', bubble: false });
   await expect(pg.locator('#clench-title')).toHaveText('SPHINCTER LOCKED');
   await expect(pg.locator('#btn-void')).toBeEnabled();
-  expect(JSON.parse(await pg.evaluate(`localStorage.getItem('${KEY}')`))).toEqual({ difficulty: 4 });
+  expect(JSON.parse(await pg.evaluate(`localStorage.getItem('${KEY}')`))).toMatchObject({ difficulty: 4, ageConfirmed: true });
 
   // the new difficulty applies to the next spike
   await pg.locator('.close-modal[data-target=settings-overlay]').dispatchEvent('pointerdown');
@@ -62,6 +62,9 @@ test('the game works when browser storage is blocked or holds junk', async ({ br
     pg.on('pageerror', (e) => errors.push(String(e)));
     await pg.addInitScript(sabotage);
     await pg.goto('/'); await pg.waitForTimeout(300);
+    // nothing could be remembered, so the 18+ gate asks again; answering works without storage
+    await expect(pg.locator('#age-gate'), sabotage).toBeVisible();
+    await pg.locator('#age-yes').click();
     await start(pg);
     await expect(pg.locator('#difficulty-select'), sabotage).toHaveValue('2');
     await pg.locator('#btn-settings').dispatchEvent('pointerdown');

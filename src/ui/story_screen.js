@@ -84,7 +84,7 @@ export function updateStory(dt) {
 function beginMinigame(request) {
   toy.classList.add('mg-active'); // shows the game panel in place of the choices
   const playing = runner;
-  startMinigame({
+  const started = startMinigame({
     id: request.id, difficulty: request.difficulty, text: request.prompt ? { prompt: request.prompt } : {},
     onResult: (result) => {
       toy.classList.remove('mg-active');
@@ -93,6 +93,8 @@ function beginMinigame(request) {
       render();
     },
   });
+  // The player has switched every minigame off: the story carries on as if this one was passed
+  if (!started) { toy.classList.remove('mg-active'); runner.minigameDone(true); render(); }
 }
 
 function render() {

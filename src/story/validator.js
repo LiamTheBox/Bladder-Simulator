@@ -4,7 +4,7 @@
 // validateStory(data, { file, minigameIds }) -> { ok, errors, warnings }
 // Every message starts with the file name and, where it applies, the scene id, then the path of the field.
 import {
-  SCHEMA_VERSION, RATING, MIN_AGE, NARRATOR, FULLNESS, ID_PATTERN, CLOCK_PATTERN, COMPARISONS, ENDING_KINDS, LIMITS,
+  SCHEMA_VERSION, RATING, MIN_AGE, NARRATOR, FULLNESS, RETURN, ID_PATTERN, CLOCK_PATTERN, COMPARISONS, ENDING_KINDS, LIMITS,
 } from './schema.js';
 
 const isObject = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -60,7 +60,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   }
 
   /* --- top level --- */
-  if (!keys(data, 'story', ['schemaVersion', 'meta', 'characters', 'start', 'scenes', 'endings'], ['stats', 'bladder', 'clock', 'scorecard'])) return done();
+  if (!keys(data, 'story', ['schemaVersion', 'meta', 'characters', 'start', 'scenes', 'endings'], ['stats', 'bladder', 'clock', 'scorecard', 'modes', 'choiceSets', 'triggers'])) return done();
   if (data.schemaVersion !== SCHEMA_VERSION) { err('schemaVersion', `must be ${SCHEMA_VERSION} (this file says ${JSON.stringify(data.schemaVersion)})`); return done(); }
 
   if (keys(data.meta, 'meta', ['title', 'rating'], ['id', 'author', 'description', 'tags'])) {
@@ -107,8 +107,10 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   if (!list(data.scenes, 'scenes', LIMITS.scenes, { min: 1 }) || !list(data.endings, 'endings', LIMITS.endings, { min: 1 })) return done();
   const sceneIds = uniqueIds(scenes, 'scenes'), endingIds = uniqueIds(endings, 'endings');
   for (const e of endingIds) if (sceneIds.has(e)) err('endings', `"${e}" is both a scene and an ending; ids must be unique across both`);
+  if (sceneIds.has(RETURN) || endingIds.has(RETURN)) err('scenes', `"${RETURN}" is reserved: it means "go back to the interrupted scene"`);
   const knownTarget = (v) => sceneIds.has(v) || endingIds.has(v);
   function target(v, path) {
+    if (v === RETURN) return true;
     if (!id(v, path)) return false;
     if (!knownTarget(v)) { err(path, `points to "${v}", which is not a scene or an ending`); return false; }
     return true;
@@ -132,7 +134,8 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
         if (!keys(e, p, ['flag'], ['value'])) return;
         if (id(e.flag, `${p}.flag`)) flagsSet.add(e.flag);
         if ('value' in e && typeof e.value !== 'boolean') err(`${p}.value`, 'must be true or false');
-      } else err(p, 'is not a known effect (expected "stat", "fullness", "drink", "minutes" or "flag")');
+      } else if ('void' in e) { if (keys(e, p, ['void']) && e.void !== true) err(`${p}.void`, 'must be true'); }
+      else err(p, 'is not a known effect (expected "stat", "fullness", "drink", "minutes", "flag" or "void")');
     });
   }
   function conditions(v, path) {
@@ -190,21 +193,116 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
       const side = 'atOrBelow' in t ? 'atOrBelow' : 'atOrAbove';
       if (!keys(t, tp, [side, 'goto'])) return;
       number(t[side], `${tp}.${side}`, min, max);
-      if (target(t.goto, `${tp}.goto`)) roots.push(t.goto);
+      if (t.goto === RETURN) err(`${tp}.goto`, `cannot be "${RETURN}"`);
+      else if (target(t.goto, `${tp}.goto`)) roots.push(t.goto);
     });
   });
 
-  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'capacityMl'])) {
+  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'absorbPerMinute', 'capacityMl'])) {
     number(data.bladder.startFullness, 'bladder.startFullness', 0, 100);
     if ('fillPerMinute' in data.bladder) number(data.bladder.fillPerMinute, 'bladder.fillPerMinute', 0, 100);
+    if ('absorbPerMinute' in data.bladder) number(data.bladder.absorbPerMinute, 'bladder.absorbPerMinute', 0, 100);
     if ('capacityMl' in data.bladder) number(data.bladder.capacityMl, 'bladder.capacityMl', 100, 10000);
   }
   if ('clock' in data && keys(data.clock, 'clock', ['start']) && (typeof data.clock.start !== 'string' || !CLOCK_PATTERN.test(data.clock.start))) {
     err('clock.start', 'must be a 24-hour time like "04:10"');
   }
 
+  if ('modes' in data && list(data.modes, 'modes', LIMITS.modes)) data.modes.forEach((m, i) => {
+    const p = `modes[${i}]`;
+    if (!keys(m, p, ['flag', 'label'], ['minigameDifficulty', 'fillMultiplier'])) return;
+    if (id(m.flag, `${p}.flag`)) flagsRead.push([m.flag, where(`${p}.flag`)]);
+    text(m.label, `${p}.label`, LIMITS.shortText);
+    if ('minigameDifficulty' in m && (!Number.isInteger(m.minigameDifficulty) || Math.abs(m.minigameDifficulty) > 2)) err(`${p}.minigameDifficulty`, 'must be a whole number from -2 to 2');
+    if ('fillMultiplier' in m) number(m.fillMultiplier, `${p}.fillMultiplier`, 0.25, 4);
+  });
+
+  /* --- choice sets: recurring kinds of decision, worded differently by each scene that uses them --- */
+  const choiceSets = new Map(); // id -> [{ key, effects }]
+  if ('choiceSets' in data && list(data.choiceSets, 'choiceSets', LIMITS.choiceSets)) {
+    uniqueIds(data.choiceSets, 'choiceSets');
+    data.choiceSets.forEach((set, i) => {
+      const p = `choiceSets[${i}]`;
+      if (!keys(set, p, ['id', 'options']) || !list(set.options, `${p}.options`, LIMITS.setOptions, { min: 2 })) return;
+      const options = [], seen = new Set();
+      set.options.forEach((o, j) => {
+        const op = `${p}.options[${j}]`;
+        if (!keys(o, op, ['key'], ['effects']) || !id(o.key, `${op}.key`)) return;
+        if (seen.has(o.key)) err(`${op}.key`, `"${o.key}" is used more than once in this set`);
+        seen.add(o.key);
+        if ('effects' in o) effects(o.effects, `${op}.effects`);
+        options.push(o);
+      });
+      if (typeof set.id === 'string') choiceSets.set(set.id, options);
+    });
+  }
+
+  const usesReturn = new Set();                 // scenes with a "return" somewhere
+  const exits = new Map();                      // scene id -> targets it can lead to by its own choices
+  const interruptions = new Map();              // scene id -> scenes its triggers can cut to
+  const storyInterruptions = [];                // scenes that story-wide triggers can cut to
+
+  // One plain choice. Returns the targets it can lead to.
+  function choice(c, cp) {
+    const out = [];
+    if (!keys(c, cp, ['text'], ['if', 'effects', 'next', 'minigame'])) return out;
+    text(c.text, `${cp}.text`, LIMITS.text);
+    if ('if' in c) conditions(c.if, `${cp}.if`);
+    if ('effects' in c) effects(c.effects, `${cp}.effects`);
+    const own = 'next' in c && target(c.next, `${cp}.next`) ? c.next : undefined;
+    if ('minigame' in c) out.push(...minigame(c.minigame, `${cp}.minigame`, 'next' in c ? (own ?? null) : undefined));
+    else if (!('next' in c)) err(cp, 'has nowhere to go: give it a "next"');
+    else if (own) out.push(own);
+    return out;
+  }
+  // A use of a choice set: the scene's own wording for every option. Returns targets and how many choices it adds.
+  function setUse(c, cp) {
+    const out = [];
+    if (!keys(c, cp, ['set', 'texts'], ['next', 'nexts', 'if'])) return { out, count: 1 };
+    const options = choiceSets.get(c.set);
+    if (!options) { err(`${cp}.set`, `"${c.set}" is not one of this story's choice sets`); return { out, count: 1 }; }
+    if ('if' in c) conditions(c.if, `${cp}.if`);
+    const shared = 'next' in c && target(c.next, `${cp}.next`) ? c.next : undefined;
+    const nexts = isObject(c.nexts) ? c.nexts : {};
+    if ('nexts' in c && !isObject(c.nexts)) err(`${cp}.nexts`, 'must be an object of key: target');
+    if (!isObject(c.texts)) { err(`${cp}.texts`, 'must be an object of key: text'); return { out, count: options.length }; }
+    const optionKeys = options.map((o) => o.key);
+    for (const k of Object.keys(c.texts)) if (!optionKeys.includes(k)) err(`${cp}.texts.${k}`, `the set "${c.set}" has no option "${k}" (it has: ${optionKeys.join(', ')})`);
+    for (const k of Object.keys(nexts)) if (!optionKeys.includes(k)) err(`${cp}.nexts.${k}`, `the set "${c.set}" has no option "${k}"`);
+    for (const k of optionKeys) {
+      if (!(k in c.texts)) err(`${cp}.texts.${k}`, `is required: write this scene's wording for the "${k}" option`);
+      else text(c.texts[k], `${cp}.texts.${k}`);
+      if (k in nexts) { if (target(nexts[k], `${cp}.nexts.${k}`)) out.push(nexts[k]); }
+      else if (shared) out.push(shared);
+      else if (!('next' in c)) err(`${cp}.nexts.${k}`, 'has nowhere to go: give the set use a "next", or this option its own in "nexts"');
+    }
+    return { out, count: options.length };
+  }
+  // A trigger, on a scene or on the whole story. Returns { targets, scenes it cuts to }.
+  function trigger(t, tp) {
+    const result = { out: [], cuts: [] };
+    if (!isObject(t)) { err(tp, 'must be an object'); return result; }
+    const kind = 'scene' in t ? 'scene' : 'minigame';
+    if (!keys(t, tp, ['when', kind], ['once', 'bladder'])) return result;
+    conditions(t.when, `${tp}.when`);
+    if (Array.isArray(t.when) && t.when.length === 0) err(`${tp}.when`, 'needs at least one condition');
+    if ('once' in t && typeof t.once !== 'boolean') err(`${tp}.once`, 'must be true or false');
+    if ('bladder' in t) text(t.bladder, `${tp}.bladder`);
+    if (kind === 'minigame') result.out.push(...minigame(t.minigame, `${tp}.minigame`, null)); // null: afterwards the scene simply continues
+    else if (id(t.scene, `${tp}.scene`)) {
+      if (!sceneIds.has(t.scene)) err(`${tp}.scene`, `points to "${t.scene}", which is not a scene`);
+      else result.cuts.push(t.scene);
+    }
+    return result;
+  }
+
+  if ('triggers' in data && list(data.triggers, 'triggers', LIMITS.storyTriggers)) data.triggers.forEach((t, j) => {
+    const r = trigger(t, `triggers[${j}]`);
+    roots.push(...r.out.filter((x) => x !== RETURN)); storyInterruptions.push(...r.cuts);
+    if (r.out.includes(RETURN)) err(`triggers[${j}]`, `"${RETURN}" only makes sense inside a scene that interrupted another`);
+  });
+
   /* --- scenes --- */
-  const exits = new Map(); // scene id -> targets it can lead to
   scenes.forEach((s, i) => {
     sceneId = isObject(s) && typeof s.id === 'string' ? s.id : null;
     const p = sceneId ? '' : `scenes[${i}]`, at = (f) => sub(p, f);
@@ -214,7 +312,8 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     if ('chapter' in s) text(s.chapter, at('chapter'), LIMITS.shortText);
     if (list(s.lines, at('lines'), LIMITS.linesPerScene, { min: 1 })) s.lines.forEach((l, j) => {
       const lp = at(`lines[${j}]`);
-      if (!keys(l, lp, ['speaker', 'text'], ['mood', 'bladder'])) return;
+      if (!keys(l, lp, ['speaker', 'text'], ['mood', 'bladder', 'if'])) return;
+      if ('if' in l) conditions(l.if, `${lp}.if`);
       if (l.speaker !== NARRATOR && !characterIds.has(l.speaker)) err(`${lp}.speaker`, `"${l.speaker}" is not "${NARRATOR}" or one of this story's characters`);
       text(l.text, `${lp}.text`);
       if ('mood' in l) text(l.mood, `${lp}.mood`, LIMITS.shortText);
@@ -224,30 +323,29 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     if ('next' in s && target(s.next, at('next'))) out.push(s.next);
 
     const hasChoices = Array.isArray(s.choices) && s.choices.length > 0;
-    if ('choices' in s && list(s.choices, at('choices'), LIMITS.choicesPerScene)) s.choices.forEach((c, j) => {
-      const cp = at(`choices[${j}]`);
-      if (!keys(c, cp, ['text'], ['if', 'effects', 'next', 'minigame'])) return;
-      text(c.text, `${cp}.text`, LIMITS.text);
-      if ('if' in c) conditions(c.if, `${cp}.if`);
-      if ('effects' in c) effects(c.effects, `${cp}.effects`);
-      const own = 'next' in c && target(c.next, `${cp}.next`) ? c.next : undefined;
-      if ('minigame' in c) out.push(...minigame(c.minigame, `${cp}.minigame`, 'next' in c ? (own ?? null) : undefined));
-      else if (!('next' in c)) err(cp, 'has nowhere to go: give it a "next"');
-      else if (own) out.push(own);
-    });
+    if ('choices' in s && list(s.choices, at('choices'), LIMITS.choicesPerScene)) {
+      let total = 0;
+      s.choices.forEach((c, j) => {
+        const cp = at(`choices[${j}]`);
+        if (isObject(c) && 'set' in c) { const r = setUse(c, cp); out.push(...r.out); total += r.count; }
+        else { out.push(...choice(c, cp)); total += 1; }
+      });
+      if (total > LIMITS.choicesPerScene) err(at('choices'), `offers too many choices once its sets are expanded (${total}, limit ${LIMITS.choicesPerScene})`);
+    }
     if (hasChoices && 'next' in s) err(at('next'), 'a scene has either choices or "next", not both');
     if (!hasChoices && !('next' in s)) err(p, 'is a dead end: it needs choices or a "next"');
     if (hasChoices && s.choices.every((c) => isObject(c) && 'if' in c)) warn(at('choices'), 'every choice has a condition; if none holds the player is stuck');
 
+    const cuts = [];
     if ('triggers' in s && list(s.triggers, at('triggers'), LIMITS.triggersPerScene)) s.triggers.forEach((t, j) => {
-      const tp = at(`triggers[${j}]`);
-      if (!keys(t, tp, ['when', 'minigame'], ['once', 'bladder'])) return;
-      conditions(t.when, `${tp}.when`);
-      if (Array.isArray(t.when) && t.when.length === 0) err(`${tp}.when`, 'needs at least one condition');
-      if ('once' in t && typeof t.once !== 'boolean') err(`${tp}.once`, 'must be true or false');
-      if ('bladder' in t) text(t.bladder, `${tp}.bladder`);
-      out.push(...minigame(t.minigame, `${tp}.minigame`, null)); // null: afterwards the scene simply continues
+      const r = trigger(t, at(`triggers[${j}]`));
+      out.push(...r.out); cuts.push(...r.cuts);
     });
+    if (sceneId) {
+      if (out.includes(RETURN)) usesReturn.add(sceneId);
+      interruptions.set(sceneId, cuts);
+    }
+    for (let k = out.length - 1; k >= 0; k--) if (out[k] === RETURN) out.splice(k, 1);
     if (sceneId) exits.set(sceneId, out);
   });
   sceneId = null;
@@ -271,14 +369,22 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
 
   /* --- the story as a whole: where it starts and what can be reached --- */
   if (id(data.start, 'start') && !sceneIds.has(data.start)) err('start', `points to "${data.start}", which is not a scene`);
-  const reached = new Set(), queue = [data.start, ...roots].filter(knownTarget);
-  while (queue.length) {
-    const t = queue.pop();
-    if (reached.has(t)) continue;
-    reached.add(t);
-    for (const next of exits.get(t) || []) queue.push(next);
+  // "ordinary" = reachable without any interruption; "reached" = reachable at all
+  function spread(from, followCuts) {
+    const seen = new Set(), queue = from.filter(knownTarget);
+    while (queue.length) {
+      const t = queue.pop();
+      if (seen.has(t)) continue;
+      seen.add(t);
+      for (const next of exits.get(t) || []) queue.push(next);
+      if (followCuts) for (const next of interruptions.get(t) || []) queue.push(next);
+    }
+    return seen;
   }
+  const ordinary = spread([data.start, ...roots], false);
+  const reached = spread([data.start, ...roots, ...storyInterruptions], true);
   for (const s of sceneIds) if (!reached.has(s)) { sceneId = s; err('', 'can never be reached from the start'); }
+  for (const s of usesReturn) if (ordinary.has(s)) { sceneId = s; err('', `uses "${RETURN}" but can be reached in the ordinary flow, where there is nothing to return to`); }
   sceneId = null;
   for (const e of endingIds) if (!reached.has(e)) warn(`endings`, `"${e}" can never be reached`);
   if (![...endingIds].some((e) => reached.has(e))) err('endings', 'no ending can be reached: the story never finishes');

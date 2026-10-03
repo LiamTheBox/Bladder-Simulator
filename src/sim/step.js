@@ -116,7 +116,7 @@ export function stepSim(dt, pointerCount) {
       st.staminaDraining = true;
 
       const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct);
-      st.stamina -= drainRate * dt;
+      st.stamina = Math.max(0, st.stamina - drainRate * dt);
 
       if (st.stamina <= 0) triggerAccident();
 

@@ -121,7 +121,7 @@ test('a story saves itself and can be continued or started over; a finished one 
   await card(pg, 'Bonnie').locator('.story-play').click();
   await expect(pg.locator('#story-chapter')).toHaveText(/4:14 AM — The Hallway/);
   await expect(pg.locator('#story-clock')).toHaveText('04:11');
-  await expect(pg.locator('.story-stat-head')).toHaveText([/Control\s*51/, /Halo\s*100/, /Noise\s*30/]);
+  await expect(pg.locator('.story-stat-head')).toHaveText([/Control\s*51/, /Halo\s*100/, /Suspicion\s*30/]);
   await expect(pg.locator('.story-line:not(.bladder-voice)'), 'the same lines are on screen').toHaveCount(2);
   expect(Math.round(await pg.evaluate('st.volume'))).toBe(86);
   await pg.locator('#story-exit').click();

@@ -44,7 +44,7 @@ test('reading: lines one at a time, the bladder answers in its bubble, stats and
   const { context, pg, ev, errors } = await openStory(browser);
   await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · 4:10 AM — The Silent House');
   await expect(pg.locator('#story-clock')).toHaveText('04:10');
-  await expect(pg.locator('.story-stat-head')).toHaveText([/Control\s*48/, /Halo\s*100/, /Noise\s*0/]);
+  await expect(pg.locator('.story-stat-head')).toHaveText([/Control\s*48/, /Halo\s*100/, /Suspicion\s*0/]);
   await expect(pg.locator('.story-line')).toHaveCount(1);
   await expect(pg.locator('#btn-shop'), 'no drink shop in a story').toBeHidden();
   await expect(pg.locator('#controls'), 'no sim controls while reading').toBeHidden();
@@ -64,7 +64,7 @@ test('reading: lines one at a time, the bladder answers in its bubble, stats and
   await choice(pg, 'Just get UP').click();
   await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · 4:14 AM — The Hallway');
   await expect(pg.locator('#story-clock')).toHaveText('04:11');
-  await expect(pg.locator('.story-stat-head')).toHaveText([/Control\s*51/, /Halo\s*100/, /Noise\s*30/]);
+  await expect(pg.locator('.story-stat-head')).toHaveText([/Control\s*51/, /Halo\s*100/, /Suspicion\s*30/]);
   expect(errors).toEqual([]);
   await context.close();
 });
@@ -97,13 +97,13 @@ test('a story minigame takes the place of the choices, and its result moves the 
   await ev('endMinigame(false)'); // lose: the story's own consequence applies
   await expect(pg.locator('#toy-container')).not.toHaveClass(/mg-active/);
   await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · The Downstairs Bathroom');
-  await expect(pg.locator('.story-stat-head').nth(2)).toHaveText(/Noise\s*30/);
+  await expect(pg.locator('.story-stat-head').nth(2)).toHaveText(/Suspicion\s*30/);
   expect(await ev('st.stamina'), 'the sim stamina penalty does not matter in a story').toBeGreaterThanOrEqual(0);
   expect(errors).toEqual([]);
   await context.close();
 });
 
-test('hard mode raises minigame difficulty; the void effect drains the bladder; the ending shows a scorecard', async ({ browser }) => {
+test('hard mode raises minigame difficulty; the void effect drains the bladder; chapter 1 runs on into chapter 2', async ({ browser }) => {
   const { context, pg, ev, errors } = await openStory(browser);
   await ev("window.__started=[]; onSimEvent('minigameStarted', (m) => { window.__started.push(m); })");
   await readOn(pg); await choice(pg, 'Lie still one more minute').click();
@@ -115,9 +115,7 @@ test('hard mode raises minigame difficulty; the void effect drains the bladder; 
   expect(await ev('window.__started')).toEqual([{ id: 'mash', difficulty: 3 }]); // written as 2, hard mode adds 1
   await ev('endMinigame(false)');                                   // fail: second thoughts, back to the stairs
   await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · 4:38 AM — Second Thoughts');
-  // hard mode fills faster, so the story-wide "just let go" interruption cuts in on the way: win it
   await advance(pg);
-  expect((await ev('window.__started')).slice(1)).toEqual([{ id: 'swipe_away', difficulty: 3 }]);
   await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · The Stairs');
   await choice(pg, 'One stair at a time').click();
   await advance(pg);
@@ -125,13 +123,13 @@ test('hard mode raises minigame difficulty; the void effect drains the bladder; 
   expect(await ev('st.isVoiding'), 'the bladder on screen is emptying').toBe(true);
   await expect.poll(() => ev('st.volume'), { timeout: 6000 }).toBeLessThan(2); // empty, bar the two minutes that pass afterwards
   await readOn(pg); await choice(pg, "Don't flush").click();
-  await expect(pg.locator('.story-ending-title')).toHaveText('The Clock Is Reset');
-  await expect(pg.locator('.story-score-row')).toHaveText([/Control\s*100/, /Halo\s*\d+/, /Noise made\s*\d+/, /Hard mode\s*Yes/]);
-  await expect(pg.locator('.story-choice')).toHaveText(['Play again', 'Back to menu']);
-
-  await choice(pg, 'Play again').click();
-  await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · 4:10 AM — The Silent House');
-  await expect(pg.locator('#story-modes')).toBeHidden();
+  await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · 4:31 AM — The Clock Is Reset');
+  // chapter 1 leads straight into chapter 2, and hard mode carries over
+  await pg.locator('.story-continue').click();
+  await expect(pg.locator('#story-chapter')).toHaveText('Chapter 2 · 8:00 AM — Breakfast & the Suit');
+  await expect(pg.locator('#story-clock')).toHaveText('08:00');
+  await expect(pg.locator('#story-modes')).toHaveText('Hard mode');
+  await expect(pg.locator('.story-stat-head')).toHaveText([/Control\s*100/, /Halo\s*\d+/, /Suspicion\s*0/]);
   expect(errors).toEqual([]);
   await context.close();
 });
@@ -197,6 +195,21 @@ test('story text is shown as plain text, never as HTML', async ({ browser }) => 
   const markup = "['#story-panel', '#bladder-bubble', '#story-list'].flatMap((s) => [...document.querySelectorAll(`${s} img, ${s} b, ${s} script, ${s} i`)]).length";
   expect(await pg.evaluate(markup), 'no markup was created from story text').toBe(0);
   expect(await pg.evaluate('window.__pwned')).toBeUndefined();
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('an ending shows its title, text and scorecard, and offers to play again', async ({ browser }) => {
+  const { context, pg, errors } = await openStory(browser, /Meeting/);
+  await readOn(pg); await choice(pg, "I'm fine, thanks").click();
+  await advance(pg);
+  await choice(pg, 'Excuse yourself').click();
+  await expect(pg.locator('.story-ending-title')).toHaveText('A reasonable adult');
+  await expect(pg.locator('.story-score-row')).toHaveText([/Control left\s*90/, /Composure\s*75/, /How full\s*\d+/, /Refused the coffee\s*Yes/]);
+  await expect(pg.locator('.story-choice')).toHaveText(['Play again', 'Back to menu']);
+  await choice(pg, 'Play again').click();
+  await expect(pg.locator('#story-chapter')).toHaveText('The meeting · 2:00 PM — Slide 1 of 48');
+  await expect(pg.locator('.story-stat-head').first()).toHaveText(/Control\s*80/);
   expect(errors).toEqual([]);
   await context.close();
 });

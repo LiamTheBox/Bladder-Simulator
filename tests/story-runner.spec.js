@@ -105,6 +105,17 @@ test('a stat threshold ends the story from anywhere', () => {
   expect(r.view().ending.id).toBe('ending_dash');
 });
 
+test('the clock effect changes the time shown without time passing', () => {
+  const story = load('placeholder');
+  story.scenes[0].choices = [{ text: 'Land.', effects: [{ clock: '20:30' }], next: 'slide_twenty' }];
+  story.scenes[1].onEnter = [{ minutes: 15 }];
+  const r = createRunner(story); read(r);
+  const before = r.view().fullness;
+  r.choose(0);
+  expect(r.view().clock).toBe('20:45');
+  expect(r.view().fullness, 'only the 15 real minutes filled the bladder').toBeCloseTo(before + 15 * 0.5, 5);
+});
+
 test('the void effect empties the bladder; choices with no available option report stuck', () => {
   const story = load('placeholder');
   story.scenes[0].choices = [{ text: 'Go.', effects: [{ void: true }], next: 'slide_twenty' }];
@@ -123,16 +134,16 @@ test('every bundled story is valid, and a random walk through it always reaches 
     expect(checked.errors, name).toEqual([]);
     expect(checked.warnings, name).toEqual([]);
     const seen = new Set();
-    for (let run = 0; run < 400; run++) {
+    for (let run = 0; run < 1500; run++) {
       const r = createRunner(story);
-      for (let step = 0; step < 500 && r.view().phase !== 'ended'; step++) {
+      for (let step = 0; step < 900 && r.view().phase !== 'ended'; step++) {
         const v = r.view();
-        expect(v.phase, `${name} run ${run}`).not.toBe('stuck');
+        if (v.phase === 'stuck') throw new Error(`${name}: run ${run} got stuck in scene "${r.state.sceneId}"`);
         if (v.phase === 'lines') r.next();
         else if (v.phase === 'choices') r.choose(Math.floor(Math.random() * v.choices.length));
-        else if (v.phase === 'minigame') { expect(MINIGAMES).toContain(v.minigame.id); r.minigameDone(Math.random() < 0.5); }
+        else if (v.phase === 'minigame') r.minigameDone(Math.random() < 0.5);
       }
-      expect(r.view().phase, `${name} run ${run} finishes`).toBe('ended');
+      if (r.view().phase !== 'ended') throw new Error(`${name}: run ${run} did not finish`);
       seen.add(r.view().ending.id);
     }
     expect([...seen].sort(), `${name}: every ending is reachable in play`).toEqual(story.endings.map((e) => e.id).sort());

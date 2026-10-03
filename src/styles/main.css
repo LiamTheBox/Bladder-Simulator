@@ -212,3 +212,14 @@
     pointer-events: auto; cursor: pointer; touch-action: none; animation: popup-in 0.12s ease-out;
   }
   @keyframes popup-in { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+  /* Tremor lock: like Breathe, the whole strip is the touch target. The pulse ring is 28px and grows to at most
+     1.6x (45px), which the 46px wrapper reserves so it always fits the strip. */
+  #mg-tremor-area { flex: 1; display: none; align-items: center; justify-content: center; gap: 18px; cursor: pointer; touch-action: none; border-radius: 12px; transition: background-color 0.15s; }
+  #mg-tremor-area.good { background-color: rgba(16, 185, 129, 0.25); }
+  #mg-tremor-area.bad { background-color: rgba(244, 63, 94, 0.25); }
+  #tremor-ring { position: relative; width: 46px; height: 46px; flex: none; pointer-events: none; }
+  #tremor-target, #tremor-pulse { position: absolute; left: 9px; top: 9px; width: 28px; height: 28px; border-radius: 50%; }
+  #tremor-target { background: rgba(255,255,255,0.15); border: 3px solid white; }
+  #tremor-pulse { border: 3px solid var(--danger); box-shadow: 0 0 12px rgba(244, 63, 94, 0.6); }
+  #tremor-label { min-width: 130px; font-weight: 900; font-size: 1.05rem; letter-spacing: 0.5px; color: white; pointer-events: none; }

@@ -36,9 +36,10 @@ export const minigameLines = {
   breathe: ["Breathe with me! Hold as I grow, let go as I shrink.", "Slow breaths! Hold the circle while it grows."],
   leaks:   ["I'm springing leaks! Tap the cracks!", "Cracks! Patch them fast!"],
   swipe_away: ["Don't listen to that! Flick it away!", "No, no, no! Swipe that thought away!"],
-  distraction_popups: ["Too many feelings! Tap them away!", "Ignore the twinges! Tap, tap, tap!"]
+  distraction_popups: ["Too many feelings! Tap them away!", "Ignore the twinges! Tap, tap, tap!"],
+  tremor_lock: ["I'm shaking! Tap with my heartbeat to steady me!", "Steady... tap on the beat!"]
 };
 
-// Placeholder wording for the two UI-intrusion minigames
+// Placeholder wording for the UI-intrusion minigames
 export const swipeCardTexts = ["JUST LET GO", "Nobody would know", "Open up, it's fine", "Give in already"];
 export const popupWords = ["Spasm!", "Ache!", "Twinge!", "Cramp!", "Throb!"];

@@ -19,8 +19,9 @@ import leaks from './leaks.js';
 import breathe from './breathe.js';
 import swipeAway from './swipe_away.js';
 import distractionPopups from './distraction_popups.js';
+import tremorLock from './tremor_lock.js';
 
-[mash, leaks, breathe, swipeAway, distractionPopups].forEach(registerMinigame);
+[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock].forEach(registerMinigame);
 
 let current = null;      // the game that is running (or was last started and not yet cleaned up)
 let currentInfo = null;  // { id, difficulty, onResult } of that run

@@ -29,7 +29,7 @@ export const TUNING = {
   spikeFirstCooldown: 15,        // seconds
   spikeCooldownMin: 15, spikeCooldownSpread: 10,
   // Sim mode picks one of these at random, but never one of the last simSpikeNoRepeat games played
-  simSpikePool: ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups'],
+  simSpikePool: ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock'],
   simSpikeNoRepeat: 2,
   simSpikeDifficulty: 2,         // the default; the player can change it in Settings (1..5)
   minigameDefaultDuration: 5.0,  // for a game that does not say how long it takes
@@ -49,6 +49,14 @@ export const TUNING = {
     duration: 6.0, firstSpawn: 0.3, margin: 8,
     spawnEveryByDifficulty: [1.1, 0.9, 0.75, 0.6, 0.5],       // seconds between popups
     limitByDifficulty: [5, 5, 4, 4, 3],                       // this many on screen at once = overwhelmed
+  },
+  tremorLock: {
+    duration: 7.0,
+    beatSecByDifficulty: [0.9, 0.8, 0.7, 0.6, 0.5],           // seconds per heartbeat
+    hitsByDifficulty: [3, 4, 5, 6, 7],                        // on-beat taps needed
+    windowSecByDifficulty: [0.2, 0.17, 0.15, 0.13, 0.11],     // how far from the beat a tap still counts
+    missCost: 1,                                              // an off-beat tap undoes this many
+    maxShakePx: 6, pulseExtra: 0.6, flashSec: 0.18,
   },
 
   // Stretch (pixels)

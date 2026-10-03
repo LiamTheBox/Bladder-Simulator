@@ -29,6 +29,7 @@ import { vibe } from './audio/haptics.js';
 import { speak, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
 import { startMinigame, endMinigame, updateMinigame } from './minigames/index.js';
 import { mgPanel, btnRow, showMgPanel } from './minigames/panel.js';
+import { minigameIds } from './minigames/registry.js';
 import { mgBtnMash } from './minigames/mash.js';
 import { mgBreatheArea } from './minigames/breathe.js';
 import { mgLeaksArea } from './minigames/leaks.js';
@@ -52,7 +53,7 @@ on('accident', () => {
   if (st.minigame.active) endMinigame(false, true);
   vibe([200, 100, 200, 100, 200]); speak('accident', true);
 });
-on('spikeDue', () => { startMinigame(); });
+on('spikeDue', () => { startMinigame(); }); // sim mode: random game from TUNING.simSpikePool
 on('spikeCancelled', () => { endMinigame(false, true); });
 on('heartbeat', () => { playHeartbeat(); vibe(45); });
 
@@ -94,7 +95,7 @@ if (import.meta.env.MODE === 'test') {
   Object.assign(window, {
     st, canvasContainer, bladderGeom, waterState, updateClenchUI, voiceLines, triggerAccident, speakDirect,
     startMinigame, endMinigame, bubbleEl, minigameLines, mgPanel, btnRow, mgBtnMash, mgBreatheArea, mgLeaksArea,
-    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel
+    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on
   });
   Object.defineProperty(window, 'prioritySpeechUntil', { get: getPrioritySpeechUntil, set: setPrioritySpeechUntil });
 }

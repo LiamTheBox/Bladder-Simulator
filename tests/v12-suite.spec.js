@@ -159,7 +159,8 @@ for (const [W, H, label] of [[390, 700, 'phone'], [520, 900, 'desktop']]) {
 
     // leaks game keeps the body still
     await ev("st.dance.id='hop'; st.dance.timer=99"); await wait(600);
-    await ev("st.minigame.active=true; st.minigame.type='leaks'; st.minigame.leaks=[{th:4,patched:false}]; st.minigame.timer=99; st.minigame.duration=99");
+    // (freezeBody is what the leaks game sets through the registry; the reference script only had to set the type)
+    await ev("st.minigame.active=true; st.minigame.type='leaks'; st.minigame.freezeBody=true; st.minigame.leaks=[{th:4,patched:false}]; st.minigame.timer=99; st.minigame.duration=99");
     await wait(600); // let the hop ease out
     const o = await sample(pg, 1, { bx: 'st.body.x', by: 'st.body.y' });
     await ev('st.minigame.active=false; showMgPanel(false)');

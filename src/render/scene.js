@@ -6,6 +6,7 @@ import { canvasContainer, canvas, ctx } from './canvas.js';
 import { drawSmoothPath, getPearPoints } from './bladder.js';
 import { drawCuteFace } from './face.js';
 import { drawPottyDanceLegs } from './legs.js';
+import { drawMinigame } from '../minigames/index.js';
 
 export function renderCanvas(t, fillPerc) {
   if(!canvasContainer) return;
@@ -76,20 +77,5 @@ export function renderCanvas(t, fillPerc) {
 
   drawPottyDanceLegs(ctx, cx, cy, baseR);
 
-  // DRAW MINIGAME LEAKS
-  if (st.minigame.active && st.minigame.type === 'leaks') {
-      st.minigame.leaks.forEach(leak => {
-          if (leak.patched) return;
-          const lx = cx + Math.cos(leak.th) * baseR;
-          const ly = cy + Math.sin(leak.th) * baseR;
-          
-          ctx.save();
-          ctx.translate(lx, ly); ctx.rotate(leak.th);
-          ctx.fillStyle = '#f87171'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15;
-          const scale = 1 + Math.sin(t * 15) * 0.2;
-          ctx.beginPath(); ctx.ellipse(0, 0, 6 * scale, 25 * scale, 0, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = '#fca5a5'; ctx.beginPath(); ctx.ellipse(0, 0, 2, 10, 0, 0, Math.PI*2); ctx.fill();
-          ctx.restore();
-      });
-  }
+  drawMinigame(ctx, G, t);
 }

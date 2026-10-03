@@ -9,8 +9,9 @@ export const st = {
   staminaDraining: false, // true while holding costs stamina; the HUD brightens the stamina bar from this
   // Minigame State
   minigame: {
+      freezeBody: false, // the running game wants the bladder to hold still
       active: false, type: '', timer: 0, duration: 5, cooldown: TUNING.spikeFirstCooldown,
-      clicks: 0, req: TUNING.mash.taps, // Mash
+      clicks: 0, req: TUNING.mash.tapsByDifficulty[TUNING.simSpikeDifficulty - 1], // Mash
       phase: 'inhale', phaseTimer: 0, score: 0, holdingRing: false, // Breathe
       leaks: [] // Leaks
   },

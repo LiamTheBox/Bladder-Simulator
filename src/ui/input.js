@@ -8,7 +8,7 @@ import { canvasContainer } from '../render/canvas.js';
 import { playPoke, playStretch, playSnapback } from '../audio/engine.js';
 import { vibe } from '../audio/haptics.js';
 import { speak } from '../audio/speech.js';
-import { tapLeaks } from '../minigames/index.js';
+import { minigamePointer } from '../minigames/index.js';
 
 let pointers = {};
 export function pointerCount() { return Object.keys(pointers).length; }
@@ -28,15 +28,10 @@ canvasContainer.addEventListener('pointerdown', (e) => {
   e.preventDefault(); pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
   const keys = Object.keys(pointers), rect = canvasContainer.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const { cx, cy, Rr } = bladderGeom();
+  const geom = bladderGeom(), { cx, cy, Rr } = geom;
 
-  // LEAKS MINIGAME HIT DETECTION
-  if (st.minigame.active && st.minigame.type === 'leaks') {
-      tapLeaks(mx, my, cx, cy, Rr);
-      return; // Don't trigger stretch/soothe if doing minigame
-  }
-
-  if (st.minigame.active) return; // Block other touches during other minigames
+  // During a minigame the touch belongs to the game (e.g. tapping cracks), never to stretch/soothe
+  if (st.minigame.active) { minigamePointer(mx, my, geom); return; }
 
   if (keys.length === 2) {
     st.drag.active = false; st.drag.targetDist = 0; const p1 = pointers[keys[0]], p2 = pointers[keys[1]];
@@ -58,10 +53,10 @@ window.addEventListener('pointermove', (e) => {
   pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
   const keys = Object.keys(pointers), rect = canvasContainer.getBoundingClientRect();
   const mx = e.clientX - rect.left, my = e.clientY - rect.top;
-  const { cx, cy, Rr } = bladderGeom();
+  const geom = bladderGeom(), { cx, cy, Rr } = geom;
 
-  // LEAKS MINIGAME SWIPE DETECTION
-  if (st.minigame.active && st.minigame.type === 'leaks') tapLeaks(mx, my, cx, cy, Rr);
+  // Swiping across the bladder also counts for minigames played on it
+  if (st.minigame.active) minigamePointer(mx, my, geom);
 
   if (keys.length === 2 && st.squeeze.active) {
     const p1 = pointers[keys[0]], p2 = pointers[keys[1]];
@@ -109,6 +104,6 @@ export function clearPointers() {
   pointers = {};
   st.drag.active = false; st.drag.peakDist = 0;
   st.squeeze.active = false; st.squeeze.spoke = false;
-  st.soothe.lastX = 0; st.minigame.holdingRing = false;
+  st.soothe.lastX = 0;
 }
 window.addEventListener('blur', clearPointers);

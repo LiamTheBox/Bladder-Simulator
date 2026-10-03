@@ -1,60 +1,100 @@
-/* --- MINIGAME SYSTEM --- */
-// The bladder announces each urge spike in its speech bubble. Any control the minigame needs
-// (mash button, breathing ring, timer) appears in the bottom panel where SPEED UP / VOID normally are.
-// Leaks are tapped directly on the bladder, so nothing covers it.
+/* --- MINIGAME RUNNER --- */
+// Runs one registered minigame at a time. The runner owns everything the games share: the countdown and timer
+// bar, the bottom panel, the bladder's spoken prompt, and what winning or losing does to stamina. A game only
+// owns its own controls and rules (see registry.js for the interface).
+//
+// The bladder announces each urge spike in its speech bubble. Any control the minigame needs appears in the
+// bottom panel where SPEED UP / VOID normally are, so nothing covers the bladder.
 import { TUNING } from '../config/tuning.js';
-import { minigameLines } from '../config/content.js';
 import { st } from '../sim/state.js';
+import { emit } from '../sim/events.js';
 import { vibe } from '../audio/haptics.js';
 import { speak, speakLine } from '../audio/speech.js';
 import { showBubble, hideBubble } from '../ui/bubble.js';
 import { mgTimerBar, showMgPanel } from './panel.js';
-import * as mash from './mash.js';
-import * as breathe from './breathe.js';
-import * as leaks from './leaks.js';
+import { registerMinigame, getMinigame, clampDifficulty } from './registry.js';
+import mash from './mash.js';
+import leaks from './leaks.js';
+import breathe from './breathe.js';
 
-const games = { mash, leaks, breathe };
+[mash, leaks, breathe].forEach(registerMinigame);
 
-export function startMinigame() {
+let current = null;      // the game that is running (or was last started and not yet cleaned up)
+let currentInfo = null;  // { id, difficulty, onResult } of that run
+
+function retireCurrent() {
+  if (current) current.cleanup();
+  current = null; currentInfo = null;
+  st.minigame.freezeBody = false;
+}
+
+// request: { id, difficulty, duration, text, onResult }, all optional. Without an id, sim mode picks at random.
+// Returns false (and starts nothing) if the id is unknown.
+export function startMinigame(request = {}) {
+  const pool = TUNING.simSpikePool;
+  const id = request.id ?? pool[Math.floor(Math.random() * pool.length)];
+  const game = getMinigame(id);
+  if (!game) { console.warn(`Unknown minigame "${id}"`); return false; }
+
+  // One at a time: a request during a running game cancels that game first (its caller hears "cancelled")
+  if (st.minigame.active && current) endMinigame(false, true);
+  else retireCurrent(); // clears a game whose "active" flag was switched off from outside
+  const config = {
+    difficulty: clampDifficulty(request.difficulty ?? TUNING.simSpikeDifficulty),
+    text: request.text ?? {},
+  };
+  config.duration = request.duration ?? (game.duration ? game.duration(config.difficulty) : TUNING.minigameDefaultDuration);
+
   st.minigame.active = true;
-
-  const types = ['mash', 'leaks', 'breathe'];
-  st.minigame.type = types[Math.floor(Math.random() * types.length)];
-
-  // Reset UI
-  mash.hide(); breathe.hide(); leaks.hide();
+  st.minigame.type = id;
+  st.minigame.duration = config.duration;
+  st.minigame.freezeBody = Boolean(game.freezesBody);
   mgTimerBar.style.background = '#fef08a';
   mgTimerBar.style.width = '100%';
 
-  games[st.minigame.type].setup();
+  current = game; currentInfo = { id, difficulty: config.difficulty, onResult: request.onResult };
+  game.start(config, (result) => {
+    // ignore reports from a game that is no longer the running one
+    if (current === game && st.minigame.active) endMinigame(result.success, false, result.quality);
+  });
 
   st.minigame.timer = st.minigame.duration;
   showMgPanel(true);
 
-  const lines = minigameLines[st.minigame.type];
-  const prompt = lines[Math.floor(Math.random() * lines.length)];
+  const lines = game.prompts ?? [];
+  const prompt = config.text.prompt ?? lines[Math.floor(Math.random() * lines.length)] ?? '';
   showBubble(prompt, Infinity, true);   // pinned until the minigame ends
   speakLine(prompt, true);
   vibe([100, 50, 100]);
   st.faceState = { e: 'wide_shake', m: 'zigzag' }; st.faceTimer = st.minigame.duration;
+  emit('minigameStarted', { id, difficulty: config.difficulty });
+  return true;
 }
 
-export function endMinigame(success, cancelled = false) {
+// cancelled = stopped from outside (the player voided, the hold ended, an accident): no reward and no penalty.
+export function endMinigame(success, cancelled = false, quality) {
+  const info = currentInfo;
   st.minigame.active = false; st.minigame.cooldown = TUNING.spikeCooldownMin + Math.random() * TUNING.spikeCooldownSpread;
   showMgPanel(false);
   hideBubble();
+  retireCurrent();
 
-  if (cancelled) return;
-
-  if (success) {
-    st.stamina = Math.min(100, st.stamina + TUNING.minigameWinStamina);
-    st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0;
-    speak('success_hold', true); vibe([50, 50]);
-  } else {
-    st.stamina = Math.max(0, st.stamina - TUNING.minigameFailStamina);
-    st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0;
-    speak('fail', true); vibe(200);
+  if (!cancelled) {
+    if (success) {
+      st.stamina = Math.min(100, st.stamina + TUNING.minigameWinStamina);
+      st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0;
+      speak('success_hold', true); vibe([50, 50]);
+    } else {
+      st.stamina = Math.max(0, st.stamina - TUNING.minigameFailStamina);
+      st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0;
+      speak('fail', true); vibe(200);
+    }
   }
+
+  const result = { id: info?.id ?? st.minigame.type, difficulty: info?.difficulty, success: !cancelled && Boolean(success), cancelled };
+  if (!cancelled) result.quality = quality ?? (success ? 1 : 0);
+  emit('minigameEnded', result);
+  if (info?.onResult) info.onResult(result);
 }
 
 export function updateMinigame(dt) {
@@ -62,18 +102,20 @@ export function updateMinigame(dt) {
   st.minigame.timer -= dt;
   mgTimerBar.style.width = `${(st.minigame.timer / st.minigame.duration) * 100}%`;
 
-  if (st.minigame.type === 'breathe') breathe.update(dt);
+  if (current) current.update(dt);
 
-  if (st.minigame.timer <= 0) {
-      if (st.minigame.type === 'breathe') endMinigame(breathe.won());
-      else endMinigame(false); // Leaks and Mash fail on timeout
+  if (st.minigame.active && st.minigame.timer <= 0) {
+      const verdict = current?.timeUp ? current.timeUp() : { success: false };
+      endMinigame(verdict.success, false, verdict.quality);
   }
 }
 
-// Called by the play-area input while the leaks game is running
-export function tapLeaks(mx, my, cx, cy, Rr) {
-  if (leaks.checkLeakHits(mx, my, cx, cy, Rr)) endMinigame(true);
+// A touch on the play area while a minigame runs (games played on the bladder itself use it)
+export function minigamePointer(mx, my, geom) {
+  if (st.minigame.active && current?.onPlayAreaPointer) current.onPlayAreaPointer(mx, my, geom);
 }
 
-mash.bind(() => endMinigame(true));
-breathe.bind();
+// Lets the running game draw over the bladder
+export function drawMinigame(ctx, geom, t) {
+  if (st.minigame.active && current?.draw) current.draw(ctx, geom, t);
+}

@@ -113,8 +113,8 @@ export function updateDance(t, dt, fill) {
     }
   }
 
-  // Keep the body still while the crack-tapping minigame is running so the cracks are easy to hit
-  if (st.minigame.active && st.minigame.type === 'leaks') { bx = 0; by = 0; }
+  // Keep the body still while a minigame played on the bladder is running (e.g. tapping cracks)
+  if (st.minigame.active && st.minigame.freezeBody) { bx = 0; by = 0; }
 
   const lg = Math.min(1, 8 * dt), lb = Math.min(1, 22 * dt), lbody = Math.min(1, 18 * dt);
   st.legs.al += (al - st.legs.al) * lg; st.legs.ar += (ar - st.legs.ar) * lg;

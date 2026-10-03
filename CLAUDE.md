@@ -116,6 +116,20 @@ Safety/robustness for story files (user-made files are **untrusted input**):
 - Validator also checks: unreachable scenes, missing `next` targets, unknown minigame ids, missing stats.
 - User stories are imported locally (file picker / paste) and kept in the browser. No upload server.
 
+## First story: Bonnie's journey (reference material in `legacy/`)
+The first story (roadmap step 6) is adapted from the earlier Bonnie prototype. Bonnie is a young woman in her
+20s (23 in the prose) who lives with her parents for personal reasons and flies out for a university exchange
+semester, staying with a host family. Reference files, none of them engine code:
+- `bonnies_journey.md` — the journey as prose (the beats and tone).
+- `dialogue_and_choices_extract.md` — every line and choice of the old prototype, by chapter. **Placeholder
+  wording**: reuse the structure, expect the text to be rewritten.
+- `bonnie_s_journey_minigames.md` — the old prototype's six minigames (logged in the backlog above).
+- `bonnie_concept_screenshot.png` — the old screen, as the layout reference for story mode: chapter strip
+  along the top; clock with time-to-goal; narration and choices on the left; the bladder's inner voice as a
+  quoted line under the choices; on the right the bladder with volume in ml and a mood word, then the stat
+  meters (Control, a people-pleasing "halo" stat, Suspicion) and Save / Load / Menu.
+These stats and rules belong to this story's JSON, not to the engine (see the next section).
+
 ## Resource-management layer (design from scratch, generic)
 Do **not** hard-code one story's rules into the engine. Provide generic building blocks that a story
 can switch on: meters with thresholds, offers the player can accept/refuse with consequences, a clock that

@@ -14,20 +14,26 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- `legacy/bladder_simulator_demo_(concept).html` is the **only working code**: one ~1,400-line HTML file.
-  Canvas rendering, Tone.js audio (CDN), Web Speech API voice lines, global mutable state object `st`,
-  a `TUNING` object, an update loop, and DOM UI.
-- Features that must keep working through the refactor:
+- Roadmap steps 1 and 2 are done: the game runs from `src/` as a Vite + vanilla JS static site, split into
+  the module layout below, with identical behavior to the prototype. `src/main.js` wires sim events to
+  audio / UI / minigames and runs the frame loop; `src/sim/step.js` lists every event the sim emits.
+- `legacy/bladder_simulator_demo_(concept).html` is the original one-file prototype (tag `v12-baseline`),
+  kept untouched as the behavior reference.
+- Commands: `npm run dev` (play locally), `npm run build` (static site in `dist/`), `npm test`.
+  On the Bazzite dev machine Node lives in the `MyFedora` distrobox, so run them inside it.
+- Features that must keep working:
   - Bladder physics: fill, sloshing, digestion of queued drinks, stretch/squeeze/poke/soothe interactions.
-  - Stretch relaxes back to normal in ~0.9 s after release (`TUNING.stretchRecoverSec`).
+  - Stretch relaxes back to normal in ~0.9 s after release (`TUNING.creepRelaxRate`).
   - 12 potty-dance leg moves (hop, tap, curl, squeeze, shiver, ...) chosen by fullness; whole-body hops.
   - 3 minigames: mash ("clench"), leaks (tap cracks), breathe (hold/release ring). Controls appear in a
     bottom panel; the bladder "speaks" the instruction in a speech bubble; the bladder stays unobstructed.
   - Voice-line categories (casual, filling, desperate, begging, poke, stretch, soothe, squeeze,
     success_hold, voiding, accident) editable in Settings; every spoken line also shows as a subtitle bubble.
   - Pause when menus are open, on the start screen, or when the tab is hidden.
-- Known minor edge: stamina can dip fractionally below 0 for one frame before an accident triggers
-  (the display is clamped). Clamp it properly in the refactor.
+- Known prototype quirks, kept on purpose so the refactor stayed behavior-identical; fix each in its own commit:
+  - Stamina can dip fractionally below 0 for one frame before an accident triggers (the display is clamped).
+  - Sweat drops keep spawning while the game is paused above 50% and only expire after unpausing.
+  - A new urge spike can start in the same frame as an accident; it is cancelled on the next frame.
 
 ## Target architecture
 Vite + vanilla JavaScript (ES modules). TypeScript is optional later. Output must stay a **static site**
@@ -115,9 +121,13 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   Python + Playwright scripts that run the legacy page headless with Tone.js and `speechSynthesis` replaced by
   recording mocks. Run: `python tests_reference/v11_regression.py` (needs `pip install playwright` and
   `playwright install chromium`). Set `SIM_HTML=/path/to/page.html` to point at a different build.
-- Port them to `@playwright/test` early. Keep the **behaviors** they check (stretch recovery, audio channels
-  independent, pause on menus, minigame cancel rules, panel layout fits at phone sizes, dances actually move).
-- Add tests for: the story validator, each minigame's win/lose paths, and mobile viewports (360x640, 390x844, 768x1024).
+- They are ported to `@playwright/test` in `tests/` (`v11-regression.spec.js`, `v12-suite.spec.js`), check for
+  check. `npm test` runs them against `vite --mode test`, which swaps Tone.js for `tests/mocks/tone.js` and
+  exposes the names the tests drive (bottom of `src/main.js`). Keep the **behaviors** they check (stretch
+  recovery, audio channels independent, pause on menus, minigame cancel rules, panel layout, dances move).
+- `tests/layout.spec.js` covers the mobile viewports (360x640, 390x844, 768x1024); `tests/build.spec.js`
+  smoke-tests the real production build and fails on any request to another host.
+- Still to add: tests for the story validator and each minigame's win/lose paths.
 - Run tests before every commit that touches `sim/`, `minigames/`, or `story/`.
 
 ## How to work in this repo

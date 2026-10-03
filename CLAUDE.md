@@ -95,6 +95,17 @@ Backlog of cross-platform "UI-intrusion" ideas (all drag/tap/hold, no special ha
 8. `scrub_monologue` — the bladder's huge words cover the text; rub the screen to wipe them off.
 9. `anchor_hold` — safe text keeps morphing into a pleading line; hold an anchor button to freeze it.
 10. `pressure_valve` — hold while a ring grows, release inside the green zone to unlock choices briefly.
+
+From the earlier Bonnie prototype (`legacy/bonnie_s_journey_minigames.md`), the ones that add something new:
+11. `on_the_spot` — a stat drains live while the player must pick one of two hard options; slower = costlier.
+12. `volley` — rapid-fire small talk: a question, two answers, a fast timer; hesitating raises suspicion.
+13. `brace` — an arrow flashes (left / right / both); tap the matching button before the jolt lands.
+14. `timing_bar` — a dot sweeps across a bar; tap while it is in the green zone, three misses fail.
+    (Close to `tremor_lock` and `pressure_valve`; build only if a sweeping bar reads better than a ring.)
+Already covered, as variants worth keeping in mind: the old `mash` had a bar that drains back between taps
+(a harder mode for ours); the old `hold` is `anchor_hold` plus fake-out prompts that try to make you let go.
+`on_the_spot` and `volley` act on dialogue choices, so they belong with the story runner, not sim mode.
+
 Prototype these in **sim mode first** (no story needed), 2–3 at a time, playtest on a phone.
 
 ## Story format (data, never code)

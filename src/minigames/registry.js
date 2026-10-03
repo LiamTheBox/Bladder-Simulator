@@ -14,6 +14,7 @@
 //   draw(ctx, geom, t)      draw on the canvas over the bladder
 //   freezesBody   true if the bladder should stop dancing so things on it are easy to hit
 //   prompts       lines the bladder may say to announce it (config.text.prompt overrides)
+//   failStamina   stamina lost on failure, if different from TUNING.minigameFailStamina
 // quality is 0..1: how well it went, for callers that want more than pass/fail.
 const games = new Map();
 

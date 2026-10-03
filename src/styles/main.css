@@ -188,3 +188,27 @@
     background: linear-gradient(135deg, #38bdf8, #818cf8); border: none; padding: 12px; border-radius: 12px;
     color: white; font-weight: 800; cursor: pointer; font-size: 1rem;
   }
+
+  /* Swipe away: the card fills the action row; dragging it out is clipped at the panel edge */
+  #controls { position: relative; overflow: hidden; }
+  #mg-swipe-area { flex: 1; display: none; position: relative; touch-action: none; }
+  #swipe-card {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center;
+    padding: 0 12px; border-radius: 16px; background: linear-gradient(180deg, #fde68a, #f59e0b); color: #451a03;
+    font-weight: 900; font-size: 1.1rem; letter-spacing: 0.5px; box-shadow: 0 6px 0 #b45309;
+    cursor: grab; touch-action: none; will-change: transform;
+  }
+  #swipe-card.settle { transition: transform 0.18s ease-out, opacity 0.18s; }
+  #swipe-card.drop { animation: card-drop 0.22s ease-out; }
+  @keyframes card-drop { from { transform: translateY(-140%); } to { transform: translateY(0); } }
+
+  /* Distraction popups: a layer over the whole control panel; only the bubbles themselves take touches */
+  #mg-popups-area { flex: 1; display: none; align-items: center; justify-content: center; text-align: center; color: #fbbf24; font-weight: 800; font-size: 1.05rem; }
+  #mg-popups-layer { position: absolute; inset: 0; display: none; pointer-events: none; z-index: 5; }
+  .mg-popup {
+    position: absolute; min-width: 96px; height: 56px; padding: 0 16px; display: flex; align-items: center; justify-content: center;
+    border-radius: 99px; background: #fee2e2; color: #7f1d1d; font-weight: 900; font-size: 1rem; white-space: nowrap;
+    border: 2px solid #f87171; box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+    pointer-events: auto; cursor: pointer; touch-action: none; animation: popup-in 0.12s ease-out;
+  }
+  @keyframes popup-in { from { transform: scale(0.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }

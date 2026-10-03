@@ -22,14 +22,15 @@ export const TUNING = {
   staminaDrainPerPct: 0.08,      // drain per second, per percent of volume above staminaDrainFrom
   staminaRegenPerSec: 20,
   minigameWinStamina: 40,
-  minigameFailStamina: 50,
+  minigameFailStamina: 50,       // a game can set its own (see swipeAway.failStamina)
 
   // Urge spikes
   spikeMinVolume: 55,
   spikeFirstCooldown: 15,        // seconds
   spikeCooldownMin: 15, spikeCooldownSpread: 10,
-  // Sim mode picks one of these at random
-  simSpikePool: ['mash', 'leaks', 'breathe'],
+  // Sim mode picks one of these at random, but never one of the last simSpikeNoRepeat games played
+  simSpikePool: ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups'],
+  simSpikeNoRepeat: 2,
   simSpikeDifficulty: 2,         // the default; the player can change it in Settings (1..5)
   minigameDefaultDuration: 5.0,  // for a game that does not say how long it takes
 
@@ -37,6 +38,18 @@ export const TUNING = {
   mash: { duration: 5.0, tapsByDifficulty: [9, 12, 15, 18, 22] },
   breathe: { duration: 6.0, phaseSec: 1.5, winFractionByDifficulty: [0.55, 0.6, 0.65, 0.72, 0.8] },
   leaks: { duration: 5.0, countByDifficulty: [1, 2, 3, 4, 5], hitRadius: 50, arcStart: Math.PI * 0.95, arcSpan: Math.PI * 1.1, jitter: 0.3 },
+  swipeAway: {
+    duration: 5.0, cardsByDifficulty: [1, 2, 2, 3, 4],
+    flickFractionByDifficulty: [0.25, 0.25, 0.35, 0.35, 0.4], // share of the card's width it must be dragged
+    flickSpeed: 900, flickMinDist: 30,                        // or: a quick flick (px/s) of at least this many px
+    nextCardDelay: 0.2,
+    failStamina: 0,                                           // failing this one costs nothing
+  },
+  distractionPopups: {
+    duration: 6.0, firstSpawn: 0.3, margin: 8,
+    spawnEveryByDifficulty: [1.1, 0.9, 0.75, 0.6, 0.5],       // seconds between popups
+    limitByDifficulty: [5, 5, 4, 4, 3],                       // this many on screen at once = overwhelmed
+  },
 
   // Stretch (pixels)
   stretchGrabBand: 55,           // how close to the edge a touch must land to grab it

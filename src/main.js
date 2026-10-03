@@ -14,7 +14,8 @@ import './styles/main.css';
 // The legacy page loaded Tailwind's Play CDN only for its CSS reset (no utility classes were used).
 // The reset was injected after the page's own <style>, so it is imported after main.css here too.
 import './styles/preflight.css';
-import { voiceLines, minigameLines } from './config/content.js';
+import { voiceLines, minigameLines, swipeCardTexts } from './config/content.js';
+import { TUNING } from './config/tuning.js';
 import { DANCE_MOVES } from './config/dance.js';
 import { st } from './sim/state.js';
 import { on, off } from './sim/events.js';
@@ -102,7 +103,7 @@ if (import.meta.env.MODE === 'test') {
   Object.assign(window, {
     st, canvasContainer, bladderGeom, waterState, updateClenchUI, voiceLines, triggerAccident, speakDirect,
     startMinigame, endMinigame, bubbleEl, minigameLines, mgPanel, btnRow, mgBtnMash, mgBreatheArea, mgLeaksArea,
-    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on, offSimEvent: off
+    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on, offSimEvent: off, TUNING, swipeCardTexts
   });
   Object.defineProperty(window, 'prioritySpeechUntil', { get: getPrioritySpeechUntil, set: setPrioritySpeechUntil });
 }

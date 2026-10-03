@@ -30,10 +30,6 @@ Goal: easy to **deploy as a static website** and easy to **mod with user-made st
   - Voice-line categories (casual, filling, desperate, begging, poke, stretch, soothe, squeeze,
     success_hold, voiding, accident) editable in Settings; every spoken line also shows as a subtitle bubble.
   - Pause when menus are open, on the start screen, or when the tab is hidden.
-- Known prototype quirks, kept on purpose so the refactor stayed behavior-identical; fix each in its own commit:
-  - Stamina can dip fractionally below 0 for one frame before an accident triggers (the display is clamped).
-  - Sweat drops keep spawning while the game is paused above 50% and only expire after unpausing.
-  - A new urge spike can start in the same frame as an accident; it is cancelled on the next frame.
 
 ## Target architecture
 Vite + vanilla JavaScript (ES modules). TypeScript is optional later. Output must stay a **static site**

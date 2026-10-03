@@ -9,6 +9,9 @@ import './styles/main.css';
 // The legacy page loaded Tailwind's Play CDN only for its CSS reset (no utility classes were used).
 // The reset was injected after the page's own <style>, so it is imported after main.css here too.
 import './styles/preflight.css';
+import { drinks, voiceLines, minigameLines } from './config/content.js';
+import { DANCE_MOVES, LIVELY_MOVES } from './config/dance.js';
+import { TUNING } from './config/tuning.js';
 
 /* PROTOTYPE: single-file toy. Handy tunables:
    BODY_CY / MIN_R / MAX_R ........ where the bladder sits and how big it gets
@@ -22,36 +25,6 @@ let heartBeat, snapSynth, pokeSynth, bubbleSynth, stretchSynth, snapbackSynth;
 const waterState = { fill: false, drain: false }; // which water sounds are currently playing
 let bubbleTimer = 0;
 let prioritySpeechUntil = 0; // timestamp: important lines (accident/void) can't be cut off by drink chatter
-
-const drinks = [
-  { name: "Water", icon: "💧", amt: 15, reaction: "Refreshing and clear." },
-  { name: "Coffee", icon: "☕", amt: 20, reaction: "Whoa, caffeine makes me process so fast!" },
-  { name: "Soda", icon: "🥤", amt: 25, reaction: "Fizzy! I feel bubbly inside." },
-  { name: "Beer", icon: "🍺", amt: 35, reaction: "Oh no, alcohol goes straight through!" },
-  { name: "Tea", icon: "🍵", amt: 15, reaction: "Warm and herbal. Very relaxing." },
-  { name: "Energy Drink", icon: "⚡", amt: 25, reaction: "So much sugar and energy! It's intense!" },
-  { name: "Milk", icon: "🥛", amt: 20, reaction: "Coating and smooth, a bit heavy." },
-  { name: "Lemonade", icon: "🍋", amt: 20, reaction: "Sour! Makes me pucker up!" },
-  { name: "Sports Drink", icon: "🧪", amt: 30, reaction: "Electrolytes! So salty and sweet." },
-  { name: "Boba Tea", icon: "🧋", amt: 25, reaction: "Wait, are those tapioca pearls? Feels weird." },
-  { name: "Hot Cocoa", icon: "🍫", amt: 20, reaction: "Warm, thick, and chocolatey. Cozy." },
-  { name: "Apple Juice", icon: "🧃", amt: 15, reaction: "Sweet and tart, very refreshing." }
-];
-
-const voiceLines = {
-  filling: ["Getting fuller.", "Digesting nicely.", "I can feel it expanding."],
-  desperate: ["I can't hold it much longer!", "Too full!", "I'm going to burst!", "The pressure is immense!"],
-  begging: ["Please... I'll do anything!", "Why are you making me hold this?", "Have a heart, let me drain!"],
-  voiding: ["Ahhh, sweet relief.", "Emptying the tank.", "Whoosh... feels so much better."],
-  poke: ["Hey, careful!", "Don't poke me!", "That tickles."],
-  stretch: ["Whoa! You're pulling too hard!", "Yikes! Watch the elasticity!"],
-  casual: ["Just hanging out, holding fluid.", "Nice and squishy."],
-  soothe: ["Mmm, that feels nice.", "Oh, that's soothing."],
-  squeeze: ["Agh! Don't squeeze!", "Too much pressure!"],
-  accident: ["Oh no! I lost control!", "I couldn't hold it!", "I'm having an accident!", "No no no, it's leaking!"],
-  success_hold: ["Phew, fought that urge off.", "I can keep holding it.", "Stay strong, seal!"],
-  fail: ["Ahh, I slipped a little!", "I can't focus!", "Ow, I lost my grip!"]
-};
 
 /* --- BLADDER SPEECH: speech bubble (subtitles + minigame prompts) and text-to-speech --- */
 const bubbleEl = document.getElementById('bladder-bubble');
@@ -192,10 +165,9 @@ let pointers = {};
 let lastTime = performance.now();
 
 // Bladder placement and size. Every pointer test and the renderer share this one function.
-const BODY_CY = 0.43, MIN_R = 0.15, MAX_R = 0.31;
 function bladderGeom(fill = st.volume / 100) {
   const W = canvasContainer.clientWidth, H = canvasContainer.clientHeight, m = Math.min(W, H);
-  return { W, H, cx: W / 2 + st.body.x, cy: H * BODY_CY + st.body.y, Rr: m * MIN_R + m * (MAX_R - MIN_R) * fill };
+  return { W, H, cx: W / 2 + st.body.x, cy: H * TUNING.bodyCy + st.body.y, Rr: m * TUNING.minR + m * (TUNING.maxR - TUNING.minR) * fill };
 }
 
 const elVol = document.getElementById('vol-lbl');
@@ -310,12 +282,6 @@ const mgBreatheArea = document.getElementById('mg-breathe-area');
 const mgBreatheRing = document.getElementById('breathe-ring');
 const mgBreatheLabel = document.getElementById('breathe-label');
 const mgLeaksArea = document.getElementById('mg-leaks-area');
-
-const minigameLines = {
-  mash:    ["Urge spike! Mash CLENCH!", "It's coming! Clench, clench, clench!"],
-  breathe: ["Breathe with me! Hold as I grow, let go as I shrink.", "Slow breaths! Hold the circle while it grows."],
-  leaks:   ["I'm springing leaks! Tap the cracks!", "Cracks! Patch them fast!"]
-};
 
 function showMgPanel(on) {
   mgPanel.style.display = on ? 'flex' : 'none';
@@ -802,24 +768,6 @@ function drawCuteFace(ctx, cx, cy, Rr, time, fill, isClosed, gX) {
 }
 
 /* --- POTTY DANCE --- */
-// Each move only sets target values for the legs (angle / foot lift / start offset) and the whole body (x / y);
-// updateDance() eases toward them. u = urgency across the 50%-100% range, "min" = urgency where a move can first appear.
-const DANCE_MOVES = [
-  { id: 'sway',    min: 0.00 },  // gentle hip sway, weight on alternate feet
-  { id: 'shift',   min: 0.00 },  // shifting weight from foot to foot
-  { id: 'fidget',  min: 0.05 },  // small crossing steps with little hops
-  { id: 'knock',   min: 0.10 },  // knock-kneed bounce
-  { id: 'cross',   min: 0.25 },  // legs crossed over and squeezing tight
-  { id: 'squeeze', min: 0.30 },  // legs pressed together, pulsing and trembling
-  { id: 'tap',     min: 0.35 },  // quick alternating tap-dance steps
-  { id: 'curl',    min: 0.45 },  // curls up: feet tucked and crossed, body sinks
-  { id: 'shiver',  min: 0.50 },  // whole-body tremble
-  { id: 'hop',     min: 0.55 },  // jumping on the spot (with a floor shadow)
-  { id: 'shimmy',  min: 0.60 },  // fast side-to-side wiggle
-  { id: 'march',   min: 0.70 }   // frantic running in place
-];
-const LIVELY_MOVES = ['hop', 'march', 'tap']; // these switch a bit faster
-
 function pickDanceMove(u, last) {
   const pool = DANCE_MOVES.filter(m => m.min <= u && m.id !== last);
   return pool[Math.floor(Math.random() * pool.length)].id;
@@ -982,7 +930,7 @@ function renderCanvas(t, dt, fillPerc) {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
 
   const G = bladderGeom(fillPerc);
-  const cx = G.cx, cy = G.cy, baseR = G.Rr, maxR = Math.min(W, H) * MAX_R;
+  const cx = G.cx, cy = G.cy, baseR = G.Rr, maxR = Math.min(W, H) * TUNING.maxR;
 
   for (let i = st.particles.length - 1; i >= 0; i--) {
     let p = st.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 800 * dt; p.life -= dt * 1.5;

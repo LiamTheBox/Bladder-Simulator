@@ -130,12 +130,16 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
       } else if ('fullness' in e) { if (keys(e, p, ['fullness'])) number(e.fullness, `${p}.fullness`, -100, 100); }
       else if ('drink' in e) { if (keys(e, p, ['drink'])) number(e.drink, `${p}.drink`, 0, 100); }
       else if ('minutes' in e) { if (keys(e, p, ['minutes'])) number(e.minutes, `${p}.minutes`, 0, 24 * 60); }
+      else if ('clock' in e) {
+        if (keys(e, p, ['clock']) && (typeof e.clock !== 'string' || !CLOCK_PATTERN.test(e.clock))) err(`${p}.clock`, 'must be a 24-hour time like "20:30"');
+        else if (!('clock' in data)) err(`${p}.clock`, 'needs the story to have a "clock"');
+      }
       else if ('flag' in e) {
         if (!keys(e, p, ['flag'], ['value'])) return;
         if (id(e.flag, `${p}.flag`)) flagsSet.add(e.flag);
         if ('value' in e && typeof e.value !== 'boolean') err(`${p}.value`, 'must be true or false');
       } else if ('void' in e) { if (keys(e, p, ['void']) && e.void !== true) err(`${p}.void`, 'must be true'); }
-      else err(p, 'is not a known effect (expected "stat", "fullness", "drink", "minutes", "flag" or "void")');
+      else err(p, 'is not a known effect (expected "stat", "fullness", "drink", "minutes", "clock", "flag" or "void")');
     });
   }
   function conditions(v, path) {

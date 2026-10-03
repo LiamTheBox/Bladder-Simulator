@@ -59,7 +59,8 @@ export function createRunner(story, saved = null) {
         const absorbed = Math.min(state.pending, e.minutes * bladder.absorbPerMinute);
         state.pending -= absorbed;
         state.fullness = clamp(state.fullness + (absorbed + e.minutes * bladder.fillPerMinute) * fillMultiplier(), 0, 100);
-      } else if ('flag' in e) state.flags[e.flag] = e.value ?? true;
+      } else if ('clock' in e) { if (state.minutes !== null) state.minutes = clockMinutes(e.clock); }
+      else if ('flag' in e) state.flags[e.flag] = e.value ?? true;
       else if ('void' in e) { state.fullness = 0; state.voided++; }
     }
     for (const [id, s] of stats) {

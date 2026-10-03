@@ -35,8 +35,9 @@
 //             The story only names the game and how hard it is. An outcome without "next" continues with the
 //             choice's own "next" (for a trigger: back to the interrupted scene).
 //   effect    { "stat", "add": n } | { "stat", "set": n } | { "fullness": n } | { "drink": n }
-//             | { "minutes": n } | { "flag": id, "value"?: bool (default true) } | { "void": true }
-//             "drink" queues fluid that is absorbed as minutes pass; "void" empties the bladder.
+//             | { "minutes": n } | { "clock": "HH:MM" } | { "flag": id, "value"?: bool (default true) } | { "void": true }
+//             "drink" queues fluid that is absorbed as minutes pass; "void" empties the bladder; "clock" only
+//             changes the time shown (a new time zone, a new day) without any time passing.
 //   condition { "stat", one of "lt" | "lte" | "gt" | "gte" | "eq": n } | { "flag": id, "is"?: bool (default true) }
 //   target    a scene id or an ending id (they share one namespace), or "return" inside an interruption
 //   mode      while its flag is set, every minigame is that much harder and the bladder fills that much faster

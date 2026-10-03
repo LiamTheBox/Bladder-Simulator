@@ -159,6 +159,9 @@ test('modes, conditional lines and the void effect are checked', () => {
   expectError((s) => { delete s.modes[0].label; }, /modes\[0\]\.label: is required/);
   expectError((s) => { s.scenes[1].lines[2].if = [{ stat: 'mood', gt: 1 }]; }, /lines\[2\]\.if\[0\]\.stat: "mood" is not one of this story's stats/);
   expectError((s) => { s.scenes[0].choices[1].effects.push({ void: false }); }, /\.void: must be true/);
+  expectError((s) => { s.scenes[0].choices[1].effects.push({ clock: '9pm' }); }, /\.clock: must be a 24-hour time/);
+  expectError((s) => { delete s.clock; s.scenes[0].choices[1].effects.push({ clock: '21:00' }); }, /\.clock: needs the story to have a "clock"/);
+  expect(errorsAfter((s) => { s.scenes[0].choices[1].effects.push({ clock: '21:00' }); })).toEqual([]);
   expect(errorsAfter((s) => { s.scenes[0].choices[1].effects.push({ void: true }); })).toEqual([]);
   const r = check((() => { const s = fresh(); s.modes[0].flag = 'never_set'; return s; })());
   expect(r.warnings.join('\n')).toMatch(/modes\[0\]\.flag: flag "never_set" is checked but never set anywhere/);

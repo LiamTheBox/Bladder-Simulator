@@ -39,6 +39,8 @@ import { updateHud, updateBackground } from './ui/hud.js';
 import { btnVoid, updateClenchUI, lockClenchButton } from './ui/controls.js';
 import { pointerCount } from './ui/input.js';
 import { isPaused } from './ui/menus.js';
+import { updateStory, startStory, exitStory, storyView, isStoryActive } from './ui/story_screen.js';
+import { parseStory } from './story/loader.js';
 
 setPlayAreaSize(() => ({ W: canvasContainer.clientWidth, H: canvasContainer.clientHeight }));
 
@@ -84,6 +86,7 @@ function gameLoop(now) {
 
   updateSpeech(dt);
   updateBubble(dt);
+  updateStory(dt);
   stepSim(dt, pointerCount());
   updateMinigame(dt);
   updateHud();
@@ -103,7 +106,8 @@ if (import.meta.env.MODE === 'test') {
   Object.assign(window, {
     st, canvasContainer, bladderGeom, waterState, updateClenchUI, voiceLines, triggerAccident, speakDirect,
     startMinigame, endMinigame, bubbleEl, minigameLines, mgPanel, btnRow, mgBtnMash, mgBreatheArea, mgLeaksArea,
-    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on, offSimEvent: off, TUNING, swipeCardTexts
+    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on, offSimEvent: off, TUNING, swipeCardTexts,
+    startStory, exitStory, storyView, isStoryActive, parseStory
   });
   Object.defineProperty(window, 'prioritySpeechUntil', { get: getPrioritySpeechUntil, set: setPrioritySpeechUntil });
 }

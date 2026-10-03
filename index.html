@@ -21,6 +21,17 @@
       Tilt your phone to slosh the fluid<br><br>
       <span style="opacity:.7;">The game pauses while menus are open or the tab is hidden.</span>
     </div>
+    <button id="btn-story-mode">📖 STORY MODE</button>
+  </div>
+
+  <div class="modal-overlay" id="story-overlay" style="z-index: 210;">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: white;">STORIES</h2>
+        <button class="close-modal" data-target="story-overlay" style="background: none; border: none; color: #94a3b8; font-size: 2rem; cursor: pointer; line-height: 1; pointer-events: auto;">&times;</button>
+      </div>
+      <div id="story-list"></div>
+    </div>
   </div>
 
   <div class="modal-overlay" id="shop-overlay">
@@ -98,6 +109,19 @@
     </div>
 
     <div id="bladder-bubble"></div>
+  </div>
+
+  <!-- Story mode: shown instead of the sim controls. Filled in by src/ui/story_screen.js -->
+  <div id="story-panel">
+    <div id="story-head">
+      <span id="story-chapter"></span>
+      <span id="story-modes"></span>
+      <span id="story-clock"></span>
+      <button id="story-exit">Menu</button>
+    </div>
+    <div id="story-stats"></div>
+    <div id="story-log"></div>
+    <div id="story-choices"></div>
   </div>
 
   <div id="controls">

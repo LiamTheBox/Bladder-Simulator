@@ -25,6 +25,7 @@ for (const [W, H, label] of [[390, 700, 'phone'], [520, 900, 'desktop']]) {
     const wait = (ms) => pg.waitForTimeout(ms);
     await pg.mouse.click(Math.floor(W / 2), Math.floor(H / 2)); await wait(300);
     await ev('st.pendingFluid=0; st.minigame.cooldown=999');
+    await ev("TUNING.simSpikePool=['mash','leaks','breathe']; TUNING.simSpikeNoRepeat=0;"); // the reference script knows only the prototype's three games
 
     // ---------- LAYOUT ----------
     check(`[${label}] old minigame overlay is gone`, await ev("document.getElementById('minigame-overlay')===null"));

@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { openGame } from './helpers.js';
 
 const KEY = 'bladderSim.settings';
-const forceMash = "(()=>{ const o=Math.random; let n=0; Math.random=()=> (n++===0 ? 0.01 : o()); startMinigame(); Math.random=o; })()";
+const forceMash = "startMinigame({ id: 'mash' })"; // no difficulty given: the Settings choice applies
 
 async function start(pg) { await pg.mouse.click(195, 400); await pg.waitForTimeout(300); await pg.evaluate('st.pendingFluid=0; st.minigame.cooldown=999'); }
 

@@ -28,13 +28,14 @@ for (const [W, H] of [[360, 640], [390, 844], [768, 1024]]) {
     expect(fit.right, 'right edge on screen at 100%').toBeLessThanOrEqual(fit.W);
 
     // Each minigame's controls stay inside the bottom panel, and the panel inside the viewport
-    for (const [i, typ] of ['mash', 'leaks', 'breathe'].entries()) {
+    const CONTROL = { mash: 'mg-btn-mash', leaks: 'mg-leaks-area', breathe: 'breathe-ring', swipe_away: 'swipe-card', distraction_popups: 'mg-popups-area' };
+    for (const typ of Object.keys(CONTROL)) {
       await ev('st.failureEvent=false; st.isClosed=true; st.volume=75; st.stamina=100; st.minigame.active=false');
-      await ev(`(()=>{ const o=Math.random; let n=0; Math.random=()=> (n++===0 ? ${i}/3+0.01 : o()); startMinigame(); Math.random=o; })()`);
-      await pg.waitForTimeout(typ === 'breathe' ? 1700 : 250); // breathe: let the ring finish growing
+      // popups: easiest level, so they stay on screen long enough to measure (harder levels end once they pile up)
+      await ev(`startMinigame({ id: '${typ}'${typ === 'distraction_popups' ? ', difficulty: 1' : ''} })`);
+      await pg.waitForTimeout(typ === 'breathe' ? 1700 : 400); // breathe: let the ring finish growing
       expect(await ev('st.minigame.type')).toBe(typ);
-      const id = { mash: 'mg-btn-mash', leaks: 'mg-leaks-area', breathe: 'breathe-ring' }[typ];
-      const r = await ev(`(()=>{const a=document.getElementById('${id}').getBoundingClientRect(), p=mgPanel.getBoundingClientRect(), b=bubbleEl.getBoundingClientRect(), c=document.getElementById('canvas-wrapper').getBoundingClientRect();
+      const r = await ev(`(()=>{const a=document.getElementById('${CONTROL[typ]}').getBoundingClientRect(), p=mgPanel.getBoundingClientRect(), b=bubbleEl.getBoundingClientRect(), c=document.getElementById('canvas-wrapper').getBoundingClientRect();
         return {top:a.top-p.top, bottom:p.bottom-a.bottom, left:a.left, right:a.right, panelBottom:p.bottom, bubL:b.left-c.left, bubR:c.right-b.right, bubB:c.bottom-b.bottom}})()`);
       expect(r.top, `${typ}: control inside the panel (top)`).toBeGreaterThanOrEqual(-2);
       expect(r.bottom, `${typ}: control inside the panel (bottom)`).toBeGreaterThanOrEqual(-2);
@@ -42,6 +43,16 @@ for (const [W, H] of [[360, 640], [390, 844], [768, 1024]]) {
       expect(r.right, `${typ}: control inside the viewport (right)`).toBeLessThanOrEqual(W);
       expect(r.panelBottom, `${typ}: panel inside the viewport`).toBeLessThanOrEqual(H + 0.5);
       expect(Math.min(r.bubL, r.bubR, r.bubB), `${typ}: prompt bubble stays inside the play area`).toBeGreaterThanOrEqual(0);
+      if (typ === 'distraction_popups') {
+        // every popup lands fully inside the control panel, is big enough to tap, and never covers the bladder
+        await pg.waitForTimeout(1300);
+        const pops = await ev(`(()=>{const c=document.getElementById('controls').getBoundingClientRect(); return [...document.querySelectorAll('.mg-popup')].map(e=>{const r=e.getBoundingClientRect(); return {l:r.left-c.left, t:r.top-c.top, r:c.right-r.right, b:c.bottom-r.bottom, w:r.width, h:r.height}})})()`);
+        expect(pops.length).toBeGreaterThan(0);
+        for (const p of pops) {
+          expect(Math.min(p.l, p.t, p.r, p.b), 'popup inside the control panel').toBeGreaterThanOrEqual(0);
+          expect(Math.min(p.w, p.h), 'popup is a comfortable touch target').toBeGreaterThanOrEqual(56);
+        }
+      }
       await ev('endMinigame(false, true)');
     }
 

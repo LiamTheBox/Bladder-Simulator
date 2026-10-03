@@ -9,6 +9,7 @@ test('v11 regression (38 checks)', async ({ browser }) => {
   const wait = (ms) => pg.waitForTimeout(ms);
 
   // --- Paused on start screen ---
+  await ev("TUNING.simSpikePool=['mash','leaks','breathe']; TUNING.simSpikeNoRepeat=0;"); // the reference script knows only the prototype's three games
   const v0 = await ev('st.volume'); await ev('st.pendingFluid = 20'); await wait(700);
   check('paused before start (volume frozen, pending intact)', (await ev('st.volume')) === v0 && (await ev('st.pendingFluid')) === 20);
 

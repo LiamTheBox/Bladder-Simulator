@@ -119,8 +119,8 @@ export function stepSim(dt, pointerCount) {
       st.stamina = Math.max(0, st.stamina - drainRate * dt);
 
       if (st.stamina <= 0) triggerAccident();
-
-      if (!st.minigame.active) {
+      // not in the frame of an accident: the spike would be cancelled a frame later and wipe the accident subtitle
+      else if (!st.minigame.active) {
          st.minigame.cooldown -= dt;
          if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume) emit('spikeDue');
       }

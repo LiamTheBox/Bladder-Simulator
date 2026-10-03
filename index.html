@@ -8,6 +8,21 @@
 <body>
 
 <div id="toy-container">
+
+  <div id="age-gate" style="display: none;">
+    <div class="modal-box" style="text-align: center;">
+      <div id="age-ask">
+        <h2 style="margin: 0 0 12px; font-size: 1.5rem; font-weight: 800; color: white;">Adults only</h2>
+        <p style="color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">This is an 18+ desperation-endurance game with adult themes. It contains no explicit sexual content. Please confirm your age to continue.</p>
+        <button id="age-yes" class="age-btn primary">I am 18 or older</button>
+        <button id="age-no" class="age-btn">I am under 18</button>
+      </div>
+      <div id="age-refused" style="display: none; color: #cbd5e1; line-height: 1.5;">
+        <h2 style="margin: 0 0 12px; font-size: 1.5rem; font-weight: 800; color: white;">Sorry</h2>
+        This game is only for adults. Please close this page.
+      </div>
+    </div>
+  </div>
   
   <div id="start-overlay">
     <div class="start-btn-visual">TAP TO START</div>
@@ -20,6 +35,30 @@
       Two-finger pinch (or scroll wheel) to squeeze<br>
       Tilt your phone to slosh the fluid<br><br>
       <span style="opacity:.7;">The game pauses while menus are open or the tab is hidden.</span>
+    </div>
+    <button id="btn-story-mode">📖 STORY MODE</button>
+  </div>
+
+  <div class="modal-overlay" id="story-overlay" style="z-index: 210;">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: white;">STORIES</h2>
+        <button class="close-modal" data-target="story-overlay" style="background: none; border: none; color: #94a3b8; font-size: 2rem; cursor: pointer; line-height: 1; pointer-events: auto;">&times;</button>
+      </div>
+      <div id="story-list"></div>
+      <div id="story-hidden-note"></div>
+      <div id="story-tools">
+        <button id="story-import-btn" class="story-btn">Import a story file</button>
+        <input type="file" id="story-file" accept=".json,application/json" style="display: none;">
+        <details>
+          <summary>Or paste a story's text</summary>
+          <textarea id="story-paste" placeholder='{ "schemaVersion": 1, ... }'></textarea>
+          <button id="story-paste-btn" class="story-btn">Import the pasted text</button>
+        </details>
+        <button id="story-template-btn" class="story-btn">Download the story template</button>
+        <a id="story-guide-link" href="./modding-guide.md" target="_blank" rel="noopener">How to write your own story</a>
+        <div id="story-import-result"></div>
+      </div>
     </div>
   </div>
 
@@ -50,6 +89,12 @@
         </select>
         <div style="color: #94a3b8; font-size: 0.8rem;">Sets how demanding the urge-spike minigames are. Changing it restarts the game.</div>
       </div>
+      <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Comfort</h3>
+      <div id="settings-comfort" class="setting-group"></div>
+      <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Minigames that may appear</h3>
+      <div id="settings-minigames" class="setting-group"></div>
+      <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Hide stories tagged</h3>
+      <div id="settings-tags" class="setting-group"></div>
       <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Custom Voice Lines</h3>
       <div class="custom-tts-row">
         <input type="text" id="tts-input" placeholder="Type custom phrase here...">
@@ -68,6 +113,12 @@
           <option value="accident">Accident</option>
         </select>
         <button id="tts-add">Add Phrase</button>
+      </div>
+      <button id="btn-back-to-start" class="age-btn" style="margin-top: 24px;">Back to the start screen</button>
+      <div id="settings-try">
+        <h3 style="color: #94a3b8; font-size: 0.9rem; margin: 24px 0 4px;">Try a new minigame</h3>
+        <div style="color: #94a3b8; font-size: 0.8rem; margin-bottom: 4px;">Experimental. They start straight away at your difficulty, cost no stamina, and do not appear by themselves yet.</div>
+        <div id="settings-try-list"></div>
       </div>
     </div>
   </div>
@@ -100,6 +151,19 @@
     <div id="bladder-bubble"></div>
   </div>
 
+  <!-- Story mode: shown instead of the sim controls. Filled in by src/ui/story_screen.js -->
+  <div id="story-panel">
+    <div id="story-head">
+      <span id="story-chapter"></span>
+      <span id="story-modes"></span>
+      <span id="story-clock"></span>
+      <button id="story-exit">Menu</button>
+    </div>
+    <div id="story-stats"></div>
+    <div id="story-log"></div>
+    <div id="story-choices"></div>
+  </div>
+
   <div id="controls">
     <div id="stamina-row">
       <span class="stm-lbl">STAMINA</span>
@@ -126,6 +190,9 @@
       <div id="mg-leaks-area">Tap the red cracks!</div>
       <div id="mg-swipe-area"><div id="swipe-card"></div></div>
       <div id="mg-popups-area">Tap them away!</div>
+      <div id="mg-tiptoe-area"><div id="tiptoe-track"><div id="tiptoe-goal">🚪</div><div id="tiptoe-knob">👣</div><span id="tiptoe-label"></span></div></div>
+      <div id="mg-steady-area"><div id="steady-wave"></div><div id="steady-handle"></div></div>
+      <div id="mg-count-area"></div>
       <div id="mg-tremor-area"><div id="tremor-ring"><div id="tremor-target"></div><div id="tremor-pulse"></div></div><span id="tremor-label">STEADY</span></div>
     </div>
     </div>

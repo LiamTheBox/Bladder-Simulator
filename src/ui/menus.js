@@ -7,6 +7,9 @@ import { speak, speakDirect } from '../audio/speech.js';
 import { clearPointers } from './input.js';
 import { settings, saveSettings, isValidDifficulty } from '../config/settings.js';
 import { resetGame } from './reset.js';
+import { startStory } from './story_screen.js';
+import { openStoryMenu, closeStoryMenu } from './story_menu.js';
+import { isAgeGateOpen, onBackToStart } from './settings_panel.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
 const shopOverlayEl = document.getElementById('shop-overlay');
@@ -14,7 +17,7 @@ const settingsOverlayEl = document.getElementById('settings-overlay');
 
 /* --- PAUSE: menus, start screen, hidden tab --- */
 export function isPaused() {
-  return document.hidden ||
+  return document.hidden || isAgeGateOpen() ||
     startOverlayEl.style.display !== 'none' ||
     shopOverlayEl.style.display === 'flex' ||
     settingsOverlayEl.style.display === 'flex';
@@ -66,7 +69,8 @@ document.querySelectorAll('.close-modal').forEach(btn => {
   });
 });
 
-startOverlayEl.addEventListener('pointerdown', async () => {
+// The first tap unlocks audio, speech and (on iOS) motion; browsers only allow that inside a user gesture
+async function unlock() {
   // iOS asks for motion permission; tilt-to-slosh is an optional extra, so a refusal changes nothing else
   if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
     try { await DeviceOrientationEvent.requestPermission(); } catch(e) {}
@@ -74,5 +78,24 @@ startOverlayEl.addEventListener('pointerdown', async () => {
   // An empty utterance inside the tap unlocks speech on mobile browsers
   if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
   await startAudio();
+}
+
+// Free play: tap anywhere on the start screen
+startOverlayEl.addEventListener('pointerdown', async () => {
+  await unlock();
   startOverlayEl.style.display = 'none'; speak('casual');
 });
+
+// Story mode: the story list (bundled and imported stories, import / export)
+const storyOverlayEl = document.getElementById('story-overlay');
+document.getElementById('btn-story-mode').addEventListener('pointerdown', (e) => {
+  e.stopPropagation(); // not a free-play start
+  openStoryMenu(async (entry, saved) => {
+    await unlock();
+    closeStoryMenu(); startOverlayEl.style.display = 'none';
+    startStory(entry.story, { onExit: () => { startOverlayEl.style.display = 'flex'; }, slot: { key: entry.key, hash: entry.hash }, saved });
+  });
+});
+storyOverlayEl.addEventListener('pointerdown', (e) => e.stopPropagation()); // taps in the list never start free play
+
+onBackToStart(() => { startOverlayEl.style.display = 'flex'; });

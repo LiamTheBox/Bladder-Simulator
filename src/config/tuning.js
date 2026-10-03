@@ -4,8 +4,12 @@
 export const TUNING = {
   // Bladder placement and size, as fractions of the play area. Pointer tests and the renderer share these.
   bodyCy: 0.43, minR: 0.15, maxR: 0.31,
+  // Story mode has a shorter play area with the speech bubble at its foot: the bladder sits higher and is
+  // sized from this share of the height, so the bubble does not cover its legs
+  storyBodyCy: 0.34, storyBodyShare: 0.62,
 
   startVolume: 15,
+  storyVolumeEase: 3,            // story mode: how fast the bladder on screen catches up with the story's fullness
 
   // Fluid, in percent of capacity per second
   digestPerSec: 1.0 / 15.0,      // queued drinks trickle in
@@ -58,6 +62,31 @@ export const TUNING = {
     missCost: 1,                                              // an off-beat tap undoes this many
     maxShakePx: 6, pulseExtra: 0.6, flashSec: 0.18,
   },
+
+  tiptoe: {
+    duration: 7.0,
+    limitByDifficulty: [0.5, 0.42, 0.35, 0.3, 0.26],          // fastest allowed, in track lengths per second
+    speedWindowSec: 0.2,                                      // speed is measured over this long, not per frame
+    maxJolts: 3, joltCooldown: 0.6, joltSloshKick: 6,
+  },
+  steadyTheSlosh: {
+    duration: 6.0,
+    pushByDifficulty: [0.45, 0.6, 0.75, 0.9, 1.05],           // how hard the wave is pushed (track halves per second)
+    turnSecByDifficulty: [3, 2.5, 2, 1.6, 1.3],               // seconds between changes of direction
+    turnJitter: 0.3, ripple: 0.3, rippleRate: 3,
+    runaway: 0.8,                                             // the further out the wave is, the faster it runs
+    leanPower: 2.2,                                           // pull of a finger held at the very end of the strip
+    dangerFrom: 0.7, sloshForce: 400,
+  },
+  thinkOfSomethingElse: {
+    duration: 7.0,
+    tilesByDifficulty: [4, 5, 5, 6, 6],
+    shuffleFromDifficulty: 3,                                 // from here on the tiles change places after each right tap
+    wrongTapCostSec: 0.7,
+    firstHeckleSec: 0.9, heckleEverySec: 1.1,
+  },
+  // Games offered under "Try a new minigame" in Settings. They are not in simSpikePool until they are approved.
+  practiceMinigames: ['tiptoe', 'steady_the_slosh', 'think_of_something_else'],
 
   // Stretch (pixels)
   stretchGrabBand: 55,           // how close to the edge a touch must land to grab it

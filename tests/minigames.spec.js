@@ -24,9 +24,9 @@ async function tapAllCracks(pg) {
   }
 }
 
-test('registry knows all six games and refuses unknown ids', async ({ browser }) => {
+test('registry knows every game and refuses unknown ids', async ({ browser }) => {
   const { context, ev } = await started(browser);
-  expect(await ev('minigameIds()')).toEqual(['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock']);
+  expect(await ev('minigameIds()')).toEqual(['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else']);
   expect(await ev("startMinigame({ id: 'no_such_game' })")).toBe(false);
   expect(await ev('st.minigame.active')).toBe(false);
   await context.close();

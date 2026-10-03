@@ -8,10 +8,13 @@ function initialState() {
   isClosed: true, isSpeedingUp: false, isVoiding: false,
   stamina: 100, failureEvent: false,
   prevVolume: TUNING.startVolume, prevStamina: 100, // last frame's values, for the thresholdCrossed event
+  storyMode: false, // story mode drives fullness itself: no stamina drain, random spikes or idle chatter
   staminaDraining: false, // true while holding costs stamina; the HUD brightens the stamina bar from this
   // Minigame State
   minigame: {
       freezeBody: false, // the running game wants the bladder to hold still
+      practice: false,   // a try-out from Settings: not cancelled by the spike rules, no stamina at stake
+      wave: 0,           // Steady the slosh
       active: false, type: '', timer: 0, duration: 5, cooldown: TUNING.spikeFirstCooldown,
       clicks: 0, req: TUNING.mash.tapsByDifficulty[TUNING.simSpikeDifficulty - 1], // Mash
       phase: 'inhale', phaseTimer: 0, score: 0, holdingRing: false, // Breathe

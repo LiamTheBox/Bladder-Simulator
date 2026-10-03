@@ -1,0 +1,2710 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "id": "bonnies_journey",
+    "title": "Bonnie's Long Journey",
+    "author": "LiamBox",
+    "rating": "18+",
+    "tags": [
+      "desperation",
+      "travel",
+      "family home",
+      "politeness"
+    ],
+    "description": "Departure day. Bonnie, 23, has one stubborn rule for travel: flawless manners, total composure, and nobody inconvenienced. Twenty-two hours, seven chapters, and a great many drinks she is too polite to refuse. Placeholder wording."
+  },
+  "characters": [
+    {
+      "id": "bonnie",
+      "name": "Bonnie",
+      "age": 23,
+      "notes": "Twenty-three, leaving for a university exchange semester. Lives with her parents. A committed people-pleaser with a stubborn streak."
+    },
+    {
+      "id": "chloe",
+      "name": "Chloe",
+      "age": 26,
+      "notes": "Bonnie's older sister. Light sleeper."
+    },
+    {
+      "id": "mom",
+      "name": "Mom",
+      "age": 52
+    },
+    {
+      "id": "dad",
+      "name": "Dad",
+      "age": 55
+    },
+    {
+      "id": "tsa",
+      "name": "Security officer",
+      "age": 41
+    },
+    {
+      "id": "businessman",
+      "name": "Businessman",
+      "age": 47
+    },
+    {
+      "id": "attendant",
+      "name": "Flight attendant",
+      "age": 34
+    },
+    {
+      "id": "officer",
+      "name": "Immigration officer",
+      "age": 50
+    },
+    {
+      "id": "irina",
+      "name": "Irina",
+      "age": 23,
+      "notes": "The Higgins' daughter, a student Bonnie's age. Loud, warm, awake."
+    },
+    {
+      "id": "mrs_higgins",
+      "name": "Mrs. Higgins",
+      "age": 51,
+      "notes": "Host. Hugs first, asks later."
+    },
+    {
+      "id": "bladder",
+      "name": "Bladder",
+      "kind": "bladder"
+    }
+  ],
+  "stats": [
+    {
+      "id": "control",
+      "label": "Control",
+      "start": 48,
+      "thresholds": [
+        {
+          "atOrBelow": 0,
+          "goto": "ending_lost"
+        }
+      ]
+    },
+    {
+      "id": "halo",
+      "label": "Halo",
+      "icon": "😇",
+      "start": 100
+    },
+    {
+      "id": "suspicion",
+      "label": "Suspicion",
+      "icon": "👀",
+      "start": 0,
+      "thresholds": [
+        {
+          "atOrAbove": 100,
+          "goto": "ending_found_out"
+        }
+      ]
+    }
+  ],
+  "bladder": {
+    "startFullness": 86,
+    "fillPerMinute": 0.03,
+    "absorbPerMinute": 0.5,
+    "capacityMl": 2400
+  },
+  "clock": {
+    "start": "04:10"
+  },
+  "modes": [
+    {
+      "flag": "hard_mode",
+      "label": "Hard mode",
+      "minigameDifficulty": 1,
+      "fillMultiplier": 1.5
+    }
+  ],
+  "choiceSets": [
+    {
+      "id": "noise_response",
+      "options": [
+        {
+          "key": "freeze",
+          "effects": [
+            {
+              "minutes": 3
+            },
+            {
+              "stat": "suspicion",
+              "add": -20
+            },
+            {
+              "stat": "control",
+              "add": -8
+            }
+          ]
+        },
+        {
+          "key": "push_on",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": 4
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bathroom_offer",
+      "options": [
+        {
+          "key": "refuse",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "stat": "control",
+              "add": -7
+            }
+          ]
+        },
+        {
+          "key": "hover",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -10
+            },
+            {
+              "stat": "suspicion",
+              "add": 10
+            }
+          ]
+        },
+        {
+          "key": "busy",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 3
+            },
+            {
+              "stat": "control",
+              "add": -5
+            },
+            {
+              "minutes": 5
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "noticed",
+      "options": [
+        {
+          "key": "admit",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": -30
+            },
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "stat": "control",
+              "add": 5
+            }
+          ]
+        },
+        {
+          "key": "double_down",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": -15
+            },
+            {
+              "drink": 8
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "when": [
+        {
+          "stat": "suspicion",
+          "gte": 50
+        },
+        {
+          "flag": "day_started",
+          "is": false
+        }
+      ],
+      "scene": "house_stirs"
+    },
+    {
+      "when": [
+        {
+          "stat": "suspicion",
+          "gte": 40
+        },
+        {
+          "flag": "day_started"
+        }
+      ],
+      "scene": "noticed_mild"
+    },
+    {
+      "when": [
+        {
+          "stat": "suspicion",
+          "gte": 70
+        },
+        {
+          "flag": "day_started"
+        }
+      ],
+      "scene": "noticed_strong"
+    },
+    {
+      "when": [
+        {
+          "stat": "fullness",
+          "gte": 60
+        },
+        {
+          "flag": "day_started"
+        }
+      ],
+      "bladder": "Hello again. Remember me? I have news.",
+      "minigame": {
+        "id": "tremor_lock",
+        "difficulty": 2,
+        "prompt": "The first real wave. Steady...",
+        "success": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": 4
+            }
+          ]
+        },
+        "fail": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": -14
+            }
+          ]
+        }
+      }
+    },
+    {
+      "when": [
+        {
+          "stat": "fullness",
+          "gte": 80
+        },
+        {
+          "flag": "day_started"
+        }
+      ],
+      "bladder": "This is no longer a request.",
+      "minigame": {
+        "id": "breathe",
+        "difficulty": 2,
+        "prompt": "Breathe through it. In. Out.",
+        "success": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": 5
+            }
+          ]
+        },
+        "fail": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": -18
+            }
+          ]
+        }
+      }
+    },
+    {
+      "when": [
+        {
+          "stat": "fullness",
+          "gte": 93
+        }
+      ],
+      "bladder": "Just let go. Right here. Who would ever know?",
+      "minigame": {
+        "id": "swipe_away",
+        "difficulty": 2,
+        "success": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": 4
+            }
+          ]
+        },
+        "fail": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": -20
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "start": "bed",
+  "scenes": [
+    {
+      "id": "bed",
+      "title": "4:10 AM — The Silent House",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The red digits on the nightstand click over to 4:10. Under the blanket, Bonnie curls her toes and bites her lip."
+        },
+        {
+          "speaker": "narrator",
+          "text": "She has not been since yesterday afternoon. That was the challenge she set herself: flawless manners, total composure, and nobody inconvenienced. It is going badly.",
+          "bladder": "I filed a complaint at midnight. Nobody answered."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Through the wall, Dad's snoring is slow and even. Chloe's room next door is quiet. The taxi comes at eight. If she is ever going to go, it is now. Silently.",
+          "bladder": "There is a bathroom downstairs. Fourteen steps. I counted."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Slide out of bed slowly. Every spring of this mattress is a tattletale.",
+          "effects": [
+            {
+              "minutes": 4
+            },
+            {
+              "stat": "control",
+              "add": -6
+            }
+          ],
+          "next": "hallway"
+        },
+        {
+          "text": "Just get UP. Speed over silence. Not one more minute.",
+          "effects": [
+            {
+              "minutes": 1
+            },
+            {
+              "stat": "suspicion",
+              "add": 30
+            },
+            {
+              "stat": "control",
+              "add": 3
+            }
+          ],
+          "next": "hallway"
+        },
+        {
+          "text": "Lie still one more minute and listen to the house. Be sure.",
+          "effects": [
+            {
+              "minutes": 3
+            },
+            {
+              "stat": "control",
+              "add": -4
+            },
+            {
+              "flag": "listened"
+            }
+          ],
+          "next": "hallway"
+        }
+      ]
+    },
+    {
+      "id": "hallway",
+      "title": "4:14 AM — The Hallway",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The landing is cold under her feet. Chloe's door is open a hand's width."
+        },
+        {
+          "speaker": "narrator",
+          "text": "She already knows which board outside Chloe's door complains. She steps over it.",
+          "if": [
+            {
+              "flag": "listened"
+            }
+          ]
+        },
+        {
+          "speaker": "chloe",
+          "text": "Mmh... Bonnie...?",
+          "mood": "sleepy",
+          "bladder": "She's awake. We are DONE. Abort, or run for it?"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Slip back to my room and KEEP HOLDING. The record is not over.",
+          "effects": [
+            {
+              "flag": "hard_mode"
+            },
+            {
+              "stat": "halo",
+              "add": 10
+            },
+            {
+              "minutes": 2
+            }
+          ],
+          "next": "back_in_bed"
+        },
+        {
+          "set": "noise_response",
+          "texts": {
+            "freeze": "Freeze. Wait. Let her settle back into sleep, then carry on.",
+            "push_on": "Whisper \"just getting water\" and keep walking."
+          },
+          "next": "stairs"
+        }
+      ]
+    },
+    {
+      "id": "back_in_bed",
+      "title": "4:17 AM — Back Under the Blanket",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Bonnie eases the door shut and climbs back into bed like someone defusing it. Hard mode. Nobody asked her to. That is rather the point."
+        },
+        {
+          "speaker": "narrator",
+          "text": "The wave arrives on schedule.",
+          "bladder": "You had ONE chance. You were RIGHT THERE."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Face it. Ride out the wave.",
+          "effects": [
+            {
+              "minutes": 20
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Hold the line! Hold it!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ],
+              "next": "hard_morning"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -15
+                }
+              ],
+              "next": "second_thoughts"
+            }
+          }
+        },
+        {
+          "text": "This is absurd. Go. Now. Properly this time.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            }
+          ],
+          "next": "second_thoughts"
+        }
+      ]
+    },
+    {
+      "id": "hard_morning",
+      "title": "4:40 AM — The Record Stands",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The wave passes. The record stands, and so does the problem. Bonnie stares at the ceiling until the alarm goes. Everything from here will be harder. She is, somehow, pleased.",
+          "bladder": "I want it noted that I objected."
+        }
+      ],
+      "next": "breakfast_suit"
+    },
+    {
+      "id": "second_thoughts",
+      "title": "4:38 AM — Second Thoughts",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The record can stand some other night. Bonnie is out of bed and past Chloe's door before she can talk herself out of it.",
+          "bladder": "Finally. FINALLY. Left at the banister."
+        }
+      ],
+      "next": "stairs"
+    },
+    {
+      "id": "stairs",
+      "title": "The Stairs",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Fourteen stairs. The fourth and the seventh creak; she mapped them years ago, coming home late."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Every step down is a small negotiation.",
+          "bladder": "Faster. No. Slower. No. FASTER."
+        }
+      ],
+      "choices": [
+        {
+          "text": "One stair at a time, weight on the banister, slow as syrup.",
+          "effects": [
+            {
+              "minutes": 5
+            },
+            {
+              "stat": "control",
+              "add": -9
+            }
+          ],
+          "next": "bathroom_door"
+        },
+        {
+          "text": "Skip the fourth and the seventh. Muscle memory.",
+          "effects": [
+            {
+              "minutes": 1
+            }
+          ],
+          "minigame": {
+            "id": "tremor_lock",
+            "difficulty": 2,
+            "prompt": "Steady. Step on my count.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 4
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 30
+                }
+              ]
+            }
+          },
+          "next": "bathroom_door"
+        },
+        {
+          "text": "Sit down and go step by step on my hands. Undignified. Silent.",
+          "effects": [
+            {
+              "minutes": 6
+            },
+            {
+              "stat": "halo",
+              "add": -15
+            },
+            {
+              "stat": "control",
+              "add": -4
+            }
+          ],
+          "next": "bathroom_door"
+        }
+      ]
+    },
+    {
+      "id": "house_stirs",
+      "title": "The House Stirs",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Somewhere above, bedsprings shift. A floorboard answers the one she just stepped on.",
+          "bladder": "They heard that. Everyone heard that."
+        }
+      ],
+      "choices": [
+        {
+          "set": "noise_response",
+          "texts": {
+            "freeze": "FREEZE. Become furniture. Wait for the silence to heal.",
+            "push_on": "Push on. So close. Fortune favors the desperate."
+          },
+          "next": "return"
+        }
+      ]
+    },
+    {
+      "id": "bathroom_door",
+      "title": "The Downstairs Bathroom",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The door closes with a click she feels in her teeth. The lock turns. Nobody is coming."
+        },
+        {
+          "speaker": "narrator",
+          "text": "The pipes in this house carry sound like a telephone.",
+          "bladder": "I do not care about the pipes. I have never cared less about anything."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Now. Speed over silence. Not one more breath.",
+          "effects": [
+            {
+              "void": true
+            },
+            {
+              "stat": "suspicion",
+              "add": 25
+            },
+            {
+              "stat": "control",
+              "set": 100
+            },
+            {
+              "minutes": 2
+            }
+          ],
+          "next": "flush"
+        },
+        {
+          "text": "Ease down and let go as slowly, as silently, as humanly possible.",
+          "effects": [
+            {
+              "minutes": 1
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 2,
+            "prompt": "Slowly. Breathe. Slow-ly.",
+            "success": {
+              "effects": [
+                {
+                  "void": true
+                },
+                {
+                  "stat": "control",
+                  "set": 100
+                },
+                {
+                  "stat": "halo",
+                  "add": 5
+                },
+                {
+                  "minutes": 4
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "void": true
+                },
+                {
+                  "stat": "control",
+                  "set": 100
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 20
+                },
+                {
+                  "minutes": 2
+                }
+              ]
+            }
+          },
+          "next": "flush"
+        }
+      ]
+    },
+    {
+      "id": "flush",
+      "title": "The Flush",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Relief. Complete, ridiculous, hard-earned relief. Bonnie leans on the sink and grins at nobody.",
+          "bladder": "Thank you. I take back most of what I said."
+        },
+        {
+          "speaker": "narrator",
+          "text": "One problem left: the cistern in this house fills like a jet engine."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Don't flush. Lid down, leave silently, flush 'casually' once everyone is up.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -20
+            },
+            {
+              "minutes": 2
+            }
+          ],
+          "next": "clock_reset"
+        },
+        {
+          "text": "Flush and sprint. Beat the pipes back up the stairs.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 25
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Run! Run run run!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": -25
+                },
+                {
+                  "minutes": 1
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 30
+                },
+                {
+                  "minutes": 1
+                }
+              ]
+            }
+          },
+          "next": "clock_reset"
+        }
+      ]
+    },
+    {
+      "id": "clock_reset",
+      "title": "4:31 AM — The Clock Is Reset",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Back under the blanket, nobody the wiser. The clock is reset. The real journey starts at eight, and it is twenty hours long.",
+          "bladder": "Enjoy it. You will not hear from me for at least an hour."
+        }
+      ],
+      "next": "breakfast_suit"
+    },
+    {
+      "id": "breakfast_suit",
+      "title": "8:00 AM — Breakfast & the Suit",
+      "chapter": "Chapter 2",
+      "onEnter": [
+        {
+          "flag": "day_started"
+        },
+        {
+          "clock": "08:00"
+        },
+        {
+          "stat": "suspicion",
+          "set": 0
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "By eight the house is loud with a family seeing someone off. Chloe, full of espresso, is fastening the back of Bonnie's travel jumpsuit: one long row of tiny, stubborn buttons."
+        },
+        {
+          "speaker": "chloe",
+          "text": "Hold STILL! You'll look amazing. Like a superhero.",
+          "bladder": "Superheroes can't get out of these either, you know."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"Chloe, gently! Go easy.\"",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -5
+            },
+            {
+              "stat": "suspicion",
+              "add": 5
+            }
+          ],
+          "next": "breakfast_drink"
+        },
+        {
+          "text": "Endure it. Smile. Say nothing.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -6
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ],
+          "next": "breakfast_drink"
+        }
+      ]
+    },
+    {
+      "id": "breakfast_drink",
+      "title": "8:10 AM — Departure Breakfast",
+      "chapter": "Chapter 2",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Downstairs Mom has laid out everything the kitchen owns."
+        },
+        {
+          "speaker": "mom",
+          "text": "Drink up, sweetheart, you have such a long flight. Hydration is everything!",
+          "bladder": "She means well. She always means well. That is the problem."
+        }
+      ],
+      "choices": [
+        {
+          "text": "The small juice. Modest, quick, defensible.",
+          "effects": [
+            {
+              "drink": 6
+            },
+            {
+              "minutes": 10
+            }
+          ],
+          "next": "dad_offer"
+        },
+        {
+          "text": "The green tea. Mom's pride. Warm, generous, and it runs straight through.",
+          "effects": [
+            {
+              "drink": 10
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "minutes": 10
+            }
+          ],
+          "next": "dad_offer"
+        },
+        {
+          "text": "The big smoothie. Heavy, slow, an anchor in the stomach.",
+          "effects": [
+            {
+              "drink": 12
+            },
+            {
+              "minutes": 15
+            }
+          ],
+          "next": "dad_offer"
+        },
+        {
+          "text": "All of it. Every glass. Make Mom glow on departure day.",
+          "effects": [
+            {
+              "drink": 22
+            },
+            {
+              "stat": "halo",
+              "add": 15
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "dad_offer"
+        }
+      ]
+    },
+    {
+      "id": "dad_offer",
+      "title": "8:30 AM — Wheels Up",
+      "chapter": "Chapter 2",
+      "lines": [
+        {
+          "speaker": "dad",
+          "text": "Wheels up in ten! Everyone use the bathroom, it's a long drive.",
+          "bladder": "He said EVERYONE. That includes us. That is practically an order."
+        }
+      ],
+      "choices": [
+        {
+          "set": "bathroom_offer",
+          "texts": {
+            "refuse": "\"I'm fine!\" Bright, instant, fatal.",
+            "hover": "Hover on the edge of yes... then wave them on. Almost. ALMOST.",
+            "busy": "Make myself useful instead: carry the bags, check the passport, busy hands."
+          },
+          "next": "car_route"
+        }
+      ]
+    },
+    {
+      "id": "car_route",
+      "title": "8:45 AM — The Drive",
+      "chapter": "Chapter 2",
+      "lines": [
+        {
+          "speaker": "dad",
+          "text": "Right: interstate or the bypass? One's longer, one's bumpier, and I can never remember which is worse at this hour.",
+          "bladder": "Whichever has fewer bumps. Please. I am begging you."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"The interstate, Dad.\"",
+          "effects": [
+            {
+              "minutes": 50
+            },
+            {
+              "stat": "control",
+              "add": -3
+            }
+          ],
+          "next": "checkin"
+        },
+        {
+          "text": "\"Take the bypass.\"",
+          "effects": [
+            {
+              "minutes": 35
+            },
+            {
+              "stat": "control",
+              "add": -7
+            }
+          ],
+          "next": "checkin"
+        },
+        {
+          "text": "\"You choose!\"",
+          "effects": [
+            {
+              "minutes": 45
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "stat": "control",
+              "add": -5
+            }
+          ],
+          "next": "checkin"
+        }
+      ]
+    },
+    {
+      "id": "checkin",
+      "title": "10:00 AM — Check-in",
+      "chapter": "Chapter 3",
+      "onEnter": [
+        {
+          "clock": "10:00"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "mom",
+          "text": "That coffee went right through me! Bonnie, come on, last chance before the queue!",
+          "bladder": "LAST CHANCE. She said last chance. Did you hear the words?"
+        }
+      ],
+      "choices": [
+        {
+          "set": "bathroom_offer",
+          "texts": {
+            "refuse": "\"I'm fine, go ahead!\" and a little wave.",
+            "hover": "Take one step after her... and stop to check the departure board instead.",
+            "busy": "Offer to watch everyone's bags. Somebody has to."
+          },
+          "next": "queue"
+        }
+      ]
+    },
+    {
+      "id": "queue",
+      "title": "10:20 AM — The Security Queue",
+      "chapter": "Chapter 3",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The queue snakes through six lanes of tape. Forty minutes, the sign says. The sign is an optimist.",
+          "bladder": "Forty minutes. Standing. On tile."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Stand perfectly still, like a mannequin of a polite young woman.",
+          "effects": [
+            {
+              "minutes": 40
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 2,
+            "prompt": "Perfect stillness. Breathe.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 6
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -6
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 15
+                }
+              ]
+            }
+          },
+          "next": "scanner"
+        },
+        {
+          "text": "The subtle shuffle-clamp. Shuffle, clamp. Shuffle, clamp.",
+          "effects": [
+            {
+              "minutes": 40
+            }
+          ],
+          "minigame": {
+            "id": "tremor_lock",
+            "difficulty": 2,
+            "prompt": "Shuffle. Clamp. On the beat.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 9
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -8
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 10
+                }
+              ]
+            }
+          },
+          "next": "scanner"
+        },
+        {
+          "text": "Lean a hip against the luggage cart. It looks casual. It is load-bearing.",
+          "effects": [
+            {
+              "minutes": 40
+            },
+            {
+              "stat": "control",
+              "add": -4
+            }
+          ],
+          "next": "scanner"
+        }
+      ]
+    },
+    {
+      "id": "scanner",
+      "title": "11:00 AM — The Scanner",
+      "chapter": "Chapter 3",
+      "lines": [
+        {
+          "speaker": "tsa",
+          "text": "Step through. Arms up.",
+          "bladder": "Arms UP? Does he know what he is asking?"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Smile at the officer. Comply crisply. Be forgettable.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -6
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ],
+          "next": "confiscated"
+        },
+        {
+          "text": "Move a touch too fast through the scanner. Get it OVER with.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": 3
+            }
+          ],
+          "next": "confiscated"
+        },
+        {
+          "text": "Ask for the seated pat-down instead. Sitting is... strategic.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "minutes": 10
+            },
+            {
+              "stat": "control",
+              "add": 5
+            }
+          ],
+          "next": "confiscated"
+        }
+      ]
+    },
+    {
+      "id": "confiscated",
+      "title": "11:10 AM — No Liquids",
+      "chapter": "Chapter 3",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "In her bag: one oversized iced tea, bought ten minutes ago, eight dollars, untouched."
+        },
+        {
+          "speaker": "tsa",
+          "text": "No liquids past this point, miss. Drink it or bin it. Your call.",
+          "bladder": "Bin it. BIN IT. It was only eight dollars."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Chug it. All of it. Right here at the barrier, like a legend.",
+          "effects": [
+            {
+              "drink": 14
+            },
+            {
+              "stat": "halo",
+              "add": 10
+            },
+            {
+              "minutes": 3
+            }
+          ],
+          "next": "seat_34a"
+        },
+        {
+          "text": "Tip it into the bin, and feel the waste of it stain the halo.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -15
+            }
+          ],
+          "next": "seat_34a"
+        }
+      ]
+    },
+    {
+      "id": "seat_34a",
+      "title": "1:00 PM — Fourteen Hours in 34A",
+      "chapter": "Chapter 4",
+      "onEnter": [
+        {
+          "clock": "13:00"
+        },
+        {
+          "minutes": 20
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Seat 34A. A window, a tray table, and between Bonnie and the aisle a large businessman who is asleep before the doors close."
+        },
+        {
+          "speaker": "businessman",
+          "text": "Long flight, eh.",
+          "mood": "already half asleep",
+          "bladder": "Fourteen hours. Behind a wall. A wall that snores."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Perfect. A wall of businessman means nobody can see me squirm.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": 4
+            }
+          ],
+          "next": "drink_service"
+        },
+        {
+          "text": "Do the math again. Properly this time. Know exactly where I stand.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -3
+            },
+            {
+              "flag": "did_math"
+            }
+          ],
+          "next": "drink_service"
+        },
+        {
+          "text": "Sleep NOW while it's quiet. Sleep is time travel for the desperate.",
+          "effects": [
+            {
+              "minutes": 120
+            },
+            {
+              "stat": "control",
+              "add": 6
+            }
+          ],
+          "next": "drink_service"
+        }
+      ]
+    },
+    {
+      "id": "drink_service",
+      "title": "3:00 PM — Drink Service",
+      "chapter": "Chapter 4",
+      "onEnter": [
+        {
+          "minutes": 60
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The numbers were not comforting.",
+          "if": [
+            {
+              "flag": "did_math"
+            }
+          ]
+        },
+        {
+          "speaker": "attendant",
+          "text": "And to drink? We have tea, coffee, juice... or I can do the large water.",
+          "bladder": "Say \"nothing, thank you.\" It is three words. You know all three."
+        }
+      ],
+      "triggers": [
+        {
+          "when": [
+            {
+              "stat": "halo",
+              "gte": 95
+            }
+          ],
+          "bladder": "Your hand is ALREADY reaching for it. Stop being so nice!",
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Put. The cup. Down.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                },
+                {
+                  "stat": "halo",
+                  "add": -5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "drink": 10
+                },
+                {
+                  "stat": "halo",
+                  "add": 5
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"Tea, please.\" Warm, modest... and a deceptively large pot.",
+          "effects": [
+            {
+              "drink": 10
+            },
+            {
+              "stat": "halo",
+              "add": 3
+            }
+          ],
+          "next": "turbulence"
+        },
+        {
+          "text": "\"Coffee.\" Small cup. Sharp price: it goes straight through.",
+          "effects": [
+            {
+              "drink": 7
+            },
+            {
+              "fullness": 3
+            }
+          ],
+          "next": "turbulence"
+        },
+        {
+          "text": "\"Juice, thank you.\" Sweet, heavy, and somehow 400 ml.",
+          "effects": [
+            {
+              "drink": 12
+            }
+          ],
+          "next": "turbulence"
+        },
+        {
+          "text": "\"Just the water.\" The LARGE water. The only size they carry.",
+          "effects": [
+            {
+              "drink": 14
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ],
+          "next": "turbulence"
+        }
+      ]
+    },
+    {
+      "id": "turbulence",
+      "title": "6:00 PM — Turbulence",
+      "chapter": "Chapter 4",
+      "onEnter": [
+        {
+          "minutes": 180
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Hour five. The seatbelt sign chimes and the cabin drops a foot. The belt sits exactly where she wishes it did not.",
+          "bladder": "WHO APPROVED THIS? Who is flying this thing?"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Grip both armrests and ride it like a rodeo of pure regret.",
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Brace! Brace! Brace!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 6
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -14
+                }
+              ]
+            }
+          },
+          "next": "aisle_opens"
+        },
+        {
+          "text": "Press the blanket down over my lap. Pressure against pressure.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -5
+            }
+          ],
+          "next": "aisle_opens"
+        },
+        {
+          "text": "Hum the safety video jingle. Panic, but organized.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 10
+            },
+            {
+              "stat": "control",
+              "add": 3
+            }
+          ],
+          "next": "aisle_opens"
+        }
+      ]
+    },
+    {
+      "id": "aisle_opens",
+      "title": "9:00 PM — The Aisle Opens",
+      "chapter": "Chapter 4",
+      "onEnter": [
+        {
+          "minutes": 180
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The businessman wakes, stretches, and shuffles off toward the lavatory. For the first time in eight hours, the aisle is open.",
+          "bladder": "The wall is GONE. Go. GO. This is not a drill."
+        }
+      ],
+      "choices": [
+        {
+          "set": "bathroom_offer",
+          "texts": {
+            "refuse": "Stay put. \"I'm fine!\" she tells nobody at all.",
+            "hover": "Unbuckle... half stand... and sit back down as he returns.",
+            "busy": "Tidy the seat pocket instead. Fold the blanket. Very busy."
+          },
+          "next": "descent"
+        }
+      ]
+    },
+    {
+      "id": "descent",
+      "title": "2:20 AM — The Descent",
+      "chapter": "Chapter 4",
+      "onEnter": [
+        {
+          "minutes": 320
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Forty minutes of descent. The pilot points out landmarks. The plane leans, slowly, onto every one of them.",
+          "bladder": "Every. Single. Landmark."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Nod at every landmark. Smile. Be a lovely window companion.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "stat": "control",
+              "add": -8
+            }
+          ],
+          "next": "immigration"
+        },
+        {
+          "text": "Fake sleep. Rude-adjacent, but faces can't leak secrets while unconscious.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -8
+            },
+            {
+              "stat": "control",
+              "add": -3
+            }
+          ],
+          "next": "immigration"
+        },
+        {
+          "text": "Count the seconds between waves. Knowledge is power?",
+          "minigame": {
+            "id": "tremor_lock",
+            "difficulty": 3,
+            "prompt": "Ride the descent. On the beat.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 8
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -12
+                }
+              ]
+            }
+          },
+          "next": "immigration"
+        }
+      ]
+    },
+    {
+      "id": "immigration",
+      "title": "8:30 PM (local) — Immigration",
+      "chapter": "Chapter 5",
+      "onEnter": [
+        {
+          "clock": "20:30"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Landed. A new clock on the wall says 8:30 in the evening. Her body has stopped believing in clocks."
+        },
+        {
+          "speaker": "officer",
+          "text": "Purpose of visit?",
+          "bladder": "Tell him the truth. \"To find a bathroom.\""
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"Exchange program!\" Bright. Crisp. Rehearsed in the mirror weeks ago.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ],
+          "next": "arrivals_text"
+        },
+        {
+          "text": "Answer in the fewest possible syllables. Words shake things loose.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 8
+            },
+            {
+              "stat": "control",
+              "add": 3
+            }
+          ],
+          "next": "arrivals_text"
+        },
+        {
+          "text": "Compliment his stamp technique. Charm is a pressure valve.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "minutes": 3
+            },
+            {
+              "stat": "control",
+              "add": -3
+            }
+          ],
+          "next": "arrivals_text"
+        }
+      ]
+    },
+    {
+      "id": "arrivals_text",
+      "title": "8:45 PM — The Sign and the Text",
+      "chapter": "Chapter 5",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Past the desk, a restroom sign glows like a lighthouse. Her phone buzzes: \"We're outside, love!! 🎉\"",
+          "bladder": "Lighthouse. LIGHTHOUSE. Steer toward the lighthouse."
+        }
+      ],
+      "choices": [
+        {
+          "set": "bathroom_offer",
+          "texts": {
+            "refuse": "Type \"Coming!!\" and walk straight past the sign.",
+            "hover": "Drift toward the sign... and let the crowd carry her on.",
+            "busy": "Find a trolley first. Then the right carousel. Then it is too late."
+          },
+          "next": "carousel"
+        }
+      ]
+    },
+    {
+      "id": "carousel",
+      "title": "8:55 PM — Baggage Claim",
+      "chapter": "Chapter 5",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Her suitcase comes round the carousel: fifty pounds, packed by someone who feared for her survival abroad.",
+          "bladder": "Do NOT lift that. Lifting is pushing. Pushing is my department."
+        }
+      ],
+      "choices": [
+        {
+          "text": "One clean deadlift, exhale like a powerlifter, DONE.",
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Lift! Clench! Lift!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 4
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -14
+                }
+              ]
+            }
+          },
+          "next": "higgins_hug"
+        },
+        {
+          "text": "Let it go around again and catch it at a better angle next lap.",
+          "effects": [
+            {
+              "minutes": 8
+            },
+            {
+              "stat": "control",
+              "add": -5
+            }
+          ],
+          "next": "higgins_hug"
+        },
+        {
+          "text": "Ask the kind man beside me for help, with my best exhausted smile.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -5
+            },
+            {
+              "stat": "suspicion",
+              "add": 5
+            }
+          ],
+          "next": "higgins_hug"
+        }
+      ]
+    },
+    {
+      "id": "higgins_hug",
+      "title": "9:30 PM — The Higgins Family",
+      "chapter": "Chapter 6",
+      "onEnter": [
+        {
+          "clock": "21:30"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Arrivals. A sprinting figure and a slower, wider one behind her."
+        },
+        {
+          "speaker": "irina",
+          "text": "BONNIE! BONNIE!"
+        },
+        {
+          "speaker": "narrator",
+          "text": "Mrs. Higgins arrives second and hugs first: a fierce, two-armed squeeze, right around the middle.",
+          "bladder": "ABORT HUG. ABORT HUG."
+        },
+        {
+          "speaker": "bonnie",
+          "text": "Hnnng... HI!",
+          "mood": "half an octave too high"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Hug back. Breathe out. Smile. Be delighted.",
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 2,
+            "prompt": "Perfect stillness. Do NOT flinch.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "halo",
+                  "add": 5
+                },
+                {
+                  "stat": "control",
+                  "add": 3
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -14
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 10
+                }
+              ]
+            }
+          },
+          "next": "airport_offer"
+        },
+        {
+          "text": "Get a hand out first and turn it into a handshake. Then a wave.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "stat": "control",
+              "add": 2
+            }
+          ],
+          "next": "airport_offer"
+        }
+      ]
+    },
+    {
+      "id": "airport_offer",
+      "title": "9:35 PM — Before the Drive",
+      "chapter": "Chapter 6",
+      "lines": [
+        {
+          "speaker": "irina",
+          "text": "How do you even go to the bathroom in that suit?"
+        },
+        {
+          "speaker": "bonnie",
+          "text": "I didn't.",
+          "mood": "brightly",
+          "bladder": "At LAST. Someone is asking the right questions."
+        },
+        {
+          "speaker": "mrs_higgins",
+          "text": "Want to go before we drive, love? It's forty minutes."
+        }
+      ],
+      "choices": [
+        {
+          "set": "bathroom_offer",
+          "texts": {
+            "refuse": "\"I'm perfectly fine!\" Voice up half an octave.",
+            "hover": "\"Oh, maybe I... no. No, let's go, you've waited long enough.\"",
+            "busy": "Insist on wheeling the suitcase to the car herself."
+          },
+          "next": "host_car"
+        }
+      ]
+    },
+    {
+      "id": "host_car",
+      "title": "9:45 PM — The Car",
+      "chapter": "Chapter 6",
+      "lines": [
+        {
+          "speaker": "mrs_higgins",
+          "text": "Coastal road or the tunnel, love? One's ever so pretty, the other's quick... though with the roadworks lately, honestly, who knows.",
+          "bladder": "Quick. QUICK. Nobody has ever needed pretty less."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"The coastal road sounds lovely.\"",
+          "effects": [
+            {
+              "minutes": 45
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "stat": "control",
+              "add": -8
+            }
+          ],
+          "next": "welcome_tea"
+        },
+        {
+          "text": "\"The tunnel, maybe? Quickest is best.\"",
+          "effects": [
+            {
+              "minutes": 30
+            },
+            {
+              "stat": "control",
+              "add": -4
+            }
+          ],
+          "next": "welcome_tea"
+        },
+        {
+          "text": "\"Surprise me!\"",
+          "effects": [
+            {
+              "minutes": 40
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "stat": "control",
+              "add": -6
+            }
+          ],
+          "next": "welcome_tea"
+        }
+      ]
+    },
+    {
+      "id": "welcome_tea",
+      "title": "10:30 PM — Welcome Tea",
+      "chapter": "Chapter 6",
+      "lines": [
+        {
+          "speaker": "mrs_higgins",
+          "text": "Sit, sit! You must be PARCHED after that flight."
+        },
+        {
+          "speaker": "irina",
+          "text": "I'm bursting!",
+          "bladder": "SHE gets to say it. Out loud. Just like that."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Irina thunders upstairs. A pot of tea the size of a lighthouse lands on the table."
+        },
+        {
+          "speaker": "mrs_higgins",
+          "text": "Milk? Sugar? Drink up, love."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Down it: graceful, grateful, gone.",
+          "effects": [
+            {
+              "drink": 12
+            },
+            {
+              "stat": "halo",
+              "add": 10
+            },
+            {
+              "minutes": 10
+            }
+          ],
+          "next": "first_night"
+        },
+        {
+          "text": "Sip it slowly: polite, and stalling for dear life.",
+          "effects": [
+            {
+              "drink": 6
+            },
+            {
+              "minutes": 20
+            },
+            {
+              "stat": "control",
+              "add": -5
+            }
+          ],
+          "next": "first_night"
+        },
+        {
+          "text": "Nurse this one forever. Tiny sips, long stories, buy every possible second.",
+          "effects": [
+            {
+              "drink": 3
+            },
+            {
+              "minutes": 35
+            },
+            {
+              "stat": "control",
+              "add": -8
+            },
+            {
+              "stat": "halo",
+              "add": -3
+            }
+          ],
+          "next": "first_night"
+        },
+        {
+          "text": "\"I'm so sorry, the journey has absolutely wrecked me. Could I possibly just... go up to bed?\"",
+          "if": [
+            {
+              "stat": "fullness",
+              "gte": 85
+            }
+          ],
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "stat": "suspicion",
+              "add": 8
+            }
+          ],
+          "next": "first_night"
+        }
+      ]
+    },
+    {
+      "id": "first_night",
+      "title": "11:30 PM — The First Night",
+      "chapter": "Chapter 7",
+      "onEnter": [
+        {
+          "clock": "23:30"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The guest room is lovely. The catch arrives with the towels: the only working bathroom upstairs is the en-suite off Irina's room."
+        },
+        {
+          "speaker": "irina",
+          "text": "Just come through whenever! I sleep like the dead.",
+          "bladder": "Through HER ROOM. Past her BED. In the DARK."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"No problem at all!\" A sentence so false it should be arrested.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ],
+          "next": "midnight"
+        },
+        {
+          "text": "Stay up a while getting to know her. Friendship is politeness too.",
+          "effects": [
+            {
+              "flag": "friends"
+            },
+            {
+              "minutes": 45
+            },
+            {
+              "stat": "control",
+              "add": -8
+            },
+            {
+              "stat": "suspicion",
+              "add": -10
+            }
+          ],
+          "next": "midnight"
+        },
+        {
+          "text": "Scout the hallway quietly first. Know the terrain. Count the creaks.",
+          "effects": [
+            {
+              "flag": "scouted"
+            },
+            {
+              "minutes": 10
+            }
+          ],
+          "next": "midnight"
+        }
+      ]
+    },
+    {
+      "id": "midnight",
+      "title": "12:30 AM — Music Through the Wall",
+      "chapter": "Chapter 7",
+      "onEnter": [
+        {
+          "clock": "00:30"
+        },
+        {
+          "minutes": 30
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Irina does not sleep like the dead. Irina plays music and talks through the wall, cheerfully, at length.",
+          "bladder": "She is AWAKE. The door is right there and she is AWAKE."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Wait her out. The record grows with every minute.",
+          "effects": [
+            {
+              "minutes": 90
+            },
+            {
+              "stat": "control",
+              "add": -10
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ],
+          "next": "two_am"
+        },
+        {
+          "text": "Pace the room in tiny circles. Movement is management.",
+          "effects": [
+            {
+              "minutes": 60
+            }
+          ],
+          "minigame": {
+            "id": "tremor_lock",
+            "difficulty": 2,
+            "prompt": "Small steps. On the beat.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 7
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -8
+                }
+              ]
+            }
+          },
+          "next": "two_am"
+        },
+        {
+          "text": "Lie perfectly still and go somewhere else in my head. A beach. A DRY beach.",
+          "effects": [
+            {
+              "minutes": 60
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 2,
+            "prompt": "Dry beach. Dry. Beach.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 9
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -10
+                }
+              ]
+            }
+          },
+          "next": "two_am"
+        }
+      ]
+    },
+    {
+      "id": "two_am",
+      "title": "2:00 AM — The Final Threshold",
+      "chapter": "Chapter 7",
+      "onEnter": [
+        {
+          "clock": "02:00"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Two in the morning. The music has stopped. Twenty-two hours. She is a marvel of human engineering, and the dam is creaking."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Three ways through this. None of them dignified.",
+          "bladder": "Pick one. ANY one. I vote for all three at once."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Go. Now. Through her room, silent as a guilty thought.",
+          "next": "sneak"
+        },
+        {
+          "text": "Hold until her morning run. Four more hours. The PERFECT record.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 5
+            }
+          ],
+          "next": "dawn_wait"
+        },
+        {
+          "text": "The window. The garden. The dark. ...I am not a garden person. Am I?",
+          "next": "garden_ledge"
+        }
+      ]
+    },
+    {
+      "id": "sneak",
+      "title": "The Dark Room",
+      "chapter": "Chapter 7",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Irina's door opens without a sound. The room is all shapes: a bed, a chair, a strip of light under the far door."
+        },
+        {
+          "speaker": "narrator",
+          "text": "She counted the creaks earlier. That helps. A little.",
+          "if": [
+            {
+              "flag": "scouted"
+            }
+          ]
+        },
+        {
+          "speaker": "narrator",
+          "text": "Somewhere in the dark, breathing. Slow. Probably asleep.",
+          "bladder": "Probably. PROBABLY is good enough. Walk."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Step. Pause. Step. Read the breathing like sonar.",
+          "minigame": {
+            "id": "tremor_lock",
+            "difficulty": 3,
+            "prompt": "Step. Pause. Step.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 4
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 30
+                },
+                {
+                  "stat": "control",
+                  "add": -8
+                }
+              ]
+            }
+          },
+          "next": "sneak_mid"
+        },
+        {
+          "text": "...no. Back out. The dawn plan.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -5
+            }
+          ],
+          "next": "dawn_wait"
+        }
+      ]
+    },
+    {
+      "id": "sneak_mid",
+      "title": "Three Steps Left",
+      "chapter": "Chapter 7",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Halfway. The strip of light is three steps away. The bed creaks behind her.",
+          "bladder": "THREE STEPS. I can see the door. I can SEE it."
+        }
+      ],
+      "choices": [
+        {
+          "text": "The last three steps. Slow as continental drift.",
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 3,
+            "prompt": "Slow. Slower. Slow-est.",
+            "success": {
+              "effects": [
+                {
+                  "void": true
+                }
+              ],
+              "next": "ending_sneak"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "void": true
+                }
+              ],
+              "next": "ending_woke_irina"
+            }
+          }
+        },
+        {
+          "text": "Just GO. Two quick steps and in.",
+          "minigame": {
+            "id": "mash",
+            "difficulty": 3,
+            "prompt": "GO GO GO!",
+            "success": {
+              "effects": [
+                {
+                  "void": true
+                }
+              ],
+              "next": "ending_sneak"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "void": true
+                }
+              ],
+              "next": "ending_woke_irina"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "dawn_wait",
+      "title": "The Deep Night Hours",
+      "chapter": "Chapter 7",
+      "onEnter": [
+        {
+          "minutes": 120
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Bonnie sits on the edge of the bed, breathes slowly, and waits. The waves come on the hour, each one taller.",
+          "bladder": "This is not a plan. This is a hostage situation."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Face it. Fight the wave through this whole hour.",
+          "effects": [
+            {
+              "minutes": 120
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 3,
+            "prompt": "The wave! Hold! HOLD!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -35
+                }
+              ]
+            }
+          },
+          "next": "dawn"
+        },
+        {
+          "text": "This is insane. Go NOW, through her room, before I shatter.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -5
+            }
+          ],
+          "next": "sneak"
+        }
+      ]
+    },
+    {
+      "id": "dawn",
+      "title": "6:58 AM — Dawn",
+      "chapter": "Chapter 7",
+      "onEnter": [
+        {
+          "clock": "06:58"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "At exactly 6:58 the front door downstairs clicks shut. Footsteps crunch on gravel and fade.",
+          "bladder": "The house is EMPTY. The house is empty!",
+          "if": [
+            {
+              "flag": "friends",
+              "is": false
+            }
+          ]
+        },
+        {
+          "speaker": "narrator",
+          "text": "6:58, and no footsteps on the gravel. Irina has skipped her run. She is downstairs cracking eggs for her new friend.",
+          "bladder": "She stayed in. For YOU. This is what being nice gets us.",
+          "if": [
+            {
+              "flag": "friends"
+            }
+          ]
+        }
+      ],
+      "choices": [
+        {
+          "text": "Walk to it. Slowly. Regally. This porcelain has been earned.",
+          "if": [
+            {
+              "flag": "friends",
+              "is": false
+            }
+          ],
+          "effects": [
+            {
+              "void": true
+            }
+          ],
+          "next": "ending_perfect"
+        },
+        {
+          "text": "Through her room NOW, while she's downstairs. Last chance.",
+          "if": [
+            {
+              "flag": "friends"
+            }
+          ],
+          "effects": [
+            {
+              "void": true
+            },
+            {
+              "stat": "halo",
+              "add": -5
+            }
+          ],
+          "next": "ending_perfect"
+        },
+        {
+          "text": "Go down to breakfast. Endure. Wait for the house to empty.",
+          "if": [
+            {
+              "flag": "friends"
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 4,
+            "prompt": "One. More. Hour.",
+            "success": {
+              "effects": [
+                {
+                  "void": true
+                }
+              ],
+              "next": "ending_perfect"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -100
+                }
+              ],
+              "next": "ending_lost"
+            }
+          }
+        },
+        {
+          "text": "Ask. Just... ask. Out loud. Like a person.",
+          "effects": [
+            {
+              "void": true
+            },
+            {
+              "stat": "halo",
+              "add": -20
+            }
+          ],
+          "next": "ending_asked"
+        }
+      ]
+    },
+    {
+      "id": "garden_ledge",
+      "title": "The Window",
+      "chapter": "Chapter 7",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The sash lifts without a sound. Below: a trellis, a hedge, a great deal of dark.",
+          "bladder": "I have no objections. None. I have NEVER been less picky."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Down the trellis. Behind the hedge. May the rosebush forgive me.",
+          "effects": [
+            {
+              "void": true
+            },
+            {
+              "stat": "halo",
+              "add": -40
+            }
+          ],
+          "next": "ending_garden"
+        },
+        {
+          "text": "...I am not a garden person. The bedroom route. Final answer.",
+          "next": "sneak"
+        }
+      ]
+    },
+    {
+      "id": "noticed_mild",
+      "title": "Somebody Notices",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "A sideways look. \"You keep shifting about. Everything alright?\"",
+          "bladder": "Tell them. They ASKED. It would be rude not to answer honestly."
+        }
+      ],
+      "choices": [
+        {
+          "set": "noticed",
+          "texts": {
+            "admit": "Admit to 'a little travel fatigue.' Vague. Deniable.",
+            "double_down": "\"Me? I'm WONDERFUL. Actually, is there a drink? I'd LOVE one.\""
+          },
+          "next": "return"
+        }
+      ]
+    },
+    {
+      "id": "noticed_strong",
+      "title": "Somebody Really Notices",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "\"You've gone pale, and you're trembling. What is going on?\"",
+          "bladder": "This is it. Say the word. It is one word."
+        }
+      ],
+      "choices": [
+        {
+          "set": "noticed",
+          "texts": {
+            "admit": "Admit it, barely a whisper: \"...I could use a stop. Soon. Please.\"",
+            "double_down": "\"Just the air conditioning!\" and a laugh that fools nobody."
+          },
+          "next": "return"
+        }
+      ]
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending_perfect",
+      "kind": "good",
+      "title": "The Perfect Record",
+      "text": "She walks down the hallway on shaking legs, locks the door, leans on the vanity, and finally lets go. It is the most colossal, silent and hard-earned relief of her life. She washes her hands, looks at her tired, victorious reflection, and smiles. The perfect record stands."
+    },
+    {
+      "id": "ending_sneak",
+      "kind": "good",
+      "title": "Silent as a Guilty Thought",
+      "text": "The en-suite door closes behind her without a click. Irina never stirs. Twenty-two hours end in the dark, in someone else's bathroom, in absolute silence. Nobody will ever know. She almost wishes somebody could."
+    },
+    {
+      "id": "ending_asked",
+      "kind": "good",
+      "title": "Like a Person",
+      "text": "\"Could I use your bathroom?\" Six words. Nobody gasps. Somebody says \"of course, love, second door.\" It turns out that was allowed the entire time. The record is over, and Bonnie cannot remember why it mattered."
+    },
+    {
+      "id": "ending_garden",
+      "kind": "neutral",
+      "title": "A Garden Person After All",
+      "text": "Behind the hedge, under the stars, in a country she has known for six hours. The rosebush keeps her secret. The halo does not survive the trellis, but the record, technically, does."
+    },
+    {
+      "id": "ending_woke_irina",
+      "kind": "neutral",
+      "title": "\"Oh! It's You\"",
+      "text": "The lamp clicks on. Irina blinks at her from the pillow, entirely unbothered. \"Bathroom's through there. I TOLD you to just come through.\" Bonnie makes it, with a witness and without her dignity. Irina is asleep again before the door closes."
+    },
+    {
+      "id": "ending_found_out",
+      "kind": "bad",
+      "title": "\"Just Go, Love\"",
+      "text": "Somebody finally says it out loud, kindly and firmly, and steers her toward the nearest door. It is mortifying for about four seconds and then it is the best thing that has ever happened to her. The record ends early, by popular demand."
+    },
+    {
+      "id": "ending_lost",
+      "kind": "bad",
+      "title": "Not Quite",
+      "text": "Control gives out before the journey does. Nothing a change of clothes and a very long shower cannot fix, but the perfect record is over. She will tell this story at parties in about ten years."
+    }
+  ],
+  "scorecard": [
+    {
+      "label": "Control",
+      "stat": "control"
+    },
+    {
+      "label": "Halo",
+      "stat": "halo"
+    },
+    {
+      "label": "Suspicion",
+      "stat": "suspicion"
+    },
+    {
+      "label": "How full at the end",
+      "stat": "fullness"
+    },
+    {
+      "label": "Hard mode",
+      "flag": "hard_mode"
+    },
+    {
+      "label": "Made a friend",
+      "flag": "friends"
+    }
+  ]
+}

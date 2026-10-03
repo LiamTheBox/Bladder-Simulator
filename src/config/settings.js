@@ -4,15 +4,38 @@ import { TUNING } from './tuning.js';
 
 const KEY = 'bladderSim.settings';
 
-export const settings = { difficulty: TUNING.simSpikeDifficulty };
+export const settings = {
+  ageConfirmed: false,                  // the 18+ gate; asked again whenever it could not be remembered
+  difficulty: TUNING.simSpikeDifficulty,
+  voice: true,                          // speak the bladder's lines aloud (subtitles always show)
+  vibration: true,
+  disabledMinigames: [],                // minigame ids the player never wants to see
+  blockedTags: [],                      // stories carrying any of these tags are hidden
+};
 
 export function isValidDifficulty(d) { return Number.isInteger(d) && d >= 1 && d <= 5; }
+const isTextList = (v) => Array.isArray(v) && v.length <= 100 && v.every((x) => typeof x === 'string' && x.length <= 120);
 
 try {
   const saved = JSON.parse(localStorage.getItem(KEY) ?? '{}');
-  if (isValidDifficulty(saved.difficulty)) settings.difficulty = saved.difficulty;
+  if (saved && typeof saved === 'object') {
+    if (saved.ageConfirmed === true) settings.ageConfirmed = true;
+    if (isValidDifficulty(saved.difficulty)) settings.difficulty = saved.difficulty;
+    if (typeof saved.voice === 'boolean') settings.voice = saved.voice;
+    if (typeof saved.vibration === 'boolean') settings.vibration = saved.vibration;
+    if (isTextList(saved.disabledMinigames)) settings.disabledMinigames = saved.disabledMinigames;
+    if (isTextList(saved.blockedTags)) settings.blockedTags = saved.blockedTags;
+  }
 } catch (e) { /* keep defaults */ }
 
 export function saveSettings() {
   try { localStorage.setItem(KEY, JSON.stringify(settings)); } catch (e) { /* still works for this session */ }
+}
+
+// Adds or removes one entry of a list setting, then saves
+export function toggleInList(list, value, present) {
+  const i = list.indexOf(value);
+  if (present && i === -1) list.push(value);
+  if (!present && i !== -1) list.splice(i, 1);
+  saveSettings();
 }

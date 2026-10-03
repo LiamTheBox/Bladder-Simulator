@@ -14,8 +14,8 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- Roadmap steps 1 to 4 are done, and step 5 has three backlog games (`swipe_away`,
-  `distraction_popups`, `tremor_lock`) built and tested but **not yet playtested on a phone**: the game runs from `src/` as a Vite + vanilla JS static site, split into
+- Roadmap steps 1 to 7 are built, and step 8 is prepared (the build is deploy-ready; nothing is published).
+  Steps 6 and 7 are tested in a headless browser but **not yet playtested on a phone**: the game runs from `src/` as a Vite + vanilla JS static site, split into
   the module layout below, with identical behavior to the prototype. `src/main.js` wires sim events to
   audio / UI / minigames and runs the frame loop; `src/sim/events.js` lists every event with its payload.
 - `legacy/bladder_simulator_demo_(concept).html` is the original one-file prototype (tag `v12-baseline`),
@@ -81,7 +81,12 @@ values). Changing it restarts the game (`src/ui/reset.js`) and is remembered in 
 To add a game: one file in `src/minigames/`, its controls in `index.html` inside `#mg-panel`, register it in
 `index.js`, add its difficulty table to `TUNING`, and add win/lose/cancel tests in `tests/minigames.spec.js`.
 
-Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`. In sim mode the
+Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`.
+On trial (registered, but only reachable from "Try a new minigame" at the bottom of Settings, listed in
+`TUNING.practiceMinigames`): `tiptoe` (drag slowly, a speed limit), `steady_the_slosh` (keep a drifting wave
+centred), `think_of_something_else` (tap numbers in order while the bladder calls wrong ones). A try-out runs
+as `startMinigame({ id, practice: true })`: no stamina at stake and not cancelled by the spike rules. To approve
+one, move its id from `practiceMinigames` to `simSpikePool`. Tests: `tests/new-minigames.spec.js`. In sim mode the
 UI-intrusion games cover the bottom control panel (never the bladder); in story mode they are meant to cover the dialogue choices.
 
 Backlog of cross-platform "UI-intrusion" ideas (all drag/tap/hold, no special hardware):
@@ -95,9 +100,35 @@ Backlog of cross-platform "UI-intrusion" ideas (all drag/tap/hold, no special ha
 8. `scrub_monologue` — the bladder's huge words cover the text; rub the screen to wipe them off.
 9. `anchor_hold` — safe text keeps morphing into a pleading line; hold an anchor button to freeze it.
 10. `pressure_valve` — hold while a ring grows, release inside the green zone to unlock choices briefly.
+
+From the earlier Bonnie prototype (`legacy/bonnie_s_journey_minigames.md`), the ones that add something new:
+11. `on_the_spot` — a stat drains live while the player must pick one of two hard options; slower = costlier.
+12. `volley` — rapid-fire small talk: a question, two answers, a fast timer; hesitating raises suspicion.
+13. `brace` — an arrow flashes (left / right / both); tap the matching button before the jolt lands.
+14. `timing_bar` — a dot sweeps across a bar; tap while it is in the green zone, three misses fail.
+    (Close to `tremor_lock` and `pressure_valve`; build only if a sweeping bar reads better than a ring.)
+Already covered, as variants worth keeping in mind: the old `mash` had a bar that drains back between taps
+(a harder mode for ours); the old `hold` is `anchor_hold` plus fake-out prompts that try to make you let go.
+`on_the_spot` and `volley` act on dialogue choices, so they belong with the story runner, not sim mode.
+
 Prototype these in **sim mode first** (no story needed), 2–3 at a time, playtest on a phone.
 
 ## Story format (data, never code)
+**Built (step 6):** the exact format is documented at the top of `src/story/schema.js`;
+`src/story/validator.js` enforces it and `src/story/loader.js` is the only way story text enters the game.
+`src/story/runner.js` plays a story (pure logic, no DOM); `src/ui/story_screen.js` is the screen: bladder on
+top, text and choices below, the bladder's replies in its bubble, minigames in place of the choices.
+In story mode (`st.storyMode`) the sim keeps animating but its stamina drain, random spikes and idle chatter
+are off; the story sets the fullness. Bundled stories: `stories/bonnies_journey.json` (seven chapters, seven
+endings, placeholder wording; **generated** by `tools/build_bonnie.py`, so edit that and re-run it) and
+`stories/placeholder.json` (tiny, uses every feature; also offered in-game as the story template).
+`tools/walk_story.mjs` validates a story and random-plays it thousands of times to show how runs end. Beyond the sketch below, the format has
+choice sets (one kind of decision, reworded per scene), interruptions (`"scene"` triggers with `"return"`),
+story-wide triggers, modes (a flag that makes minigames harder and filling faster, e.g. hard mode),
+conditional lines, and `void` and `clock` effects. `src/story/library.js` keeps imported stories and one
+automatic save per story in `localStorage`; `src/ui/story_menu.js` is the list with import / export.
+Not built yet: minigames that act on the dialogue itself. The original sketch, for intent:
+
 Stories are JSON files, versioned (`"schemaVersion": 1`). Sketch:
 - `meta`: title, author, rating, content tags, description.
 - `characters[]`: id, display name, **age (integer, must be >= 18)**, voice, personality notes.
@@ -116,6 +147,20 @@ Safety/robustness for story files (user-made files are **untrusted input**):
 - Validator also checks: unreachable scenes, missing `next` targets, unknown minigame ids, missing stats.
 - User stories are imported locally (file picker / paste) and kept in the browser. No upload server.
 
+## First story: Bonnie's journey (reference material in `legacy/`)
+The first story (roadmap step 6) is adapted from the earlier Bonnie prototype. Bonnie is a young woman in her
+20s (23 in the prose) who lives with her parents for personal reasons and flies out for a university exchange
+semester, staying with a host family. Reference files, none of them engine code:
+- `bonnies_journey.md` — the journey as prose (the beats and tone).
+- `dialogue_and_choices_extract.md` — every line and choice of the old prototype, by chapter. **Placeholder
+  wording**: reuse the structure, expect the text to be rewritten.
+- `bonnie_s_journey_minigames.md` — the old prototype's six minigames (logged in the backlog above).
+- `bonnie_concept_screenshot.png` — the old screen, as the layout reference for story mode: chapter strip
+  along the top; clock with time-to-goal; narration and choices on the left; the bladder's inner voice as a
+  quoted line under the choices; on the right the bladder with volume in ml and a mood word, then the stat
+  meters (Control, a people-pleasing "halo" stat, Suspicion) and Save / Load / Menu.
+These stats and rules belong to this story's JSON, not to the engine (see the next section).
+
 ## Resource-management layer (design from scratch, generic)
 Do **not** hard-code one story's rules into the engine. Provide generic building blocks that a story
 can switch on: meters with thresholds, offers the player can accept/refuse with consequences, a clock that
@@ -123,12 +168,35 @@ advances per scene beat, banked reserves (earned coping moves) spent during spik
 suspicion" style meters. Stories choose which blocks they use via `stats` in the JSON.
 
 ## Content and safety rules (non-negotiable)
-- **Every character in every story must declare an age of 18 or over, and the story context must be
-  consistent with that** (adult life circumstances; no childlike framing, no parent-driven/school settings
-  for the main cast). The validator rejects stories missing ages or with an age under 18.
+- **Every character in every story must declare an age of 18 or over and be written as the adult they are.**
+  Adult life comes in many shapes: living with parents or family, university or exchange study and host
+  families are all fine settings. What stays out is a child or teenager in all but the stated number:
+  no childlike depiction of a character's body, speech, behaviour or treatment.
+  The validator rejects stories missing ages or with an age under 18.
 - No minors. No real people. No non-consensual themes. **No explicit sexual content.**
 - Player controls: intensity setting, per-tag opt-outs, ability to disable individual minigames, a persistent pause/exit button.
 - If asked to write or port story content that conflicts with these rules, decline and say why briefly.
+
+## Player controls (step 7, built)
+- 18+ gate on a first visit (`src/ui/settings_panel.js`); asked again whenever storage could not remember it.
+- Settings (`src/config/settings.js`, all in `localStorage`, guarded): difficulty, speak lines aloud,
+  vibration, a switch per minigame, hide stories by tag, back to the start screen.
+- A switched-off minigame never appears: free play skips it, a story gets another enabled game, and with
+  every game off a story treats its minigames as passed.
+- Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
+
+## Desktop and phone layouts
+One page, two layouts, chosen by window size alone (the media query at the end of `src/styles/main.css`, no
+device sniffing, switches live on resize). Under 900 px wide or 520 px high: the stacked phone layout. Above: the
+panel sits beside the bladder (free play: controls left; story: text and choices left, bladder full height
+right, a minigame's controls under the text). `bladderGeom()` uses the compact story sizing only when the play
+area is a short strip (`H < W`), so it needs no knowledge of the layout. `tests/desktop-layout.spec.js` covers it.
+
+## Deploying (step 8, prepared)
+`npm run build` writes a self-contained static site to `dist/` (relative paths, no server, no CDN): upload
+that folder to any static host. Netlify / Cloudflare Pages: build command `npm run build`, output `dist`.
+GitHub Pages: `.github/workflows/deploy-pages.yml`, which only runs when started by hand.
+Publishing is the owner's decision; do not deploy without being asked.
 
 ## Testing
 - `tests_reference/v11_regression.py` (38 checks) and `tests_reference/v12_suite.py` (128 checks) are
@@ -145,7 +213,11 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   overrides; `tests/rules.spec.js` covers rule fixes made after the refactor.
 - `tests/events.spec.js` has a test per event (payload and order); `tests/settings.spec.js` covers the
   difficulty setting and blocked storage.
-- Still to add: tests for the story validator.
+- `tests/story-validator.spec.js` and `tests/story-runner.spec.js` cover the validator, loader and runner (they
+  run in Node, no browser); the runner test also random-walks every bundled story to check it can always finish.
+  `tests/story-mode.spec.js` covers the story screen in the browser, including that story text is never HTML.
+- `tests/player-controls.spec.js` covers the age gate and settings; `tests/story-library.spec.js` covers
+  import / export, tag filtering and saves.
 - Run tests before every commit that touches `sim/`, `minigames/`, or `story/`.
 
 ## How to work in this repo

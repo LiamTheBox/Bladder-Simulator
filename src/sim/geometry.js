@@ -8,6 +8,10 @@ export function setPlayAreaSize(fn) { measure = fn; }
 export function playAreaSize() { return measure(); }
 
 export function bladderGeom(fill = st.volume / 100) {
-  const { W, H } = measure(), m = Math.min(W, H);
-  return { W, H, cx: W / 2 + st.body.x, cy: H * TUNING.bodyCy + st.body.y, Rr: m * TUNING.minR + m * (TUNING.maxR - TUNING.minR) * fill };
+  const { W, H } = measure();
+  // In a story on a phone the play area is a short strip above the text: the bladder is drawn smaller and
+  // higher so its legs and bubble still fit. Beside the text (wide screens) the area is tall and it is not needed.
+  const strip = st.storyMode && H < W;
+  const m = Math.min(W, strip ? H * TUNING.storyBodyShare : H);
+  return { W, H, cx: W / 2 + st.body.x, cy: H * (strip ? TUNING.storyBodyCy : TUNING.bodyCy) + st.body.y, Rr: m * TUNING.minR + m * (TUNING.maxR - TUNING.minR) * fill };
 }

@@ -19,6 +19,7 @@ const names = (list) => list.map(([n]) => n);
 
 test('drinkQueued, and thresholdCrossed going up while the drink digests', async ({ browser }) => {
   const { context, pg, ev, events } = await started(browser);
+  await ev('st.volume = 17'); // so the drink ends clearly past 30%, not exactly on the line (rounding decided it)
   await pg.locator('#btn-shop').dispatchEvent('pointerdown');
   await pg.locator('.drink-btn').first().dispatchEvent('pointerdown');
   expect(await events('drinkQueued')).toEqual([['drinkQueued', { name: 'Water', amount: 15 }]]);

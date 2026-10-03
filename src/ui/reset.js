@@ -1,5 +1,6 @@
 // Start the game over from its opening state (used when a setting that changes the rules is switched).
 import { st, resetState } from '../sim/state.js';
+import { emit } from '../sim/events.js';
 import { stopAllWater } from '../audio/engine.js';
 import { endMinigame } from '../minigames/index.js';
 import { hideBubble } from './bubble.js';
@@ -14,4 +15,5 @@ export function resetGame() {
   resetState();
   hideBubble();
   resetControls();
+  emit('gameReset');
 }

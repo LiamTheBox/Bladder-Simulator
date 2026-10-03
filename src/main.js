@@ -17,14 +17,14 @@ import './styles/preflight.css';
 import { voiceLines, minigameLines } from './config/content.js';
 import { DANCE_MOVES } from './config/dance.js';
 import { st } from './sim/state.js';
-import { on } from './sim/events.js';
+import { on, off } from './sim/events.js';
 import { bladderGeom, setPlayAreaSize } from './sim/geometry.js';
 import { stepSim, stepHeartbeat, triggerAccident } from './sim/step.js';
 import { pickDanceMove, updateDance } from './sim/dance.js';
 import { updateParticles } from './sim/particles.js';
 import { canvasContainer } from './render/canvas.js';
 import { renderCanvas } from './render/scene.js';
-import { waterState, playWater, stopWater, stopAllWater, updateBubbles, playHeartbeat } from './audio/engine.js';
+import { waterState, playWater, stopWater, stopAllWater, updateBubbles, playHeartbeat, playPoke, playStretch, playSnapback } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
 import { startMinigame, endMinigame, updateMinigame } from './minigames/index.js';
@@ -35,7 +35,7 @@ import { mgBreatheArea } from './minigames/breathe.js';
 import { mgLeaksArea } from './minigames/leaks.js';
 import { bubbleEl, subtitle, updateBubble } from './ui/bubble.js';
 import { updateHud, updateBackground } from './ui/hud.js';
-import { btnVoid, updateClenchUI } from './ui/controls.js';
+import { btnVoid, updateClenchUI, lockClenchButton } from './ui/controls.js';
 import { pointerCount } from './ui/input.js';
 import { isPaused } from './ui/menus.js';
 
@@ -45,17 +45,24 @@ setPlayAreaSize(() => ({ W: canvasContainer.clientWidth, H: canvasContainer.clie
 on('haptic', (pattern) => { vibe(pattern); });
 on('fillFlow', (flowing) => { if (flowing) playWater(true); else stopWater(true); });
 on('drainFlow', (flowing) => { if (flowing) playWater(false); else stopWater(false); });
-on('voidEnded', () => { updateClenchUI(); stopWater(false); });
+on('sphincterChanged', () => { updateClenchUI(); });
+on('voidStarted', () => { lockClenchButton(); vibe([50, 100, 50, 100, 50]); speak('voiding', true); });
+on('voidEnded', () => { stopWater(false); });
 on('voidButtonChanged', (disabled) => { btnVoid.disabled = disabled; });
 on('voiceCue', (category) => speak(category)); // true if the line was actually spoken
 on('accident', () => {
-  updateClenchUI();
   if (st.minigame.active) endMinigame(false, true);
   vibe([200, 100, 200, 100, 200]); speak('accident', true);
 });
-on('spikeDue', () => { startMinigame(); }); // sim mode: random game from TUNING.simSpikePool, at the Settings difficulty
+on('spikeStarted', () => { startMinigame(); }); // sim mode: random game from TUNING.simSpikePool, at the Settings difficulty
 on('spikeCancelled', () => { endMinigame(false, true); });
 on('heartbeat', () => { playHeartbeat(); vibe(45); });
+on('interaction', ({ type, force }) => {
+  if (type === 'poke') { playPoke(); vibe(20); speak('poke'); }
+  else if (type === 'stretchStart') { playStretch(20); vibe(15); speak('stretch'); }
+  else if (type === 'snapback') { playSnapback(force); vibe([20, 30, 40]); }
+  else if (type === 'soothe' || type === 'squeeze') speak(type);
+});
 
 /* --- GAME LOOP --- */
 let lastTime = performance.now();
@@ -95,7 +102,7 @@ if (import.meta.env.MODE === 'test') {
   Object.assign(window, {
     st, canvasContainer, bladderGeom, waterState, updateClenchUI, voiceLines, triggerAccident, speakDirect,
     startMinigame, endMinigame, bubbleEl, minigameLines, mgPanel, btnRow, mgBtnMash, mgBreatheArea, mgLeaksArea,
-    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on
+    subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on, offSimEvent: off
   });
   Object.defineProperty(window, 'prioritySpeechUntil', { get: getPrioritySpeechUntil, set: setPrioritySpeechUntil });
 }

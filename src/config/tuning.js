@@ -13,6 +13,10 @@ export const TUNING = {
   leakPerSec: 20,                // sphincter open
   voidPerSec: 40,                // VOID pressed, or an accident
 
+  // Marks announced with a thresholdCrossed event when the value passes them in either direction
+  volumeThresholds: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],
+  staminaThresholds: [25, 50, 75],
+
   // Stamina (0..100)
   staminaDrainFrom: 50,          // volume where holding starts to cost stamina, and where minigames get cancelled
   staminaDrainPerPct: 0.08,      // drain per second, per percent of volume above staminaDrainFrom

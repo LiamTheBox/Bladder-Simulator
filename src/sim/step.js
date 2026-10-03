@@ -1,23 +1,15 @@
 // The rules of the simulation, advanced once per frame. No DOM, no audio: anything the outside world must
-// react to is announced through sim/events.js. The order of the sections matters and matches the prototype.
-//
-// Events emitted:
-//   haptic(pattern)             a vibration the rules ask for
-//   fillFlow(bool) / drainFlow(bool)   every frame: whether fluid is rushing in / out right now
-//   voidEnded                   the bladder just ran empty and closed again
-//   voidButtonChanged(disabled) VOID became usable / unusable
-//   voiceCue(category)          a good moment for a voice line; a listener returns true if it was spoken
-//   accident                    control was lost
-//   spikeDue                    an urge spike should start now
-//   spikeCancelled              the hold ended (opened, or dropped below the threshold) during a spike
-//   heartbeat                   one beat
+// react to is announced through sim/events.js (which lists every event). The order of the sections matters
+// and matches the prototype.
 import { TUNING as T } from '../config/tuning.js';
 import { st } from './state.js';
 import { bladderGeom } from './geometry.js';
 import { emit } from './events.js';
+import { setSphincter } from './actions.js';
 
 export function triggerAccident() {
-  st.failureEvent = true; st.isClosed = false; st.isVoiding = true;
+  st.failureEvent = true; st.isVoiding = true;
+  setSphincter(false, 'accident');
   st.faceState = { e: 'wide_shake', m: 'small_o' }; st.faceTimer = 10.0;
   emit('accident');
 }
@@ -94,8 +86,10 @@ export function stepSim(dt, pointerCount) {
   }
 
   if (!st.isClosed && st.volume <= 0) {
-    st.volume = 0; st.isClosed = true; st.isVoiding = false; st.failureEvent = false;
-    emit('voidEnded');
+    const accident = st.failureEvent;
+    st.volume = 0; st.isVoiding = false; st.failureEvent = false;
+    setSphincter(true, 'empty');
+    emit('voidEnded', { accident });
   }
 
   // VOID button is only usable when it can do something
@@ -122,13 +116,27 @@ export function stepSim(dt, pointerCount) {
       // not in the frame of an accident: the spike would be cancelled a frame later and wipe the accident subtitle
       else if (!st.minigame.active) {
          st.minigame.cooldown -= dt;
-         if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume) emit('spikeDue');
+         if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume) emit('spikeStarted');
       }
 
   } else {
       if (st.minigame.active) emit('spikeCancelled'); // bladder dropped below 50% or was opened: no unfair failure
       st.stamina = Math.min(100, st.stamina + T.staminaRegenPerSec * dt);
       st.staminaDraining = false;
+  }
+
+  announceThresholds('volume', st.prevVolume, st.volume, T.volumeThresholds);
+  announceThresholds('stamina', st.prevStamina, st.stamina, T.staminaThresholds);
+  st.prevVolume = st.volume; st.prevStamina = st.stamina;
+}
+
+// Compares against the value at the end of the previous frame, so changes made between frames
+// (a minigame's stamina reward, a story effect) are announced too. "up" means the value reached the mark.
+function announceThresholds(stat, before, now, marks) {
+  if (before === now) return;
+  for (const threshold of marks) {
+    if (before < threshold && now >= threshold) emit('thresholdCrossed', { stat, threshold, direction: 'up', value: now });
+    else if (before >= threshold && now < threshold) emit('thresholdCrossed', { stat, threshold, direction: 'down', value: now });
   }
 }
 

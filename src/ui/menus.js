@@ -1,6 +1,6 @@
 // Start screen, drink shop and settings. The game is paused while any of them is open.
 import { drinks, voiceLines } from '../config/content.js';
-import { st } from '../sim/state.js';
+import { queueDrink } from '../sim/actions.js';
 import { startAudio, stopAllWater, playGulp } from '../audio/engine.js';
 import { vibe } from '../audio/haptics.js';
 import { speak, speakDirect } from '../audio/speech.js';
@@ -50,7 +50,7 @@ drinks.forEach(d => {
   const btn = document.createElement('div'); btn.className = 'drink-btn';
   btn.innerHTML = `<div class="drink-icon">${d.icon}</div><div class="drink-name">${d.name}</div><div class="drink-amt">+${d.amt}%</div>`;
   btn.addEventListener('pointerdown', (e) => {
-    e.stopPropagation(); st.pendingFluid += d.amt; speakDirect(d.reaction);
+    e.stopPropagation(); queueDrink(d.amt, d.name); speakDirect(d.reaction);
     shopOverlayEl.style.display = 'none'; vibe(20);
     playGulp();
   });

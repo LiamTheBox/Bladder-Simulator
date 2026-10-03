@@ -7,6 +7,7 @@ function initialState() {
   volume: TUNING.startVolume, pendingFluid: 0,
   isClosed: true, isSpeedingUp: false, isVoiding: false,
   stamina: 100, failureEvent: false,
+  prevVolume: TUNING.startVolume, prevStamina: 100, // last frame's values, for the thresholdCrossed event
   staminaDraining: false, // true while holding costs stamina; the HUD brightens the stamina bar from this
   // Minigame State
   minigame: {

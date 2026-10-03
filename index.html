@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Sensory Bladder Prototype V12</title>
+</head>
+<body>
+
+<div id="toy-container">
+  
+  <div id="start-overlay">
+    <div class="start-btn-visual">TAP TO START</div>
+    <div style="color: #94a3b8; margin-top: 24px; font-size: 0.9rem; text-align: center; max-width: 80%; line-height: 1.5;">
+      <b style="color:#f8fafc;font-size:1rem;">How to play</b><br><br>
+      Pick a drink 🍹 and let it digest into the bladder.<br>
+      Above 50% your stamina drains. Hold the lock closed, win the urge-spike minigames, or VOID.<br><br>
+      <b style="color:#f8fafc;">Touch the bladder</b><br>
+      Tap to poke &bull; rub to soothe &bull; pull the edge to stretch<br>
+      Two-finger pinch (or scroll wheel) to squeeze<br>
+      Tilt your phone to slosh the fluid<br><br>
+      <span style="opacity:.7;">The game pauses while menus are open or the tab is hidden.</span>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="shop-overlay">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: white;">BEVERAGES <span style="font-size:.7rem;color:#94a3b8;font-weight:700;">&#9208; paused</span></h2>
+        <button class="close-modal" data-target="shop-overlay" style="background: none; border: none; color: #94a3b8; font-size: 2rem; cursor: pointer; line-height: 1; pointer-events: auto;">&times;</button>
+      </div>
+      <div class="drink-grid" id="drink-grid"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="settings-overlay">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: white;">SETTINGS <span style="font-size:.7rem;color:#94a3b8;font-weight:700;">&#9208; paused</span></h2>
+        <button class="close-modal" data-target="settings-overlay" style="background: none; border: none; color: #94a3b8; font-size: 2rem; cursor: pointer; line-height: 1; pointer-events: auto;">&times;</button>
+      </div>
+      <h3 style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 8px;">Custom Voice Lines</h3>
+      <div class="custom-tts-row">
+        <input type="text" id="tts-input" placeholder="Type custom phrase here...">
+        <select id="tts-category">
+          <option value="casual">Casual (on start)</option>
+          <option value="filling">Filling (bladder getting fuller)</option>
+          <option value="desperate">Desperate (very full)</option>
+          <option value="begging">Begging (stamina low)</option>
+          <option value="poke">Poked</option>
+          <option value="stretch">Stretched</option>
+          <option value="soothe">Soothed</option>
+          <option value="squeeze">Squeezed</option>
+          <option value="success_hold">Won a minigame</option>
+          <option value="fail">Lost a minigame</option>
+          <option value="voiding">Voiding</option>
+          <option value="accident">Accident</option>
+        </select>
+        <button id="tts-add">Add Phrase</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="canvas-wrapper">
+    <canvas id="fluid-canvas"></canvas>
+    
+    <!-- STREAMLINED HUD -->
+    <div class="hud-overlay">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div class="glass-pill" id="vol-lbl" style="font-size: 1.25rem; padding: 10px 18px;">
+            <span class="status-dot" style="color: var(--accent);"></span>
+            <span style="color: #bae6fd;">0%</span>
+          </div>
+          <div id="pending-lbl" style="display: none; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; color: #a78bfa; width: fit-content; font-weight: 800; letter-spacing: 0.5px; border: 1px solid rgba(167, 139, 250, 0.3);">
+            +0% DIGESTING
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px;">
+          <div class="glass-pill" id="btn-shop" style="cursor: pointer; background: rgba(56, 189, 248, 0.15); border-color: var(--accent); pointer-events: auto; padding: 10px 14px;">🍹</div>
+          <div class="glass-pill" id="btn-settings" style="cursor: pointer; background: rgba(255, 255, 255, 0.1); pointer-events: auto; padding: 10px 14px;">⚙️</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="bladder-bubble"></div>
+  </div>
+
+  <div id="controls">
+    <div id="stamina-row">
+      <span class="stm-lbl">STAMINA</span>
+      <div class="stm-track"><div id="stamina-bar"></div></div>
+      <span id="stamina-text">100%</span>
+    </div>
+
+    <div id="action-zone">
+    <div class="btn-row" id="btn-row">
+      <button class="action-btn" id="btn-speedup">
+        <span>SPEED UP</span>
+        <span class="sub-text">Digest faster</span>
+      </button>
+      <button class="action-btn btn-empty" id="btn-void">
+        <span>VOID</span>
+        <span class="sub-text">Release all</span>
+      </button>
+    </div>
+
+    <div id="mg-panel">
+      <div class="timer-track"><div id="mg-timer-bar"></div></div>
+      <button id="mg-btn-mash">CLENCH! (0/15)</button>
+      <div id="mg-breathe-area"><div id="breathe-ring"></div><span id="breathe-label">HOLD</span></div>
+      <div id="mg-leaks-area">Tap the red cracks!</div>
+    </div>
+    </div>
+    
+    <button class="action-btn" id="btn-clench">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.15rem;">
+        <span id="clench-icon">🔒</span> <span id="clench-title">SPHINCTER LOCKED</span>
+      </div>
+      <span class="sub-text" id="clench-subtext">Tap to Unlock (Open)</span>
+    </button>
+  </div>
+
+</div>
+
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

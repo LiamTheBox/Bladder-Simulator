@@ -14,9 +14,9 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- Roadmap steps 1 to 3 are done: the game runs from `src/` as a Vite + vanilla JS static site, split into
+- Roadmap steps 1 to 4 are done: the game runs from `src/` as a Vite + vanilla JS static site, split into
   the module layout below, with identical behavior to the prototype. `src/main.js` wires sim events to
-  audio / UI / minigames and runs the frame loop; `src/sim/step.js` lists every event the sim emits.
+  audio / UI / minigames and runs the frame loop; `src/sim/events.js` lists every event with its payload.
 - `legacy/bladder_simulator_demo_(concept).html` is the original one-file prototype (tag `v12-baseline`),
   kept untouched as the behavior reference.
 - Commands: `npm run dev` (play locally), `npm run build` (static site in `dist/`), `npm test`.
@@ -52,7 +52,10 @@ tests_reference/   Python+Playwright tests to port to @playwright/test
 
 Rules of architecture:
 - `sim/` must not import from `render/`, `ui/`, or `story/`. It **emits events** (`spikeStarted`,
-  `thresholdCrossed`, `accident`, `voidStarted`, `minigameEnded`, ...). Story/UI listen.
+  `thresholdCrossed`, `accident`, `voidStarted`, `minigameEnded`, ...). Story/UI listen with `on()`, which
+  returns its own unsubscribe function. Events are delivered in the order they were raised.
+- UI handlers never edit the state object: buttons call `sim/actions.js` (`toggleSphincter`, `startVoid`,
+  `queueDrink`, ...) and touch input calls `sim/interactions.js`. A story can call the same functions.
 - All tunables live in `config/`. No magic numbers in logic.
 - Pointer Events only for input (works for mouse + touch). **No gyroscope, no keyboard-required, no
   multi-touch-required** mechanics. Keyboard shortcuts may exist as extras.
@@ -137,6 +140,8 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   smoke-tests the real production build and fails on any request to another host.
 - `tests/minigames.spec.js` covers the registry and each game's win / lose / cancel paths, difficulty and text
   overrides; `tests/rules.spec.js` covers rule fixes made after the refactor.
+- `tests/events.spec.js` has a test per event (payload and order); `tests/settings.spec.js` covers the
+  difficulty setting and blocked storage.
 - Still to add: tests for the story validator.
 - Run tests before every commit that touches `sim/`, `minigames/`, or `story/`.
 

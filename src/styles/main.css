@@ -302,3 +302,4 @@
   .setting-check input { width: 20px; height: 20px; flex: none; accent-color: #38bdf8; }
   /* In a story the play area is short: a more compact bubble leaves the bladder's legs visible */
   .story-mode #bladder-bubble { bottom: 8px; max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; }
+  #story-guide-link { color: #7dd3fc; font-size: 0.85rem; padding: 6px 0; }

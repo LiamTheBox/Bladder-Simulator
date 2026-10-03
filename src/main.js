@@ -1,6 +1,5 @@
 // Unsplit port of the legacy <script>: same code, now an ES module. The split into sim/ render/ audio/ ui/
 // minigames/ config/ happens in later commits, each checked by the ported tests.
-import * as Tone from 'tone';
 import '@fontsource/inter/400.css';
 import '@fontsource/inter/700.css';
 import '@fontsource/inter/900.css';
@@ -12,66 +11,22 @@ import './styles/preflight.css';
 import { drinks, voiceLines, minigameLines } from './config/content.js';
 import { DANCE_MOVES, LIVELY_MOVES } from './config/dance.js';
 import { TUNING } from './config/tuning.js';
+import { st } from './sim/state.js';
+import { bladderGeom, setPlayAreaSize } from './sim/geometry.js';
+import { waterState, startAudio, playWater, stopWater, stopAllWater, updateBubbles, playSnap, playPoke, playStretch, playSnapback, playHeartbeat, playGulp } from './audio/engine.js';
+import { vibe } from './audio/haptics.js';
+import { speak, speakLine, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
+import { bubbleEl, showBubble, hideBubble, subtitle, updateBubble } from './ui/bubble.js';
 
 /* PROTOTYPE: single-file toy. Handy tunables:
    BODY_CY / MIN_R / MAX_R ........ where the bladder sits and how big it gets
    DANCE_MOVES .................... the potty-dance list (add a case in updateDance to add a move)
    startMinigame() ................ minigame durations / difficulty; minigameLines = what the bladder says
    voiceLines / drinks ............ all the spoken text and drink data */
-/* --- AUDIO ENGINE --- */
-let audioCtxReady = false;
-let waterSynth, waterFilter, waterLfo, fillSynth, fillFilter, fillLfo;
-let heartBeat, snapSynth, pokeSynth, bubbleSynth, stretchSynth, snapbackSynth;
-const waterState = { fill: false, drain: false }; // which water sounds are currently playing
-let bubbleTimer = 0;
-let prioritySpeechUntil = 0; // timestamp: important lines (accident/void) can't be cut off by drink chatter
 
-/* --- BLADDER SPEECH: speech bubble (subtitles + minigame prompts) and text-to-speech --- */
-const bubbleEl = document.getElementById('bladder-bubble');
-function showBubble(text, seconds, alarm = false) {
-  bubbleEl.textContent = text;
-  bubbleEl.classList.toggle('alarm', alarm);
-  bubbleEl.classList.add('show');
-  st.bubbleTimer = seconds; // Infinity = stays until hideBubble()
-}
-function hideBubble() { bubbleEl.classList.remove('show'); st.bubbleTimer = 0; }
-function subtitle(text, seconds = 2.6) { if (!st.minigame.active) showBubble(text, seconds); } // never overwrites a minigame prompt
 
-// Shows the line in the bubble and speaks it. Returns true if it was actually said.
-function speakLine(text, force = false) {
-  if (!audioCtxReady) return false;
-  const synth = window.speechSynthesis;
-  if (!force && ((synth && synth.speaking) || st.voiceCooldown > 0)) return false;
-  st.voiceCooldown = 4.0; // set up front: onend is unreliable on some mobile browsers
-  subtitle(text);
-  if (synth) {
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.pitch = 1.2 + (st.volume / 100) * 0.3; utterance.rate = 1.0;
-    utterance.onend = () => { st.voiceCooldown = 3.0; };
-    if (force) { synth.cancel(); prioritySpeechUntil = performance.now() + 3500; }
-    synth.speak(utterance);
-  }
-  return true;
-}
 
-function speak(category, force = false) {
-  const lines = voiceLines[category];
-  if (!lines || lines.length === 0) return false;
-  return speakLine(lines[Math.floor(Math.random() * lines.length)], force);
-}
 
-// Drink reactions: always speak, but never talk over an accident / void / minigame line
-function speakDirect(text) {
-  if (!audioCtxReady) return;
-  if (performance.now() < prioritySpeechUntil) return;
-  subtitle(text);
-  const synth = window.speechSynthesis;
-  if (!synth) return;
-  synth.cancel();
-  const utterance = new SpeechSynthesisUtterance(text);
-  utterance.pitch = 1.2; utterance.rate = 1.0;
-  synth.speak(utterance);
-}
 
 document.getElementById('tts-add').addEventListener('click', () => {
   const inputEl = document.getElementById('tts-input');
@@ -83,98 +38,18 @@ document.getElementById('tts-add').addEventListener('click', () => {
   }
 });
 
-function initAudio() {
-  // Drain sound (voiding / accidents / unlocking): deep brown noise
-  waterSynth = new Tone.NoiseSynth({ noise: { type: "brown" }, envelope: { attack: 0.1, decay: 0.1, sustain: 1, release: 0.3 } });
-  waterFilter = new Tone.Filter({ frequency: 600, type: "lowpass", rolloff: -24 }).toDestination();
-  waterLfo = new Tone.LFO(20, 200, 800).start(); waterLfo.connect(waterFilter.frequency); waterSynth.connect(waterFilter);
-  // Fill sound (speed up / drinking): brighter pink noise, on its own synth so it never cuts off the drain sound
-  fillSynth = new Tone.NoiseSynth({ noise: { type: "pink" }, envelope: { attack: 0.1, decay: 0.1, sustain: 1, release: 0.3 } });
-  fillFilter = new Tone.Filter({ frequency: 800, type: "lowpass", rolloff: -24 }).toDestination();
-  fillLfo = new Tone.LFO(12, 400, 1200).start(); fillLfo.connect(fillFilter.frequency); fillSynth.connect(fillFilter);
 
-  bubbleSynth = new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.1 } }).toDestination();
-  bubbleSynth.volume.value = -6;
-
-  heartBeat = new Tone.MembraneSynth({ pitchDecay: 0.05, octaves: 4, envelope: { attack: 0.001, decay: 0.4, sustain: 0.01, release: 1.4 } }).toDestination(); heartBeat.volume.value = -3;
-  snapSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(); snapSynth.volume.value = -10;
-  pokeSynth = new Tone.MembraneSynth({ pitchDecay: 0.1, octaves: 2, envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(); pokeSynth.volume.value = -8;
-  stretchSynth = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.1, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(); stretchSynth.volume.value = -15;
-  snapbackSynth = new Tone.MembraneSynth({ pitchDecay: 0.2, octaves: 4, envelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination(); snapbackSynth.volume.value = -4;
-
-
-  audioCtxReady = true;
-}
-
-function playWater(filling) {
-  if (!audioCtxReady) return;
-  const k = filling ? 'fill' : 'drain';
-  if (waterState[k]) return; // already playing: calling again used to throw/restart
-  waterState[k] = true;
-  (filling ? fillSynth : waterSynth).triggerAttack();
-}
-function stopWater(filling) {
-  if (!audioCtxReady) return;
-  const k = filling ? 'fill' : 'drain';
-  if (!waterState[k]) return;
-  waterState[k] = false;
-  (filling ? fillSynth : waterSynth).triggerRelease();
-}
-function stopAllWater() { stopWater(true); stopWater(false); }
-// Bubbles are driven from the game loop (replaces Tone.Loop, whose start(0) could throw on restart)
-function updateBubbles(dt) {
-  if (!audioCtxReady || !(waterState.fill || waterState.drain)) return;
-  bubbleTimer -= dt;
-  if (bubbleTimer <= 0) {
-    bubbleTimer = 0.0625;
-    if (Math.random() > 0.3) bubbleSynth.triggerAttackRelease(400 + Math.random() * 600, "32n");
-  }
-}
-function playSnap(closing) { if (!audioCtxReady) return; snapSynth.triggerAttackRelease(closing ? ["C3", "E3"] : ["E2", "G2"], "16n"); }
-function playPoke() { if (audioCtxReady) pokeSynth.triggerAttackRelease("G2", "8n"); }
-function playStretch(amt) { if (audioCtxReady) stretchSynth.triggerAttackRelease(150 + Math.min(600, amt * 6), "16n"); }
-function playSnapback(int) { if (audioCtxReady) snapbackSynth.triggerAttackRelease(Math.min(400, 80 + int * 4), "8n"); }
-function vibe(pattern) { if (navigator.vibrate) navigator.vibrate(pattern); }
-
-/* --- GAME STATE --- */
-const st = {
-  volume: 15, pendingFluid: 0,
-  isClosed: true, isSpeedingUp: false, isVoiding: false,
-  stamina: 100, failureEvent: false,
-  // Minigame State
-  minigame: { 
-      active: false, type: '', timer: 0, duration: 5, cooldown: 15, 
-      clicks: 0, req: 15, // Mash
-      phase: 'inhale', phaseTimer: 0, score: 0, holdingRing: false, // Breathe
-      leaks: [] // Leaks
-  },
-  particles: [], sweatDrops: [],
-  pokeTimer: 0, heartTimer: 0, faceTimer: 0, voiceCooldown: 0,
-  faceState: { e: 'open', m: 'neutral' }, blinkTimer: 2.0,
-  dance: { id: 'sway', timer: 0 }, body: { x: 0, y: 0 }, bubbleTimer: 0,
-  legs: { al: Math.PI * 0.65, ar: Math.PI * 0.35, bl: 0, br: 0, xl: -0.15, xr: 0.15 },
-  drag: { active: false, angle: 0, dist: 0, targetDist: 0, vel: 0, peakDist: 0 },
-  soothe: { active: false, lastX: 0, lastY: 0, acc: 0, timer: 0 },
-  squeeze: { active: false, tension: 0, wheelTimer: 0, initialDist: 0, spoke: false },
-  slosh: { val: 0, vel: 0 }, gravity: { x: 0, targetX: 0 },
-  viscoelasticCreep: 0,
-  desperateTimer: 8, beggingTimer: 6, lastBand: 0, voidBtnDisabled: false
-};
 
 let pointers = {}; 
 let lastTime = performance.now();
 
-// Bladder placement and size. Every pointer test and the renderer share this one function.
-function bladderGeom(fill = st.volume / 100) {
-  const W = canvasContainer.clientWidth, H = canvasContainer.clientHeight, m = Math.min(W, H);
-  return { W, H, cx: W / 2 + st.body.x, cy: H * TUNING.bodyCy + st.body.y, Rr: m * TUNING.minR + m * (TUNING.maxR - TUNING.minR) * fill };
-}
 
 const elVol = document.getElementById('vol-lbl');
 const toyContainer = document.getElementById('toy-container');
 const canvas = document.getElementById('fluid-canvas');
 const ctx = canvas.getContext('2d');
 const canvasContainer = document.getElementById('canvas-wrapper');
+setPlayAreaSize(() => ({ W: canvasContainer.clientWidth, H: canvasContainer.clientHeight }));
 
 /* --- PAUSE: menus, start screen, hidden tab --- */
 const startOverlayEl = document.getElementById('start-overlay');
@@ -197,7 +72,7 @@ drinks.forEach(d => {
   btn.addEventListener('pointerdown', (e) => {
     e.stopPropagation(); st.pendingFluid += d.amt; speakDirect(d.reaction);
     document.getElementById('shop-overlay').style.display = 'none'; vibe(20);
-    if (audioCtxReady && !waterState.fill) fillSynth.triggerAttackRelease(0.5);
+    playGulp();
   });
   grid.appendChild(btn);
 });
@@ -216,7 +91,7 @@ document.getElementById('start-overlay').addEventListener('pointerdown', async (
     try { await DeviceOrientationEvent.requestPermission(); } catch(e) {}
   }
   if (window.speechSynthesis) window.speechSynthesis.speak(new SpeechSynthesisUtterance(''));
-  await Tone.start(); Tone.Transport.start(); initAudio();
+  await startAudio();
   document.getElementById('start-overlay').style.display = 'none'; speak('casual');
 });
 
@@ -501,8 +376,8 @@ function gameLoop(now) {
     return;
   }
 
-  if (st.voiceCooldown > 0) st.voiceCooldown -= dt;
-  if (st.bubbleTimer > 0) { st.bubbleTimer -= dt; if (st.bubbleTimer <= 0) hideBubble(); }
+  updateSpeech(dt);
+  updateBubble(dt);
 
   // Interaction effects fade out on their own
   if (st.pokeTimer > 0) st.pokeTimer = Math.max(0, st.pokeTimer - dt * 1.5);
@@ -655,7 +530,7 @@ function gameLoop(now) {
     st.heartTimer -= dt; currentPulseRate = 1.0 - ((st.volume - 50) / 50) * 0.7; 
     if (st.heartTimer <= 0) {
       st.heartTimer = currentPulseRate;
-      if (audioCtxReady) heartBeat.triggerAttackRelease("C1", "8n"); vibe(45); 
+      playHeartbeat(); vibe(45);
       st.slosh.vel += (Math.random() > 0.5 ? 1 : -1) * 0.5; 
     }
   }
@@ -1031,5 +906,5 @@ if (import.meta.env.MODE === 'test') {
     startMinigame, endMinigame, bubbleEl, minigameLines, mgPanel, btnRow, mgBtnMash, mgBreatheArea, mgLeaksArea,
     subtitle, DANCE_MOVES, pickDanceMove, showMgPanel
   });
-  Object.defineProperty(window, 'prioritySpeechUntil', { get: () => prioritySpeechUntil, set: (v) => { prioritySpeechUntil = v; } });
+  Object.defineProperty(window, 'prioritySpeechUntil', { get: getPrioritySpeechUntil, set: setPrioritySpeechUntil });
 }

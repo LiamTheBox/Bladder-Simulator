@@ -8,6 +8,10 @@ const stmText = document.getElementById('stamina-text');
 const stmBar = document.getElementById('stamina-bar');
 const elPending = document.getElementById('pending-lbl');
 
+// Story mode can show fullness its own way (e.g. in ml); null goes back to percent
+let volumeLabel = null;
+export function setVolumeLabel(fn) { volumeLabel = fn; }
+
 export function updateHud() {
   // Bright while holding costs stamina, dim when there is nothing to worry about
   stmContainer.style.opacity = st.staminaDraining ? '1' : (st.stamina >= 100 ? '0.35' : '0.8');
@@ -18,7 +22,7 @@ export function updateHud() {
   stmBar.style.backgroundColor = st.stamina > 50 ? 'var(--success)' : (st.stamina > 20 ? 'var(--warning)' : 'var(--danger)');
 
   const volSpan = elVol.querySelector('span:nth-child(2)');
-  volSpan.textContent = `${Math.floor(st.volume)}%`;
+  volSpan.textContent = volumeLabel ? volumeLabel(st.volume) : `${Math.floor(st.volume)}%`;
   if (st.volume >= 50) { volSpan.style.color = "#fde047"; elVol.querySelector('.status-dot').style.color = "#fbbf24"; }
   else { volSpan.style.color = "#bae6fd"; elVol.querySelector('.status-dot').style.color = "var(--accent)"; }
 

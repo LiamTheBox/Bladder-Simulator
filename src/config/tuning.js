@@ -4,6 +4,9 @@
 export const TUNING = {
   // Bladder placement and size, as fractions of the play area. Pointer tests and the renderer share these.
   bodyCy: 0.43, minR: 0.15, maxR: 0.31,
+  // Story mode has a shorter play area with the speech bubble at its foot: the bladder sits higher and is
+  // sized from this share of the height, so the bubble does not cover its legs
+  storyBodyCy: 0.34, storyBodyShare: 0.62,
 
   startVolume: 15,
   storyVolumeEase: 3,            // story mode: how fast the bladder on screen catches up with the story's fullness

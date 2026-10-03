@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "id": "placeholder_meeting",
+    "title": "The Meeting That Would Not End",
+    "author": "Engine placeholder",
+    "rating": "18+",
+    "tags": ["desperation", "office", "placeholder"],
+    "description": "A tiny story that exercises every part of the format. Not real content."
+  },
+  "characters": [
+    { "id": "sam", "name": "Sam", "age": 31, "notes": "Project lead. Too polite to interrupt anyone." },
+    { "id": "dana", "name": "Dana", "age": 44, "notes": "Runs the meeting. Loves a slide deck." },
+    { "id": "bladder", "name": "Bladder", "kind": "bladder" }
+  ],
+  "stats": [
+    { "id": "control", "label": "Control", "start": 80,
+      "thresholds": [ { "atOrBelow": 0, "goto": "ending_dash" } ] },
+    { "id": "composure", "label": "Composure", "icon": "😇", "start": 100 },
+    { "id": "suspicion", "label": "Suspicion", "icon": "👀", "start": 0,
+      "thresholds": [ { "atOrAbove": 100, "goto": "ending_noticed" } ] }
+  ],
+  "bladder": { "startFullness": 55, "fillPerMinute": 0.5, "capacityMl": 800 },
+  "clock": { "start": "14:00" },
+  "start": "slide_one",
+  "scenes": [
+    {
+      "id": "slide_one",
+      "title": "2:00 PM — Slide 1 of 48",
+      "chapter": "The meeting",
+      "lines": [
+        { "speaker": "narrator", "text": "The projector hums. Dana clicks to the first slide and smiles like someone with all afternoon." },
+        { "speaker": "dana", "text": "Coffee's on the side, everyone. Sam, you look like you need one.", "bladder": "Do not. Do NOT take the coffee." }
+      ],
+      "choices": [
+        { "text": "\"Thanks, I'd love one.\"", "effects": [ { "drink": 20 }, { "stat": "composure", "add": 5 }, { "minutes": 10 } ], "next": "slide_twenty" },
+        { "text": "\"I'm fine, thanks.\"", "effects": [ { "stat": "composure", "add": -5 }, { "flag": "refused_coffee" }, { "minutes": 10 } ], "next": "slide_twenty" }
+      ]
+    },
+    {
+      "id": "slide_twenty",
+      "title": "2:40 PM — Slide 20 of 48",
+      "chapter": "The meeting",
+      "onEnter": [ { "minutes": 30 }, { "fullness": 15 } ],
+      "lines": [
+        { "speaker": "dana", "text": "Any questions so far? Sam?", "bladder": "Ask if this could have been an email." },
+        { "speaker": "sam", "text": "No questions. Very clear.", "mood": "strained" }
+      ],
+      "triggers": [
+        { "when": [ { "stat": "fullness", "gt": 70 } ], "bladder": "That is IT. I am leaving, with or without you.",
+          "minigame": { "id": "swipe_away", "difficulty": 2,
+            "success": { "effects": [ { "stat": "control", "add": 10 } ] },
+            "fail": { "effects": [ { "stat": "control", "add": -30 }, { "stat": "suspicion", "add": 20 } ] } } }
+      ],
+      "choices": [
+        { "text": "Sit perfectly still until the last slide.",
+          "minigame": { "id": "breathe", "difficulty": 2, "prompt": "Breathe with me. Slowly.",
+            "success": { "effects": [ { "stat": "control", "add": 15 } ], "next": "ending_made_it" },
+            "fail": { "effects": [ { "stat": "control", "add": -40 } ], "next": "ending_dash" } } },
+        { "text": "Excuse yourself. Politely. Now.", "effects": [ { "stat": "composure", "add": -20 } ], "next": "ending_excused" },
+        { "text": "Point out that you did skip the coffee.", "if": [ { "flag": "refused_coffee" } ], "effects": [ { "stat": "suspicion", "add": 10 } ], "next": "ending_excused" }
+      ]
+    }
+  ],
+  "endings": [
+    { "id": "ending_made_it", "kind": "good", "title": "Slide 48 of 48", "text": "Dana says \"any other business?\" and nobody dares. Sam walks to the door at a normal, dignified speed." },
+    { "id": "ending_excused", "kind": "neutral", "title": "A reasonable adult", "text": "Sam excuses himself. Nobody minds. It was, in the end, allowed all along." },
+    { "id": "ending_dash", "kind": "bad", "title": "The dash", "text": "Sam leaves mid-sentence, at speed. The slide deck continues without him." },
+    { "id": "ending_noticed", "kind": "bad", "title": "\"Are you alright?\"", "text": "Dana stops the meeting to ask. Everyone looks. Sam would have preferred the dash." }
+  ],
+  "scorecard": [
+    { "label": "Control left", "stat": "control" },
+    { "label": "Composure", "stat": "composure" },
+    { "label": "How full", "stat": "fullness" },
+    { "label": "Refused the coffee", "flag": "refused_coffee" }
+  ]
+}

@@ -14,8 +14,8 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- Roadmap steps 1 to 6 are built (step 5: three backlog games, playtested on a phone; step 6: story mode
-  with Bonnie chapter 1, tested in a headless browser but **not yet playtested on a phone**): the game runs from `src/` as a Vite + vanilla JS static site, split into
+- Roadmap steps 1 to 7 are built, and step 8 is prepared (the build is deploy-ready; nothing is published).
+  Steps 6 and 7 are tested in a headless browser but **not yet playtested on a phone**: the game runs from `src/` as a Vite + vanilla JS static site, split into
   the module layout below, with identical behavior to the prototype. `src/main.js` wires sim events to
   audio / UI / minigames and runs the frame loop; `src/sim/events.js` lists every event with its payload.
 - `legacy/bladder_simulator_demo_(concept).html` is the original one-file prototype (tag `v12-baseline`),
@@ -114,12 +114,15 @@ Prototype these in **sim mode first** (no story needed), 2–3 at a time, playte
 `src/story/runner.js` plays a story (pure logic, no DOM); `src/ui/story_screen.js` is the screen: bladder on
 top, text and choices below, the bladder's replies in its bubble, minigames in place of the choices.
 In story mode (`st.storyMode`) the sim keeps animating but its stamina drain, random spikes and idle chatter
-are off; the story sets the fullness. Bundled stories: `stories/bonnie_ch1.json` (chapter 1, placeholder
-wording) and `stories/placeholder.json` (tiny, uses every feature). Beyond the sketch below, the format has
+are off; the story sets the fullness. Bundled stories: `stories/bonnies_journey.json` (seven chapters, seven
+endings, placeholder wording; **generated** by `tools/build_bonnie.py`, so edit that and re-run it) and
+`stories/placeholder.json` (tiny, uses every feature; also offered in-game as the story template).
+`tools/walk_story.mjs` validates a story and random-plays it thousands of times to show how runs end. Beyond the sketch below, the format has
 choice sets (one kind of decision, reworded per scene), interruptions (`"scene"` triggers with `"return"`),
 story-wide triggers, modes (a flag that makes minigames harder and filling faster, e.g. hard mode),
-conditional lines and a `void` effect. Not built yet: save/load, a wide two-column desktop layout, showing
-fullness in ml, and minigames that act on the dialogue itself. The original sketch, for intent:
+conditional lines, and `void` and `clock` effects. `src/story/library.js` keeps imported stories and one
+automatic save per story in `localStorage`; `src/ui/story_menu.js` is the list with import / export.
+Not built yet: a wide two-column desktop layout, and minigames that act on the dialogue itself. The original sketch, for intent:
 
 Stories are JSON files, versioned (`"schemaVersion": 1`). Sketch:
 - `meta`: title, author, rating, content tags, description.
@@ -169,6 +172,20 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 - Player controls: intensity setting, per-tag opt-outs, ability to disable individual minigames, a persistent pause/exit button.
 - If asked to write or port story content that conflicts with these rules, decline and say why briefly.
 
+## Player controls (step 7, built)
+- 18+ gate on a first visit (`src/ui/settings_panel.js`); asked again whenever storage could not remember it.
+- Settings (`src/config/settings.js`, all in `localStorage`, guarded): difficulty, speak lines aloud,
+  vibration, a switch per minigame, hide stories by tag, back to the start screen.
+- A switched-off minigame never appears: free play skips it, a story gets another enabled game, and with
+  every game off a story treats its minigames as passed.
+- Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
+
+## Deploying (step 8, prepared)
+`npm run build` writes a self-contained static site to `dist/` (relative paths, no server, no CDN): upload
+that folder to any static host. Netlify / Cloudflare Pages: build command `npm run build`, output `dist`.
+GitHub Pages: `.github/workflows/deploy-pages.yml`, which only runs when started by hand.
+Publishing is the owner's decision; do not deploy without being asked.
+
 ## Testing
 - `tests_reference/v11_regression.py` (38 checks) and `tests_reference/v12_suite.py` (128 checks) are
   Python + Playwright scripts that run the legacy page headless with Tone.js and `speechSynthesis` replaced by
@@ -187,6 +204,8 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 - `tests/story-validator.spec.js` and `tests/story-runner.spec.js` cover the validator, loader and runner (they
   run in Node, no browser); the runner test also random-walks every bundled story to check it can always finish.
   `tests/story-mode.spec.js` covers the story screen in the browser, including that story text is never HTML.
+- `tests/player-controls.spec.js` covers the age gate and settings; `tests/story-library.spec.js` covers
+  import / export, tag filtering and saves.
 - Run tests before every commit that touches `sim/`, `minigames/`, or `story/`.
 
 ## How to work in this repo

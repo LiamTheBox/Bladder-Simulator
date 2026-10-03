@@ -31,6 +31,19 @@ test('production build starts and loads nothing from other hosts', async ({ brow
   await pg.locator('#btn-speedup').dispatchEvent('pointerdown');
   await expect.poll(async () => parseInt(await pg.locator('#vol-lbl span:nth-child(2)').textContent(), 10)).toBeGreaterThan(20);
 
+  // Story mode works in the real build too: the bundled stories load, validate and play
+  await pg.locator('#btn-settings').dispatchEvent('pointerdown');
+  await pg.locator('#btn-back-to-start').click();
+  await pg.locator('#btn-story-mode').dispatchEvent('pointerdown');
+  await expect(pg.locator('.story-card-title')).toHaveText(["Bonnie's Long Journey", 'The Meeting That Would Not End']);
+  await pg.locator('.story-card', { hasText: 'Bonnie' }).locator('.story-play').click();
+  await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · 4:10 AM — The Silent House');
+  await pg.locator('.story-continue').click();
+  await expect(pg.locator('#bladder-bubble')).toHaveClass(/show/);
+  const guide = await pg.request.get(BUILD_URL + 'modding-guide.md');
+  expect(guide.ok(), 'the modder guide ships with the site').toBe(true);
+  expect(await guide.text()).toContain('# Writing your own story');
+
   expect(foreign, 'requests to other hosts').toEqual([]);
   expect(errors, 'page and console errors').toEqual([]);
   await context.close();

@@ -5,6 +5,7 @@ import { st } from './state.js';
 // sim/ never touches the DOM, so whoever owns the play area tells it how to measure it.
 let measure = () => ({ W: 0, H: 0 });
 export function setPlayAreaSize(fn) { measure = fn; }
+export function playAreaSize() { return measure(); }
 
 export function bladderGeom(fill = st.volume / 100) {
   const { W, H } = measure(), m = Math.min(W, H);

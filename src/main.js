@@ -9,10 +9,14 @@ import './styles/main.css';
 // The reset was injected after the page's own <style>, so it is imported after main.css here too.
 import './styles/preflight.css';
 import { drinks, voiceLines, minigameLines } from './config/content.js';
-import { DANCE_MOVES, LIVELY_MOVES } from './config/dance.js';
+import { DANCE_MOVES } from './config/dance.js';
 import { TUNING } from './config/tuning.js';
 import { st } from './sim/state.js';
 import { bladderGeom, setPlayAreaSize } from './sim/geometry.js';
+import { pickDanceMove, updateDance } from './sim/dance.js';
+import { updateParticles } from './sim/particles.js';
+import { canvasContainer } from './render/canvas.js';
+import { renderCanvas } from './render/scene.js';
 import { waterState, startAudio, playWater, stopWater, stopAllWater, updateBubbles, playSnap, playPoke, playStretch, playSnapback, playHeartbeat, playGulp } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakLine, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
@@ -46,9 +50,6 @@ let lastTime = performance.now();
 
 const elVol = document.getElementById('vol-lbl');
 const toyContainer = document.getElementById('toy-container');
-const canvas = document.getElementById('fluid-canvas');
-const ctx = canvas.getContext('2d');
-const canvasContainer = document.getElementById('canvas-wrapper');
 setPlayAreaSize(() => ({ W: canvasContainer.clientWidth, H: canvasContainer.clientHeight }));
 
 /* --- PAUSE: menus, start screen, hidden tab --- */
@@ -372,7 +373,8 @@ function gameLoop(now) {
   // Paused (menu open / start screen / hidden tab): freeze the simulation, keep drawing
   if (isPaused()) {
     stopAllWater();
-    renderCanvas(now / 1000, 0, st.volume / 100);
+    updateParticles(0);
+    renderCanvas(now / 1000, st.volume / 100);
     return;
   }
 
@@ -545,355 +547,8 @@ function gameLoop(now) {
 
   updateBubbles(dt);
   updateDance(now / 1000, dt, st.volume / 100);
-  renderCanvas(now / 1000, dt, st.volume / 100);
-}
-
-/* --- RENDERING MATH --- */
-function drawSmoothPath(ctx, points) {
-  ctx.beginPath();
-  let mid = { x: (points[points.length-1].x + points[0].x)/2, y: (points[points.length-1].y + points[0].y)/2 };
-  ctx.moveTo(mid.x, mid.y);
-  for (let i = 0; i < points.length; i++) {
-    let p1 = points[i], p2 = points[(i + 1) % points.length];
-    mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
-    ctx.quadraticCurveTo(p1.x, p1.y, mid.x, mid.y);
-  }
-  ctx.closePath();
-}
-
-function getPearPoints(cx, cy, baseR, t, fillPerc) {
-  const points = [];
-  for(let i=0; i<64; i++) {
-    const th = (i / 64) * Math.PI * 2, ex = Math.cos(th), ey = Math.sin(th);
-    let r = baseR;
-
-    if (ey < 0) r += Math.abs(ey) * baseR * 0.15; 
-    if (ey > 0) r -= ey * baseR * 0.1; 
-
-    if (fillPerc > 0.3) {
-       const lobe = (fillPerc - 0.3) * 1.5;
-       r += Math.pow(Math.abs(ex), 3) * baseR * 0.25 * lobe;
-       if (ey > 0) r += ey * baseR * 0.1 * lobe;
-    }
-
-    r -= baseR * (st.squeeze.tension * 0.007) * Math.abs(ex);
-    r += baseR * (st.squeeze.tension * 0.007) * Math.abs(ey) * 0.6;
-
-    const stretch = Math.max(st.drag.dist, st.viscoelasticCreep * 3);
-    if (stretch > 0.1) {
-      let diff = th - st.drag.angle;
-      while (diff > Math.PI) diff -= Math.PI * 2; while (diff < -Math.PI) diff += Math.PI * 2;
-      r += stretch * 0.8 * Math.exp(-(diff * diff) / 0.15); 
-    }
-
-    r += Math.cos(th) * st.gravity.x * baseR * 0.25 * fillPerc;
-    let wobble = Math.sin(th * 4 + t * 5) * 0.02 * baseR + Math.sin(th * 2 + st.slosh.val * 3) * 0.06 * baseR; 
-    r += wobble * ((fillPerc > 0.5 ? 1 : 0.5) + Math.abs(st.slosh.vel) * 0.2);
-
-    if (st.pokeTimer > 0) {
-       let pDiff = th - (Math.PI/2); 
-       while (pDiff > Math.PI) pDiff -= Math.PI * 2; while (pDiff < -Math.PI) pDiff += Math.PI * 2;
-       r -= (st.pokeTimer * baseR * 0.15) * Math.exp(-(pDiff * pDiff) / 0.1);
-    }
-    points.push({ x: cx + Math.cos(th) * r, y: cy + Math.sin(th) * r });
-  }
-  return points;
-}
-
-function drawCuteFace(ctx, cx, cy, Rr, time, fill, isClosed, gX) {
-  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-  const f = st.faceState, isBlinking = st.blinkTimer < 0 && st.blinkTimer > -0.15;
-  const shake = (fill > 0.5 && isClosed) ? (Math.random()-0.5) * Rr*0.03 * ((fill-0.5)*2) : 0;
-  
-  const fx = cx + shake + (gX * Rr * 0.15 * fill), fy = cy + shake - Rr * 0.15;
-  const es = Rr * 0.18, mx = fx, my = fy + Rr * 0.3;
-
-  ctx.fillStyle = 'rgba(239, 68, 68, 0.5)'; ctx.shadowColor = 'rgba(239, 68, 68, 0.5)'; ctx.shadowBlur = 15;
-  ctx.beginPath(); ctx.ellipse(fx - Rr * 0.45, fy + es * 0.6, es * 1.3, es * 0.8, -0.1, 0, Math.PI*2); ctx.fill();
-  ctx.beginPath(); ctx.ellipse(fx + Rr * 0.45, fy + es * 0.6, es * 1.3, es * 0.8, 0.1, 0, Math.PI*2); ctx.fill();
-  ctx.shadowBlur = 0;
-
-  ctx.fillStyle = '#6b21a8'; ctx.strokeStyle = '#6b21a8'; 
-  const drawEye = (px, sign) => {
-    if (isBlinking) { ctx.lineWidth = Math.max(4, Rr * 0.04); ctx.beginPath(); ctx.moveTo(px - es*0.5, fy); ctx.lineTo(px + es*0.5, fy); ctx.stroke(); return; }
-    if (f.e === 'happy_closed') { ctx.lineWidth = Math.max(4, Rr * 0.04); ctx.beginPath(); ctx.arc(px, fy + es*0.2, es*0.6, Math.PI, Math.PI*2); ctx.stroke(); } 
-    else if (f.e === 'shut_tight') { ctx.lineWidth = Math.max(4, Rr * 0.04); ctx.beginPath(); ctx.moveTo(px - sign*es*0.6, fy - es*0.2); ctx.lineTo(px + sign*es*0.6, fy + es*0.2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(px - sign*es*0.6, fy + es*0.2); ctx.lineTo(px + sign*es*0.6, fy - es*0.2); ctx.stroke(); } 
-    else if (f.e === 'squint') { ctx.lineWidth = Math.max(4, Rr * 0.04); ctx.beginPath(); ctx.moveTo(px - es*0.5, fy); ctx.lineTo(px + es*0.5, fy); ctx.stroke(); } 
-    else if (f.e === 'wide_shake') { ctx.lineWidth = Math.max(3, Rr * 0.03); ctx.beginPath(); ctx.arc(px, fy, es * 0.7, 0, Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.arc(px, fy, es * 0.1, 0, Math.PI*2); ctx.fill(); } 
-    else if (f.e === 'x_eyes') { ctx.lineWidth = Math.max(4, Rr * 0.04); ctx.beginPath(); ctx.moveTo(px - es*0.4, fy - es*0.4); ctx.lineTo(px + es*0.4, fy + es*0.4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(px - es*0.4, fy + es*0.4); ctx.lineTo(px + es*0.4, fy - es*0.4); ctx.stroke(); } 
-    else { ctx.lineWidth = Math.max(3, Rr * 0.03); ctx.beginPath(); ctx.arc(px, fy, es * 0.5, 0, Math.PI*2); ctx.stroke(); ctx.beginPath(); ctx.arc(px, fy, es * 0.15, 0, Math.PI*2); ctx.fill(); }
-  };
-  drawEye(fx - Rr * 0.35, 1); drawEye(fx + Rr * 0.35, -1);
-
-  ctx.lineWidth = Math.max(3, Rr * 0.03); ctx.beginPath();
-  if (f.m === 'zigzag') { const w=es*0.8, h=es*0.3; ctx.moveTo(mx-w, my); ctx.lineTo(mx-w*0.5, my-h); ctx.lineTo(mx, my+h); ctx.lineTo(mx+w*0.5, my-h); ctx.lineTo(mx+w, my); ctx.stroke(); } 
-  else if (f.m === 'smile') { ctx.arc(mx, my - es*0.2, es*0.5, 0, Math.PI); ctx.stroke(); } 
-  else if (f.m === 'nervous') { ctx.moveTo(mx - es * 0.6, my); ctx.bezierCurveTo(mx - es * 0.2, my - es * 0.4, mx + es * 0.2, my + es * 0.4, mx + es * 0.6, my); ctx.stroke(); } 
-  else if (f.m === 'wavy') { ctx.moveTo(mx - es * 0.8, my); ctx.bezierCurveTo(mx - es * 0.4, my - es * 0.4, mx + es * 0.4, my + es * 0.4, mx + es * 0.8, my); ctx.stroke(); } 
-  else if (f.m === 'small_o') { ctx.arc(mx, my, es*0.3, 0, Math.PI*2); ctx.stroke(); } 
-  else { ctx.moveTo(mx - es*0.5, my); ctx.lineTo(mx + es*0.5, my); ctx.stroke(); }
-
-  if (st.failureEvent) {
-      ctx.fillStyle = '#60a5fa';
-      const ty = fy + es + Math.sin(time*10)*5;
-      ctx.beginPath(); ctx.ellipse(fx - Rr*0.4, ty, es*0.2, es*0.4, 0, 0, Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.ellipse(fx + Rr*0.4, ty, es*0.2, es*0.4, 0, 0, Math.PI*2); ctx.fill();
-  }
-  ctx.restore();
-}
-
-/* --- POTTY DANCE --- */
-function pickDanceMove(u, last) {
-  const pool = DANCE_MOVES.filter(m => m.min <= u && m.id !== last);
-  return pool[Math.floor(Math.random() * pool.length)].id;
-}
-
-function updateDance(t, dt, fill) {
-  const PI = Math.PI;
-  const R = bladderGeom(fill).Rr, k = Math.max(0.6, R / 110); // k scales pixel amplitudes with bladder size
-  let al = PI * 0.65, ar = PI * 0.35, bl = 0, br = 0, xl = -0.15, xr = 0.15, bx = 0, by = 0;
-
-  if (st.failureEvent || !st.isClosed) {
-    al = PI * 0.8; ar = PI * 0.2;
-    if (st.failureEvent) {
-      al += Math.sin(t * 15) * 0.1; ar -= Math.sin(t * 15) * 0.1;
-      bl = Math.sin(t * 10) * 10 * k; br = Math.cos(t * 10) * 10 * k;
-    }
-  } else if (fill > 0.5) {
-    const u = (fill - 0.5) * 2.0;
-    st.dance.timer -= dt;
-    if (st.dance.timer <= 0) {
-      st.dance.id = pickDanceMove(u, st.dance.id);
-      st.dance.timer = LIVELY_MOVES.includes(st.dance.id) ? 1.5 + Math.random() : 2.0 + Math.random() * 2.0;
-    }
-    const amp = 0.5 + 0.5 * u;
-
-    switch (st.dance.id) {
-      case 'sway': {
-        const sw = Math.sin(t * 3);
-        bx = sw * 0.035 * R * (0.5 + u);
-        al = PI * 0.64 + sw * 0.06; ar = PI * 0.36 + sw * 0.06;
-        bl = Math.max(0, sw) * 8 * k; br = Math.max(0, -sw) * 8 * k;
-        break; }
-      case 'shift': {
-        const sh = Math.sin(t * 4) * u;
-        bl = Math.max(0, sh * 25) * k; br = Math.max(0, -sh * 25) * k;
-        al = PI * 0.65 + sh * 0.15; ar = PI * 0.35 + sh * 0.15;
-        xl = -0.15 + sh * 0.05; xr = 0.15 + sh * 0.05;
-        break; }
-      case 'fidget': {
-        const cross = Math.sin(t * 4) * 0.3 * u;
-        al = PI / 2 - 0.15 + cross; ar = PI / 2 + 0.15 + cross;
-        xl = 0.1 * u; xr = -0.1 * u;
-        bl = br = Math.abs(Math.sin(t * 8)) * 12 * u * k;
-        break; }
-      case 'knock': {
-        const kn = Math.abs(Math.sin(t * 10));
-        al = PI * 0.6 - kn * 0.25 * u; ar = PI * 0.4 + kn * 0.25 * u;
-        by = -kn * 0.012 * R;
-        break; }
-      case 'cross': {
-        // start points are slightly apart but the feet land on opposite sides, so the legs form an X
-        const sq = Math.sin(t * 6);
-        al = PI * 0.43 + sq * 0.03; ar = PI * 0.57 - sq * 0.03;
-        xl = -0.05; xr = 0.05;
-        by = (sq * 0.5 + 0.5) * 0.012 * R;
-        bx = Math.sin(t * 2) * 0.01 * R;
-        break; }
-      case 'squeeze': {
-        const pulse = (Math.sin(t * 7) + 1) / 2;        // 0..1, 1 = tightest
-        const loose = 1 - pulse;
-        xl = -0.02 - 0.08 * loose; xr = 0.02 + 0.08 * loose;
-        al = PI / 2 + 0.01 + 0.09 * loose; ar = PI / 2 - 0.01 - 0.09 * loose;
-        bx = Math.sin(t * 38) * 0.01 * R * amp;         // trembling
-        by = pulse * 0.025 * R;                         // body squashes down on each clench
-        break; }
-      case 'tap': {
-        const s = Math.sin(t * 11);
-        al = PI * 0.68; ar = PI * 0.32;
-        bl = -Math.max(0, s) * 15 * k; br = -Math.max(0, -s) * 15 * k;   // lift, then tap
-        by = -Math.abs(s) * 0.012 * R;
-        bx = Math.sin(t * 5.5) * 0.01 * R;
-        break; }
-      case 'curl': {
-        const tight = Math.sin(t * 5) * 0.02;
-        al = PI * 0.41 + tight; ar = PI * 0.59 - tight;                  // crossed
-        xl = -0.06; xr = 0.06;
-        bl = br = -16 * k;                                               // feet drawn up
-        by = 0.05 * R + Math.sin(t * 5) * 0.008 * R;                     // body sinks / scrunches
-        break; }
-      case 'shiver': {
-        const sv = Math.sin(t * 30) * 0.04 * u;
-        al = PI / 2 + 0.05 + sv; ar = PI / 2 - 0.05 + sv;
-        xl = -0.05; xr = 0.05;
-        bl = -8 * u * k + Math.sin(t * 34) * 3 * k; br = -8 * u * k - Math.sin(t * 34) * 3 * k;
-        bx = Math.sin(t * 34) * 0.018 * R * amp;
-        by = Math.sin(t * 41) * 0.008 * R * amp;
-        break; }
-      case 'hop': {
-        const h = Math.abs(Math.sin(t * 5.5));          // 0 = on the floor, 1 = top of the jump
-        by = -h * 0.11 * R * amp;
-        bl = br = -h * 20 * k;                           // feet tuck up in the air
-        al = PI * 0.64; ar = PI * 0.36;
-        break; }
-      case 'shimmy': {
-        const sh = Math.sin(t * 9);
-        bx = sh * 0.05 * R * amp;
-        al = PI * 0.62 + sh * 0.1; ar = PI * 0.38 + sh * 0.1;
-        bl = Math.max(0, sh) * 10 * k; br = Math.max(0, -sh) * 10 * k;
-        break; }
-      case 'march': {
-        const s = Math.sin(t * 13);
-        al = PI * 0.64; ar = PI * 0.36;
-        bl = -Math.max(0, s) * 24 * k; br = -Math.max(0, -s) * 24 * k;   // big knee lifts
-        by = -Math.abs(s) * 0.03 * R;
-        bx = Math.sin(t * 6.5) * 0.012 * R;
-        break; }
-    }
-  }
-
-  // Keep the body still while the crack-tapping minigame is running so the cracks are easy to hit
-  if (st.minigame.active && st.minigame.type === 'leaks') { bx = 0; by = 0; }
-
-  const lg = Math.min(1, 8 * dt), lb = Math.min(1, 22 * dt), lbody = Math.min(1, 18 * dt);
-  st.legs.al += (al - st.legs.al) * lg; st.legs.ar += (ar - st.legs.ar) * lg;
-  st.legs.xl += (xl - st.legs.xl) * lg; st.legs.xr += (xr - st.legs.xr) * lg;
-  st.legs.bl += (bl - st.legs.bl) * lb; st.legs.br += (br - st.legs.br) * lb;
-  st.body.x += (bx - st.body.x) * lbody; st.body.y += (by - st.body.y) * lbody;
-}
-
-function drawPottyDanceLegs(ctx, cx, cy, baseR) {
-  ctx.save();
-  const isClosed = st.isClosed;
-  const sy = cy + baseR * 1.0;
-  const legLen = baseR * 0.6;
-
-  // Floor shadow while the body is in the air (hops, marching, tap steps)
-  const lift = -st.body.y;
-  if (lift > 1.5) {
-    const floorY = (cy - st.body.y) + baseR + legLen * 0.95;
-    ctx.fillStyle = `rgba(0,0,0,${Math.min(0.28, (lift / (baseR * 0.1)) * 0.28)})`;
-    ctx.beginPath();
-    ctx.ellipse(cx - st.body.x, floorY, baseR * (0.55 - Math.min(0.15, lift / baseR)), baseR * 0.07, 0, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  ctx.lineCap = 'round'; ctx.strokeStyle = '#831843'; ctx.fillStyle = '#ec4899';
-  const drawTubeLeg = (ang, offsetX, bendY) => {
-      ctx.beginPath();
-      const startX = cx + offsetX * baseR, endX = startX + Math.cos(ang) * legLen, endY = sy + Math.sin(ang) * legLen + bendY;
-      ctx.moveTo(startX, sy); ctx.quadraticCurveTo(startX, sy + legLen*0.4, endX, endY);
-      ctx.lineWidth = Math.max(6, baseR * 0.08); ctx.strokeStyle = '#831843'; ctx.stroke();
-      ctx.lineWidth = Math.max(3, baseR * 0.04); ctx.strokeStyle = '#fbcfe8'; ctx.stroke();
-  };
-
-  if (st.legs.xl > 0) { drawTubeLeg(st.legs.ar, st.legs.xr, st.legs.br); drawTubeLeg(st.legs.al, st.legs.xl, st.legs.bl); }
-  else { drawTubeLeg(st.legs.al, st.legs.xl, st.legs.bl); drawTubeLeg(st.legs.ar, st.legs.xr, st.legs.br); }
-
-  if (!isClosed || st.failureEvent) {
-     ctx.beginPath(); ctx.ellipse(cx, sy + 5, baseR * 0.15, baseR * 0.08, 0, 0, Math.PI*2);
-     ctx.fillStyle = '#4c0519'; ctx.fill();
-  }
-  ctx.restore();
-}
-
-function renderCanvas(t, dt, fillPerc) {
-  if(!canvasContainer) return;
-  const W = canvasContainer.clientWidth, H = canvasContainer.clientHeight;
-  const dpr = window.devicePixelRatio || 1;
-  if (canvas.width !== Math.floor(W * dpr) || canvas.height !== Math.floor(H * dpr)) { canvas.width = Math.floor(W * dpr); canvas.height = Math.floor(H * dpr); }
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, H);
-
-  const G = bladderGeom(fillPerc);
-  const cx = G.cx, cy = G.cy, baseR = G.Rr, maxR = Math.min(W, H) * TUNING.maxR;
-
-  for (let i = st.particles.length - 1; i >= 0; i--) {
-    let p = st.particles[i]; p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 800 * dt; p.life -= dt * 1.5;
-    if (p.life <= 0 || p.y > H + 50) st.particles.splice(i, 1);
-  }
-  
-  if (st.volume > 50 && st.isClosed && Math.random() < ((st.volume-50)/50)*0.1) {
-    st.sweatDrops.push({ th: -Math.PI/2 + (Math.random() - 0.5) * 1.2, speed: (Math.random() * 0.4 + 0.15), dir: (Math.random() < 0.5 ? 1 : -1), size: Math.random() * 2 + 2.5, life: 1.2 });
-  }
-  for (let i = st.sweatDrops.length - 1; i >= 0; i--) {
-    let s = st.sweatDrops[i]; s.th += s.speed * s.dir * dt; s.life -= dt * 0.35;
-    if (s.life <= 0) st.sweatDrops.splice(i, 1);
-  }
-
-  // Draw Splash Particles
-  ctx.fillStyle = 'rgba(250, 204, 21, 0.8)';
-  st.particles.forEach(p => { ctx.globalAlpha = p.life; ctx.beginPath(); ctx.ellipse(p.x, p.y, p.size * 0.8, p.size * 1.5, Math.atan2(p.vy, p.vx) + Math.PI/2, 0, Math.PI*2); ctx.fill(); });
-  ctx.globalAlpha = 1.0;
-
-  // Bladder Body
-  const pearPoints = getPearPoints(cx, cy, baseR, t, fillPerc);
-  ctx.save();
-  drawSmoothPath(ctx, pearPoints);
-  const bgGrad = ctx.createRadialGradient(cx, cy - baseR*0.5, baseR*0.1, cx, cy, baseR*1.5);
-  bgGrad.addColorStop(0, '#fbcfe8'); bgGrad.addColorStop(1, '#be185d');
-  ctx.fillStyle = bgGrad; ctx.fill();
-
-  ctx.clip(); 
-
-  const topY = cy - baseR * 1.3, botY = cy + baseR * 1.3, fluidY = botY - (botY - topY) * fillPerc;
-  const sloshTilt = st.gravity.x * 0.5 + Math.sin(t * 2.5) * 0.05 + (st.slosh.val * 0.015);
-  const waveAmp = 4 + Math.abs(st.slosh.val * 4);
-
-  if (fillPerc > 0) {
-    const drawWave = (lv, tilt, wAmp) => {
-      const L = cx - maxR * 1.5, Rt = cx + maxR * 1.5; ctx.beginPath(); ctx.moveTo(L, lv + (L - cx) * tilt);
-      for (let x = L; x <= Rt; x += 15) ctx.lineTo(x, lv + (x - cx) * tilt + Math.sin((x - cx) * 0.04 + t * 3) * wAmp);
-      ctx.lineTo(Rt, botY); ctx.lineTo(L, botY); ctx.closePath();
-    };
-
-    drawWave(fluidY + baseR * 0.1, sloshTilt * -0.3, waveAmp * 0.8);
-    const gB = ctx.createLinearGradient(cx, fluidY, cx, botY); gB.addColorStop(0, 'rgba(217, 119, 6, 0.9)'); gB.addColorStop(1, 'rgba(146, 64, 14, 0.95)');
-    ctx.fillStyle = gB; ctx.fill();
-
-    drawWave(fluidY, sloshTilt, waveAmp);
-    const gF = ctx.createLinearGradient(cx, fluidY, cx, botY); gF.addColorStop(0, 'rgba(253, 224, 71, 0.9)'); gF.addColorStop(0.3, 'rgba(234, 179, 8, 0.95)'); gF.addColorStop(1, 'rgba(161, 98, 7, 1.0)');
-    ctx.fillStyle = gF; ctx.fill();
-    ctx.strokeStyle = 'rgba(254, 240, 138, 0.9)'; ctx.lineWidth = 5; ctx.stroke();
-  }
-
-  const innerShadowGrad = ctx.createRadialGradient(cx, cy, baseR * 0.5, cx, cy, baseR * 1.1);
-  innerShadowGrad.addColorStop(0, 'rgba(0,0,0,0)'); innerShadowGrad.addColorStop(1, 'rgba(131, 24, 67, 0.7)');
-  ctx.fillStyle = innerShadowGrad; ctx.fillRect(cx - baseR*2, cy - baseR*2, baseR*4, baseR*4);
-  ctx.restore(); 
-
-  // Outline
-  drawSmoothPath(ctx, pearPoints);
-  ctx.lineWidth = Math.max(3, baseR * 0.025); ctx.strokeStyle = 'rgba(244, 114, 182, 0.5)'; ctx.stroke();
-
-  drawCuteFace(ctx, cx, cy, baseR, t, fillPerc, st.isClosed, st.gravity.x);
-  
-  ctx.fillStyle = 'rgba(186, 230, 253, 0.8)'; 
-  st.sweatDrops.forEach(s => {
-    const dropR = baseR * 0.98, sx = cx + Math.cos(s.th) * dropR, sy = cy + Math.sin(s.th) * dropR;
-    ctx.save(); ctx.translate(sx, sy); ctx.rotate(s.th + Math.PI/2); ctx.globalAlpha = Math.max(0, s.life);
-    ctx.beginPath(); ctx.ellipse(0, 0, s.size * 0.6, s.size * 1.6, 0, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = 'white'; ctx.beginPath(); ctx.arc(-s.size*0.2, -s.size*0.5, s.size*0.2, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-  });
-
-  drawPottyDanceLegs(ctx, cx, cy, baseR);
-
-  // DRAW MINIGAME LEAKS
-  if (st.minigame.active && st.minigame.type === 'leaks') {
-      st.minigame.leaks.forEach(leak => {
-          if (leak.patched) return;
-          const lx = cx + Math.cos(leak.th) * baseR;
-          const ly = cy + Math.sin(leak.th) * baseR;
-          
-          ctx.save();
-          ctx.translate(lx, ly); ctx.rotate(leak.th);
-          ctx.fillStyle = '#f87171'; ctx.shadowColor = '#ef4444'; ctx.shadowBlur = 15;
-          const scale = 1 + Math.sin(t * 15) * 0.2;
-          ctx.beginPath(); ctx.ellipse(0, 0, 6 * scale, 25 * scale, 0, 0, Math.PI*2); ctx.fill();
-          ctx.fillStyle = '#fca5a5'; ctx.beginPath(); ctx.ellipse(0, 0, 2, 10, 0, 0, Math.PI*2); ctx.fill();
-          ctx.restore();
-      });
-  }
+  updateParticles(dt);
+  renderCanvas(now / 1000, st.volume / 100);
 }
 
 requestAnimationFrame(gameLoop);

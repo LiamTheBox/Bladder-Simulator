@@ -10,10 +10,18 @@ export default defineConfig({
   reporter: [['list']],
   use: { baseURL: `http://localhost:${PORT}` },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
-  webServer: {
-    // Test mode swaps Tone.js for the recording mock and exposes the test hook (see vite.config.js, src/main.js).
-    command: `npx vite --mode test --port ${PORT} --strictPort`,
-    url: `http://localhost:${PORT}`,
-    reuseExistingServer: false,
-  },
+  webServer: [
+    {
+      // Test mode swaps Tone.js for the recording mock and exposes the test hook (see vite.config.js, src/main.js).
+      command: `npx vite --mode test --port ${PORT} --strictPort`,
+      url: `http://localhost:${PORT}`,
+      reuseExistingServer: false,
+    },
+    {
+      // The real production build, for tests/build.spec.js
+      command: 'npx vite build && npx vite preview --port 5184 --strictPort',
+      url: 'http://localhost:5184',
+      reuseExistingServer: false,
+    },
+  ],
 });

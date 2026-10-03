@@ -14,7 +14,7 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- Roadmap steps 1 and 2 are done: the game runs from `src/` as a Vite + vanilla JS static site, split into
+- Roadmap steps 1 to 3 are done: the game runs from `src/` as a Vite + vanilla JS static site, split into
   the module layout below, with identical behavior to the prototype. `src/main.js` wires sim events to
   audio / UI / minigames and runs the frame loop; `src/sim/step.js` lists every event the sim emits.
 - `legacy/bladder_simulator_demo_(concept).html` is the original one-file prototype (tag `v12-baseline`),
@@ -58,11 +58,21 @@ Rules of architecture:
   multi-touch-required** mechanics. Keyboard shortcuts may exist as extras.
 - Wrap browser storage in try/catch; the game must work when storage is empty or blocked.
 
-## Minigame interface (build this first)
-Every minigame is a module registered by id and has:
-`start(config) -> void`, `update(dt) -> void`, `cleanup() -> void`, and reports `{ success: boolean, quality?: 0..1 }`
-through a callback/event. `config` carries `difficulty` (1–5), `duration`, and optional text overrides.
-Stories request a minigame by `id` + `difficulty`; they never know how it works.
+## Minigame interface (built: roadmap step 3)
+Every minigame is an object registered by id (`src/minigames/registry.js` documents the full interface):
+`start(config, report) -> void`, `update(dt) -> void`, `cleanup() -> void`. It reports
+`{ success: boolean, quality?: 0..1 }` by calling `report` when the player finishes early, or by returning it
+from the optional `timeUp()` when the countdown ends (default: failure). `config` carries `difficulty` (1–5),
+`duration`, and optional `text` overrides. Optional hooks: `onPlayAreaPointer`, `draw`, `freezesBody`, `prompts`.
+
+The runner (`src/minigames/index.js`) owns what games share: countdown and timer bar, bottom panel, spoken
+prompt, stamina reward/penalty. Request one with
+`startMinigame({ id, difficulty, duration?, text?, onResult? })`; it also emits `minigameStarted` and
+`minigameEnded` on the sim event bus. Stories request a minigame by `id` + `difficulty`; they never know how it
+works. Sim mode picks from `TUNING.simSpikePool` at `TUNING.simSpikeDifficulty` (3 = the prototype's values).
+
+To add a game: one file in `src/minigames/`, its controls in `index.html` inside `#mg-panel`, register it in
+`index.js`, add its difficulty table to `TUNING`, and add win/lose/cancel tests in `tests/minigames.spec.js`.
 
 Existing: `mash`, `leaks`, `breathe`.
 
@@ -123,7 +133,9 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   recovery, audio channels independent, pause on menus, minigame cancel rules, panel layout, dances move).
 - `tests/layout.spec.js` covers the mobile viewports (360x640, 390x844, 768x1024); `tests/build.spec.js`
   smoke-tests the real production build and fails on any request to another host.
-- Still to add: tests for the story validator and each minigame's win/lose paths.
+- `tests/minigames.spec.js` covers the registry and each game's win / lose / cancel paths, difficulty and text
+  overrides; `tests/rules.spec.js` covers rule fixes made after the refactor.
+- Still to add: tests for the story validator.
 - Run tests before every commit that touches `sim/`, `minigames/`, or `story/`.
 
 ## How to work in this repo

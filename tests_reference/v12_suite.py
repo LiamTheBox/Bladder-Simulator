@@ -1,8 +1,8 @@
 # Reference test (Python + Playwright). Port to @playwright/test (JS) when the project moves to Vite.
-# Usage: SIM_HTML=/path/to/page.html python v12_suite.py   (default: ../legacy/premium_bladder_simulator_v12.html)
+# Usage: SIM_HTML=/path/to/page.html python v12_suite.py   (default: ../legacy/bladder_simulator_demo_(concept).html)
 # Tone.js and speechSynthesis are replaced by recording mocks, so no network or audio device is needed.
 import os, pathlib
-SIM_URL = pathlib.Path(os.environ.get("SIM_HTML", pathlib.Path(__file__).resolve().parents[1] / "legacy" / "premium_bladder_simulator_v12.html")).resolve().as_uri()
+SIM_URL = pathlib.Path(os.environ.get("SIM_HTML", pathlib.Path(__file__).resolve().parents[1] / "legacy" / "bladder_simulator_demo_(concept).html")).resolve().as_uri()
 import json, math, sys
 from playwright.sync_api import sync_playwright
 exec(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'v11_regression.py')).read().split("results = []")[0])   # MOCK_TONE + SIM_URL

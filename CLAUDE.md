@@ -14,7 +14,7 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- `legacy/premium_bladder_simulator_v12.html` is the **only working code**: one ~1,400-line HTML file.
+- `legacy/bladder_simulator_demo_(concept).html` is the **only working code**: one ~1,400-line HTML file.
   Canvas rendering, Tone.js audio (CDN), Web Speech API voice lines, global mutable state object `st`,
   a `TUNING` object, an update loop, and DOM UI.
 - Features that must keep working through the refactor:
@@ -43,7 +43,8 @@ src/
   story/       runner, schema, validator, loader
   config/      TUNING and all magic numbers
 stories/       example story packs (JSON)
-legacy/        the original prototype, untouched (reference for behavior)
+legacy/        the original prototype, untouched (reference for behavior), plus
+               bonnies_journey.md, the prose reference for the first story
 tests_reference/   Python+Playwright tests to port to @playwright/test
 ```
 

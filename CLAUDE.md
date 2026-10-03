@@ -109,6 +109,11 @@ Already covered, as variants worth keeping in mind: the old `mash` had a bar tha
 Prototype these in **sim mode first** (no story needed), 2–3 at a time, playtest on a phone.
 
 ## Story format (data, never code)
+**Built (step 6, part 1):** the exact format is documented at the top of `src/story/schema.js`;
+`src/story/validator.js` enforces it and `src/story/loader.js` is the only way story text enters the game.
+`stories/placeholder.json` is a tiny valid story that uses every feature. The runner and the story screen are
+not built yet. The original sketch, for intent:
+
 Stories are JSON files, versioned (`"schemaVersion": 1`). Sketch:
 - `meta`: title, author, rating, content tags, description.
 - `characters[]`: id, display name, **age (integer, must be >= 18)**, voice, personality notes.
@@ -172,7 +177,7 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   overrides; `tests/rules.spec.js` covers rule fixes made after the refactor.
 - `tests/events.spec.js` has a test per event (payload and order); `tests/settings.spec.js` covers the
   difficulty setting and blocked storage.
-- Still to add: tests for the story validator.
+- `tests/story-validator.spec.js` covers the validator and loader (runs in Node, no browser needed).
 - Run tests before every commit that touches `sim/`, `minigames/`, or `story/`.
 
 ## How to work in this repo

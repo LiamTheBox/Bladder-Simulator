@@ -37,6 +37,17 @@ export function queueDrink(amount, name) {
   emit('drinkQueued', { name, amount });
 }
 
+// Story mode on or off (see st.storyMode)
+export function setStoryMode(on) { st.storyMode = on; }
+
+// Fullness in percent, set at once (story start) or approached smoothly (every frame in story mode)
+export function setVolume(v) { st.volume = Math.max(0, Math.min(100, v)); }
+export function easeVolumeToward(target, dt) {
+  if (st.isVoiding || !st.isClosed) return; // draining has its own pace
+  st.volume += (target - st.volume) * Math.min(1, T.storyVolumeEase * dt);
+  if (Math.abs(target - st.volume) < 0.05) st.volume = target;
+}
+
 // Phone tilt in degrees (left/right); the fluid leans that way
 export function setTilt(gammaDeg) {
   st.gravity.targetX = Math.max(-1, Math.min(1, gammaDeg / T.tiltFullDeg));

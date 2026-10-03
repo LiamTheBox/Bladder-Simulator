@@ -11,6 +11,7 @@ export function isAudioReady() { return audioCtxReady; }
 
 // Must be called from a user gesture: browsers only unlock audio then.
 export async function startAudio() {
+  if (audioCtxReady) return; // already unlocked (the start screen can be reached again from story mode)
   await Tone.start(); Tone.Transport.start(); initAudio();
 }
 

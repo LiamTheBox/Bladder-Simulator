@@ -96,34 +96,37 @@ export function stepSim(dt, pointerCount) {
   const voidShouldDisable = st.isVoiding || st.failureEvent || st.volume <= 0;
   if (voidShouldDisable !== st.voidBtnDisabled) { st.voidBtnDisabled = voidShouldDisable; emit('voidButtonChanged', voidShouldDisable); }
 
-  // Voice lines for filling / desperate / begging
-  const band = Math.floor(st.volume / T.fillingBandPct);
-  if (band > st.lastBand && st.isClosed) emit('voiceCue', 'filling');
-  st.lastBand = band;
-  if (st.isClosed && !st.failureEvent) {
-    if (st.volume > T.desperateAbove) { st.desperateTimer -= dt; if (st.desperateTimer <= 0 && emit('voiceCue', 'desperate')) st.desperateTimer = T.desperateEveryMin + Math.random() * T.desperateEverySpread; }
-    if (st.volume > T.beggingAbove && st.stamina < T.beggingStaminaBelow) { st.beggingTimer -= dt; if (st.beggingTimer <= 0 && emit('voiceCue', 'begging')) st.beggingTimer = T.beggingEveryMin + Math.random() * T.beggingEverySpread; }
-  }
+  // Sim mode only: story mode has its own lines, pacing and consequences
+  if (!st.storyMode) {
+    // Voice lines for filling / desperate / begging
+    const band = Math.floor(st.volume / T.fillingBandPct);
+    if (band > st.lastBand && st.isClosed) emit('voiceCue', 'filling');
+    st.lastBand = band;
+    if (st.isClosed && !st.failureEvent) {
+      if (st.volume > T.desperateAbove) { st.desperateTimer -= dt; if (st.desperateTimer <= 0 && emit('voiceCue', 'desperate')) st.desperateTimer = T.desperateEveryMin + Math.random() * T.desperateEverySpread; }
+      if (st.volume > T.beggingAbove && st.stamina < T.beggingStaminaBelow) { st.beggingTimer -= dt; if (st.beggingTimer <= 0 && emit('voiceCue', 'begging')) st.beggingTimer = T.beggingEveryMin + Math.random() * T.beggingEverySpread; }
+    }
 
-  // STAMINA & MINIGAMES
-  if (st.volume >= T.staminaDrainFrom && st.isClosed && !st.failureEvent) {
-      st.staminaDraining = true;
+    // STAMINA & MINIGAMES
+    if (st.volume >= T.staminaDrainFrom && st.isClosed && !st.failureEvent) {
+        st.staminaDraining = true;
 
-      const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct);
-      st.stamina = Math.max(0, st.stamina - drainRate * dt);
+        const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct);
+        st.stamina = Math.max(0, st.stamina - drainRate * dt);
 
-      if (st.stamina <= 0) triggerAccident();
-      // not in the frame of an accident: the spike would be cancelled a frame later and wipe the accident subtitle
-      else if (!st.minigame.active) {
-         st.minigame.cooldown -= dt;
-         if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume) emit('spikeStarted');
-      }
+        if (st.stamina <= 0) triggerAccident();
+        // not in the frame of an accident: the spike would be cancelled a frame later and wipe the accident subtitle
+        else if (!st.minigame.active) {
+           st.minigame.cooldown -= dt;
+           if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume) emit('spikeStarted');
+        }
 
-  } else {
-      if (st.minigame.active) emit('spikeCancelled'); // bladder dropped below 50% or was opened: no unfair failure
-      st.stamina = Math.min(100, st.stamina + T.staminaRegenPerSec * dt);
-      st.staminaDraining = false;
-  }
+    } else {
+        if (st.minigame.active) emit('spikeCancelled'); // bladder dropped below 50% or was opened: no unfair failure
+        st.stamina = Math.min(100, st.stamina + T.staminaRegenPerSec * dt);
+        st.staminaDraining = false;
+    }
+  } else st.staminaDraining = false;
 
   announceThresholds('volume', st.prevVolume, st.volume, T.volumeThresholds);
   announceThresholds('stamina', st.prevStamina, st.stamina, T.staminaThresholds);

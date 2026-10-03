@@ -6,6 +6,7 @@ export const TUNING = {
   bodyCy: 0.43, minR: 0.15, maxR: 0.31,
 
   startVolume: 15,
+  storyVolumeEase: 3,            // story mode: how fast the bladder on screen catches up with the story's fullness
 
   // Fluid, in percent of capacity per second
   digestPerSec: 1.0 / 15.0,      // queued drinks trickle in

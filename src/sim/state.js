@@ -8,6 +8,7 @@ function initialState() {
   isClosed: true, isSpeedingUp: false, isVoiding: false,
   stamina: 100, failureEvent: false,
   prevVolume: TUNING.startVolume, prevStamina: 100, // last frame's values, for the thresholdCrossed event
+  storyMode: false, // story mode drives fullness itself: no stamina drain, random spikes or idle chatter
   staminaDraining: false, // true while holding costs stamina; the HUD brightens the stamina bar from this
   // Minigame State
   minigame: {

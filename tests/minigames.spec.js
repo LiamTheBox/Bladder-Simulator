@@ -13,8 +13,8 @@ async function started(browser) {
   return { ...game, ev: (js) => pg.evaluate(js), wait: (ms) => pg.waitForTimeout(ms) };
 }
 const shown = (id) => `getComputedStyle(document.getElementById('${id}')).display`;
-const controls = `({panel:${shown('mg-panel')}, mash:${shown('mg-btn-mash')}, breathe:${shown('mg-breathe-area')}, leaks:${shown('mg-leaks-area')}, swipe:${shown('mg-swipe-area')}, popups:${shown('mg-popups-layer')}})`;
-const ALL_HIDDEN = { panel: 'none', mash: 'none', breathe: 'none', leaks: 'none', swipe: 'none', popups: 'none' };
+const controls = `({panel:${shown('mg-panel')}, mash:${shown('mg-btn-mash')}, breathe:${shown('mg-breathe-area')}, leaks:${shown('mg-leaks-area')}, swipe:${shown('mg-swipe-area')}, popups:${shown('mg-popups-layer')}, tremor:${shown('mg-tremor-area')}})`;
+const ALL_HIDDEN = { panel: 'none', mash: 'none', breathe: 'none', leaks: 'none', swipe: 'none', popups: 'none', tremor: 'none' };
 
 async function tapAllCracks(pg) {
   const n = await pg.evaluate('st.minigame.leaks.length');
@@ -24,9 +24,9 @@ async function tapAllCracks(pg) {
   }
 }
 
-test('registry knows all five games and refuses unknown ids', async ({ browser }) => {
+test('registry knows all six games and refuses unknown ids', async ({ browser }) => {
   const { context, ev } = await started(browser);
-  expect(await ev('minigameIds()')).toEqual(['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups']);
+  expect(await ev('minigameIds()')).toEqual(['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock']);
   expect(await ev("startMinigame({ id: 'no_such_game' })")).toBe(false);
   expect(await ev('st.minigame.active')).toBe(false);
   await context.close();
@@ -106,7 +106,7 @@ test('breathe: win by holding on the grow phases, lose by doing nothing', async 
 
 test('a cancelled game costs nothing and reports cancelled', async ({ browser }) => {
   const { context, ev, wait } = await started(browser);
-  for (const id of ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups']) {
+  for (const id of ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock']) {
     await ev(READY);
     await ev(`startMinigame({ id: '${id}' })`);
     await ev('st.volume=40'); await wait(150); // the hold ended: bladder dropped below 50%
@@ -265,10 +265,76 @@ test('sim mode picks at random and never repeats one of the last two games', asy
   for (let i = 2; i < picks.length; i++) {
     expect(picks[i] !== picks[i - 1] && picks[i] !== picks[i - 2], `pick ${i} (${picks.slice(i - 2, i + 1)})`).toBe(true);
   }
-  expect([...new Set(picks)].sort()).toEqual(['breathe', 'distraction_popups', 'leaks', 'mash', 'swipe_away']);
+  expect([...new Set(picks)].sort()).toEqual(['breathe', 'distraction_popups', 'leaks', 'mash', 'swipe_away', 'tremor_lock']);
   // an explicitly requested game is never refused, even right after itself
   await ev("startMinigame({ id: 'mash' }); endMinigame(false, true)");
   expect(await ev("startMinigame({ id: 'mash' })")).toBe(true);
   await ev('endMinigame(false, true)');
+  await context.close();
+});
+
+// Taps the tremor strip from inside the page, on the frame where the pulse ring has shrunk to `atScale`
+// (1.0 = exactly on the beat, larger = earlier / off the beat). Returns how many taps were made.
+function tapTremor(pg, { atScale, taps }) {
+  return pg.evaluate(({ atScale, taps }) => new Promise((res) => {
+    const pulse = document.getElementById('tremor-pulse'), area = document.getElementById('mg-tremor-area');
+    let made = 0, armed = true;
+    function f() {
+      if (!window.st.minigame.active || made >= taps) return res(made);
+      const scale = parseFloat((pulse.style.transform.match(/scale\(([\d.]+)\)/) || [0, 9])[1]);
+      // only as the ring passes this size, not any time after
+      if (armed && scale <= atScale && scale > atScale - 0.1) { area.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); made++; armed = false; }
+      if (scale > atScale + 0.1) armed = true; // re-arm on the next pulse
+      requestAnimationFrame(f);
+    }
+    f();
+  }), { atScale, taps });
+}
+
+test('tremor_lock: tap on the beat to win; off-beat taps undo progress; mashing fails', async ({ browser }) => {
+  const { context, pg, ev, wait, errors } = await started(browser);
+  await ev('st.volume=55'); // slow stamina drain over the seconds this takes
+  await ev("startMinigame({ id: 'tremor_lock', difficulty: 3 })"); // 5 on-beat taps, one beat every 0.7 s
+  await expect(pg.locator('#tremor-label')).toHaveText('STEADY… 0/5');
+  await tapTremor(pg, { atScale: 1.06, taps: 2 });
+  await expect(pg.locator('#tremor-label')).toHaveText('STEADY… 2/5');
+  await tapTremor(pg, { atScale: 1.3, taps: 1 }); // half a beat early
+  await expect(pg.locator('#tremor-label'), 'an off-beat tap takes one back').toHaveText('STEADY… 1/5');
+  await tapTremor(pg, { atScale: 1.06, taps: 4 });
+  let [r] = await ev('window.__results');
+  expect(r).toMatchObject({ id: 'tremor_lock', difficulty: 3, success: true, cancelled: false });
+  expect(await ev(controls)).toEqual(ALL_HIDDEN);
+
+  // two taps inside the same beat: the second is ignored, not punished
+  await ev(READY); await ev('st.volume=55');
+  await ev("startMinigame({ id: 'tremor_lock', difficulty: 1 })");
+  await pg.evaluate(() => new Promise((res) => {
+    const pulse = document.getElementById('tremor-pulse'), area = document.getElementById('mg-tremor-area');
+    (function f() {
+      const scale = parseFloat((pulse.style.transform.match(/scale\(([\d.]+)\)/) || [0, 9])[1]);
+      if (scale <= 1.06) { for (let i = 0; i < 2; i++) area.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); return res(); }
+      requestAnimationFrame(f);
+    })();
+  }));
+  await expect(pg.locator('#tremor-label')).toHaveText('STEADY… 1/3');
+  await ev('endMinigame(false, true)');
+
+  // mashing as fast as possible never wins
+  await ev(READY); await ev('st.volume=55; st.stamina=80');
+  await ev("startMinigame({ id: 'tremor_lock', difficulty: 1 })");
+  while (await ev('st.minigame.active')) { await pg.locator('#mg-tremor-area').dispatchEvent('pointerdown'); await wait(40); }
+  [r] = await ev('window.__results');
+  expect(r).toMatchObject({ id: 'tremor_lock', success: false, cancelled: false });
+  expect(await ev('st.stamina'), 'the usual 50 stamina penalty').toBeLessThan(35);
+
+  // every difficulty is winnable by tapping on the beat
+  for (const d of [1, 5]) {
+    await ev(READY); await ev('st.volume=55');
+    await ev(`startMinigame({ id: 'tremor_lock', difficulty: ${d} })`);
+    await tapTremor(pg, { atScale: 1.06, taps: 9 });
+    [r] = await ev('window.__results');
+    expect(r, `difficulty ${d}`).toMatchObject({ id: 'tremor_lock', difficulty: d, success: true });
+  }
+  expect(errors).toEqual([]);
   await context.close();
 });

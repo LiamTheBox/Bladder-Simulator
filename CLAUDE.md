@@ -14,8 +14,8 @@ Genre: interactive fiction + resource management + reflex minigames.
 Goal: easy to **deploy as a static website** and easy to **mod with user-made story files**.
 
 ## Current state (read the code, don't trust this list blindly)
-- Roadmap steps 1 to 4 are done, and step 5 has its first two backlog games (`swipe_away`,
-  `distraction_popups`) built and tested but **not yet playtested on a phone**: the game runs from `src/` as a Vite + vanilla JS static site, split into
+- Roadmap steps 1 to 4 are done, and step 5 has three backlog games (`swipe_away`,
+  `distraction_popups`, `tremor_lock`) built and tested but **not yet playtested on a phone**: the game runs from `src/` as a Vite + vanilla JS static site, split into
   the module layout below, with identical behavior to the prototype. `src/main.js` wires sim events to
   audio / UI / minigames and runs the frame loop; `src/sim/events.js` lists every event with its payload.
 - `legacy/bladder_simulator_demo_(concept).html` is the original one-file prototype (tag `v12-baseline`),
@@ -81,8 +81,8 @@ values). Changing it restarts the game (`src/ui/reset.js`) and is remembered in 
 To add a game: one file in `src/minigames/`, its controls in `index.html` inside `#mg-panel`, register it in
 `index.js`, add its difficulty table to `TUNING`, and add win/lose/cancel tests in `tests/minigames.spec.js`.
 
-Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`. In sim mode the two UI-intrusion games
-cover the bottom control panel (never the bladder); in story mode they are meant to cover the dialogue choices.
+Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`. In sim mode the
+UI-intrusion games cover the bottom control panel (never the bladder); in story mode they are meant to cover the dialogue choices.
 
 Backlog of cross-platform "UI-intrusion" ideas (all drag/tap/hold, no special hardware):
 1. `swipe_away` — a catastrophic dialogue option drops over the real choices; flick it off-screen. **(built)**
@@ -90,7 +90,7 @@ Backlog of cross-platform "UI-intrusion" ideas (all drag/tap/hold, no special ha
 3. `urge_bubble_trace` — drag your chosen reply to a "Speak" target without touching the inflating bubble.
 4. `tunnel_vision` — screen goes dark except a draggable spotlight; read the question word by word.
 5. `shattered_reply` — the polite sentence breaks into pieces; drag them back into order.
-6. `tremor_lock` — text shakes; tap in time with a heartbeat ring to steady it.
+6. `tremor_lock` — text shakes; tap in time with a heartbeat ring to steady it. **(built)**
 7. `distraction_popups` — "Spasm!", "Ache!" pop over the choices; tap them away (whack-a-mole). **(built)**
 8. `scrub_monologue` — the bladder's huge words cover the text; rub the screen to wipe them off.
 9. `anchor_hold` — safe text keeps morphing into a pleading line; hold an anchor button to freeze it.

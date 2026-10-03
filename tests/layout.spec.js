@@ -28,7 +28,7 @@ for (const [W, H] of [[360, 640], [390, 844], [768, 1024]]) {
     expect(fit.right, 'right edge on screen at 100%').toBeLessThanOrEqual(fit.W);
 
     // Each minigame's controls stay inside the bottom panel, and the panel inside the viewport
-    const CONTROL = { mash: 'mg-btn-mash', leaks: 'mg-leaks-area', breathe: 'breathe-ring', swipe_away: 'swipe-card', distraction_popups: 'mg-popups-area' };
+    const CONTROL = { mash: 'mg-btn-mash', leaks: 'mg-leaks-area', breathe: 'breathe-ring', swipe_away: 'swipe-card', distraction_popups: 'mg-popups-area', tremor_lock: 'tremor-ring' };
     for (const typ of Object.keys(CONTROL)) {
       await ev('st.failureEvent=false; st.isClosed=true; st.volume=75; st.stamina=100; st.minigame.active=false');
       // popups: easiest level, so they stay on screen long enough to measure (harder levels end once they pile up)

@@ -9,7 +9,8 @@ export function updateParticles(dt) {
     if (p.life <= 0 || p.y > H + 50) st.particles.splice(i, 1);
   }
   
-  if (st.volume > 50 && st.isClosed && Math.random() < ((st.volume-50)/50)*0.1) {
+  // dt is 0 while paused: no new drops then, or they would pile up (nothing ages while paused)
+  if (dt > 0 && st.volume > 50 && st.isClosed && Math.random() < ((st.volume-50)/50)*0.1) {
     st.sweatDrops.push({ th: -Math.PI/2 + (Math.random() - 0.5) * 1.2, speed: (Math.random() * 0.4 + 0.15), dir: (Math.random() < 0.5 ? 1 : -1), size: Math.random() * 2 + 2.5, life: 1.2 });
   }
   for (let i = st.sweatDrops.length - 1; i >= 0; i--) {

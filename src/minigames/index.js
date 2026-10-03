@@ -20,8 +20,11 @@ import breathe from './breathe.js';
 import swipeAway from './swipe_away.js';
 import distractionPopups from './distraction_popups.js';
 import tremorLock from './tremor_lock.js';
+import tiptoe from './tiptoe.js';
+import steadyTheSlosh from './steady_the_slosh.js';
+import thinkOfSomethingElse from './think_of_something_else.js';
 
-[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock].forEach(registerMinigame);
+[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock, tiptoe, steadyTheSlosh, thinkOfSomethingElse].forEach(registerMinigame);
 
 let current = null;      // the game that is running (or was last started and not yet cleaned up)
 let currentInfo = null;  // { id, difficulty, onResult } of that run
@@ -45,7 +48,7 @@ const isEnabled = (id) => !settings.disabledMinigames.includes(id);
 // game instead; with every game off there is nothing to play (null).
 function substituteFor(id) {
   if (isEnabled(id)) return id;
-  const others = minigameIds().filter(isEnabled);
+  const others = minigameIds().filter((other) => isEnabled(other) && !TUNING.practiceMinigames.includes(other));
   return others.length ? others[Math.floor(Math.random() * others.length)] : null;
 }
 
@@ -55,7 +58,8 @@ function retireCurrent() {
   st.minigame.freezeBody = false;
 }
 
-// request: { id, difficulty, duration, text, onResult }, all optional. Without an id, sim mode picks at random;
+// request: { id, difficulty, duration, text, onResult, practice }, all optional.
+// practice: a try-out from Settings. It runs whatever the bladder's state and changes no stamina. Without an id, sim mode picks at random;
 // without a difficulty, the player's Settings choice is used.
 // Returns false (and starts nothing) if the id is unknown, or if the player has switched every minigame off.
 export function startMinigame(request = {}) {
@@ -74,6 +78,7 @@ export function startMinigame(request = {}) {
   config.duration = request.duration ?? (game.duration ? game.duration(config.difficulty) : TUNING.minigameDefaultDuration);
 
   st.minigame.active = true;
+  st.minigame.practice = Boolean(request.practice);
   st.minigame.type = id;
   st.minigame.duration = config.duration;
   st.minigame.freezeBody = Boolean(game.freezesBody);
@@ -81,7 +86,7 @@ export function startMinigame(request = {}) {
   mgTimerBar.style.width = '100%';
 
   recent.push(id); if (recent.length > 8) recent.shift();
-  current = game; currentInfo = { id, difficulty: config.difficulty, onResult: request.onResult, failStamina: game.failStamina };
+  current = game; currentInfo = { id, difficulty: config.difficulty, onResult: request.onResult, failStamina: game.failStamina, practice: Boolean(request.practice) };
   game.start(config, (result) => {
     // ignore reports from a game that is no longer the running one
     if (current === game && st.minigame.active) endMinigame(result.success, false, result.quality);
@@ -103,18 +108,18 @@ export function startMinigame(request = {}) {
 // cancelled = stopped from outside (the player voided, the hold ended, an accident): no reward and no penalty.
 export function endMinigame(success, cancelled = false, quality) {
   const info = currentInfo;
-  st.minigame.active = false; st.minigame.cooldown = TUNING.spikeCooldownMin + Math.random() * TUNING.spikeCooldownSpread;
+  st.minigame.active = false; st.minigame.practice = false; st.minigame.cooldown = TUNING.spikeCooldownMin + Math.random() * TUNING.spikeCooldownSpread;
   showMgPanel(false);
   hideBubble();
   retireCurrent();
 
   if (!cancelled) {
     if (success) {
-      st.stamina = Math.min(100, st.stamina + TUNING.minigameWinStamina);
+      if (!info?.practice) st.stamina = Math.min(100, st.stamina + TUNING.minigameWinStamina);
       st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0;
       speak('success_hold', true); vibe([50, 50]);
     } else {
-      st.stamina = Math.max(0, st.stamina - (info?.failStamina ?? TUNING.minigameFailStamina));
+      if (!info?.practice) st.stamina = Math.max(0, st.stamina - (info?.failStamina ?? TUNING.minigameFailStamina));
       st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0;
       speak('fail', true); vibe(200);
     }

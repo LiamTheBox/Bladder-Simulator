@@ -122,7 +122,7 @@ export function stepSim(dt, pointerCount) {
         }
 
     } else {
-        if (st.minigame.active) emit('spikeCancelled'); // bladder dropped below 50% or was opened: no unfair failure
+        if (st.minigame.active && !st.minigame.practice) emit('spikeCancelled'); // bladder dropped below 50% or was opened: no unfair failure
         st.stamina = Math.min(100, st.stamina + T.staminaRegenPerSec * dt);
         st.staminaDraining = false;
     }

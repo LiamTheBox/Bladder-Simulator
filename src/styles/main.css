@@ -304,6 +304,33 @@
   .story-mode #bladder-bubble { bottom: 8px; max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; }
   #story-guide-link { color: #7dd3fc; font-size: 0.85rem; padding: 6px 0; }
 
+  /* Tiptoe: the whole strip is the handle; the marker reddens as it nears the speed limit (--rush, 0..1) */
+  #mg-tiptoe-area { flex: 1; display: none; position: relative; touch-action: none; cursor: grab; }
+  #tiptoe-track { position: absolute; inset: 0; border-radius: 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; transition: background-color 0.15s; }
+  #mg-tiptoe-area.jolt #tiptoe-track { background: rgba(244, 63, 94, 0.35); }
+  #tiptoe-knob { --rush: 0; position: absolute; left: 0; top: 0; bottom: 0; width: 56px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; border-radius: 16px; pointer-events: none; will-change: transform;
+    background: color-mix(in srgb, #f43f5e calc(var(--rush) * 100%), #34d399); box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+  #tiptoe-goal { position: absolute; right: 0; top: 0; bottom: 0; width: 56px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; border-radius: 16px; border: 2px dashed rgba(255,255,255,0.4); pointer-events: none; }
+  #tiptoe-label { position: relative; z-index: 1; text-shadow: 0 1px 4px rgba(0,0,0,0.8); font-weight: 900; font-size: 0.95rem; letter-spacing: 0.5px; color: white; pointer-events: none; }
+
+  /* Steady the slosh: red ends are the spill zones; the blue drop is the wave, the white bar is your finger */
+  #mg-steady-area { flex: 1; display: none; position: relative; touch-action: none; cursor: ew-resize; border-radius: 16px; overflow: hidden;
+    background: linear-gradient(90deg, rgba(244,63,94,0.75) 0%, rgba(244,63,94,0.15) 15%, rgba(255,255,255,0.08) 30%, rgba(52,211,153,0.25) 50%, rgba(255,255,255,0.08) 70%, rgba(244,63,94,0.15) 85%, rgba(244,63,94,0.75) 100%);
+    border: 1px solid rgba(255,255,255,0.2); }
+  #steady-wave { position: absolute; top: 50%; width: 34px; height: 34px; margin: -17px 0 0 -17px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #facc15; box-shadow: 0 0 14px rgba(250, 204, 21, 0.7); pointer-events: none; }
+  #steady-wave.danger { background: #f87171; box-shadow: 0 0 18px rgba(244, 63, 94, 0.9); }
+  #steady-handle { position: absolute; top: 4px; bottom: 4px; width: 6px; margin-left: -3px; border-radius: 3px; background: white; pointer-events: none; }
+
+  /* Think of something else: one row of number tiles */
+  #mg-count-area { flex: 1; display: none; gap: 6px; }
+  .count-tile { flex: 1; min-width: 0; border-radius: 12px; border: 1px solid rgba(253, 230, 138, 0.5); background: rgba(255,255,255,0.1); color: white; font-weight: 900; font-size: 1.3rem; font-family: 'JetBrains Mono', monospace; cursor: pointer; touch-action: none; }
+  .count-tile.done { opacity: 0.2; border-color: transparent; cursor: default; }
+  .count-tile.wrong { animation: tile-wrong 0.3s; }
+  @keyframes tile-wrong { 0%, 100% { transform: translateX(0); background: rgba(244, 63, 94, 0.6); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  #settings-try-list .age-btn { text-align: left; padding-left: 16px; }
+  .story-mode #settings-try { display: none; } /* a story decides its own minigames */
+
   /* ---------- DESKTOP (wide screens) ----------
      Same page, same elements: above this size the panel moves beside the bladder instead of under it.
      Phones, portrait tablets and phones held sideways (too short) keep the stacked layout above. */

@@ -63,6 +63,31 @@ export const TUNING = {
     maxShakePx: 6, pulseExtra: 0.6, flashSec: 0.18,
   },
 
+  tiptoe: {
+    duration: 7.0,
+    limitByDifficulty: [0.5, 0.42, 0.35, 0.3, 0.26],          // fastest allowed, in track lengths per second
+    speedWindowSec: 0.2,                                      // speed is measured over this long, not per frame
+    maxJolts: 3, joltCooldown: 0.6, joltSloshKick: 6,
+  },
+  steadyTheSlosh: {
+    duration: 6.0,
+    pushByDifficulty: [0.45, 0.6, 0.75, 0.9, 1.05],           // how hard the wave is pushed (track halves per second)
+    turnSecByDifficulty: [3, 2.5, 2, 1.6, 1.3],               // seconds between changes of direction
+    turnJitter: 0.3, ripple: 0.3, rippleRate: 3,
+    runaway: 0.8,                                             // the further out the wave is, the faster it runs
+    leanPower: 2.2,                                           // pull of a finger held at the very end of the strip
+    dangerFrom: 0.7, sloshForce: 400,
+  },
+  thinkOfSomethingElse: {
+    duration: 7.0,
+    tilesByDifficulty: [4, 5, 5, 6, 6],
+    shuffleFromDifficulty: 3,                                 // from here on the tiles change places after each right tap
+    wrongTapCostSec: 0.7,
+    firstHeckleSec: 0.9, heckleEverySec: 1.1,
+  },
+  // Games offered under "Try a new minigame" in Settings. They are not in simSpikePool until they are approved.
+  practiceMinigames: ['tiptoe', 'steady_the_slosh', 'think_of_something_else'],
+
   // Stretch (pixels)
   stretchGrabBand: 55,           // how close to the edge a touch must land to grab it
   stretchMin: -60, stretchMax: 140,

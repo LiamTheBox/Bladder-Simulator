@@ -3,6 +3,8 @@
 import { settings, saveSettings, toggleInList } from '../config/settings.js';
 import { minigameNames } from '../config/content.js';
 import { minigameIds } from '../minigames/registry.js';
+import { TUNING } from '../config/tuning.js';
+import { startMinigame } from '../minigames/index.js';
 import { resetGame } from './reset.js';
 
 /* --- 18+ gate: shown until confirmed, and again whenever the answer could not be remembered --- */
@@ -35,7 +37,8 @@ document.getElementById('settings-comfort').append(
   checkbox('Vibration', settings.vibration, (on) => { settings.vibration = on; saveSettings(); }),
 );
 
-document.getElementById('settings-minigames').append(...minigameIds().map((id) => checkbox(
+// (try-out games have their own section below; they never appear by themselves, so they need no switch)
+document.getElementById('settings-minigames').append(...minigameIds().filter((id) => !TUNING.practiceMinigames.includes(id)).map((id) => checkbox(
   minigameNames[id] ?? id, !settings.disabledMinigames.includes(id),
   (on) => toggleInList(settings.disabledMinigames, id, !on),
 )));
@@ -49,6 +52,17 @@ export function showTagSettings(tags, onChange) {
   })));
   if (all.length === 0) tagBox.textContent = 'No stories have tags yet.';
 }
+
+// Try-outs for games that are not in the random pool yet: closes Settings (which unpauses) and starts the game
+document.getElementById('settings-try-list').append(...TUNING.practiceMinigames.map((id) => {
+  const b = document.createElement('button'); b.className = 'age-btn'; b.dataset.try = id;
+  b.textContent = minigameNames[id] ?? id;
+  b.addEventListener('click', () => {
+    document.getElementById('settings-overlay').style.display = 'none';
+    startMinigame({ id, practice: true });
+  });
+  return b;
+}));
 
 // A way out at any time: back to the start screen, game reset
 export function onBackToStart(showStartScreen) {

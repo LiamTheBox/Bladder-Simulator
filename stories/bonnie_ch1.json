@@ -1,0 +1,654 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "id": "bonnie_ch1",
+    "title": "Bonnie's Long Journey — Chapter 1: The Silent House",
+    "author": "LiamBox",
+    "rating": "18+",
+    "tags": [
+      "desperation",
+      "stealth",
+      "family home",
+      "chapter 1"
+    ],
+    "description": "4:10 AM on departure day. Bonnie, 23, has one rule for travel: never inconvenience anyone. The bathroom is one flight of creaky stairs away, and the whole house is asleep. Placeholder wording."
+  },
+  "characters": [
+    {
+      "id": "bonnie",
+      "name": "Bonnie",
+      "age": 23,
+      "notes": "Twenty-three, flying out today for an exchange semester. Lives with her parents. A committed people-pleaser with a stubborn streak."
+    },
+    {
+      "id": "chloe",
+      "name": "Chloe",
+      "age": 26,
+      "notes": "Bonnie's older sister. Light sleeper. Sleeps in the next room."
+    },
+    {
+      "id": "bladder",
+      "name": "Bladder",
+      "kind": "bladder"
+    }
+  ],
+  "stats": [
+    {
+      "id": "control",
+      "label": "Control",
+      "start": 48,
+      "thresholds": [
+        {
+          "atOrBelow": 0,
+          "goto": "ending_lost"
+        }
+      ]
+    },
+    {
+      "id": "halo",
+      "label": "Halo",
+      "icon": "😇",
+      "start": 100
+    },
+    {
+      "id": "suspicion",
+      "label": "Noise",
+      "icon": "👀",
+      "start": 0,
+      "thresholds": [
+        {
+          "atOrAbove": 100,
+          "goto": "ending_caught"
+        }
+      ]
+    }
+  ],
+  "bladder": {
+    "startFullness": 86,
+    "fillPerMinute": 0.3,
+    "capacityMl": 2400
+  },
+  "clock": {
+    "start": "04:10"
+  },
+  "modes": [
+    {
+      "flag": "hard_mode",
+      "label": "Hard mode",
+      "minigameDifficulty": 1,
+      "fillMultiplier": 1.5
+    }
+  ],
+  "choiceSets": [
+    {
+      "id": "noise_response",
+      "options": [
+        {
+          "key": "freeze",
+          "effects": [
+            {
+              "minutes": 3
+            },
+            {
+              "stat": "suspicion",
+              "add": -20
+            },
+            {
+              "stat": "control",
+              "add": -8
+            }
+          ]
+        },
+        {
+          "key": "push_on",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": 4
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "when": [
+        {
+          "stat": "suspicion",
+          "gte": 50
+        }
+      ],
+      "scene": "house_stirs"
+    },
+    {
+      "when": [
+        {
+          "stat": "fullness",
+          "gte": 93
+        }
+      ],
+      "bladder": "Just let go. Right here. Who would ever know?",
+      "minigame": {
+        "id": "swipe_away",
+        "difficulty": 2,
+        "success": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": 6
+            }
+          ]
+        },
+        "fail": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": -18
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "start": "bed",
+  "scenes": [
+    {
+      "id": "bed",
+      "title": "4:10 AM — The Silent House",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The red digits on the nightstand click over to 4:10. Under the blanket, Bonnie curls her toes and bites her lip."
+        },
+        {
+          "speaker": "narrator",
+          "text": "She has not been since yesterday afternoon. That was the challenge she set herself: flawless manners, total composure, and nobody inconvenienced. It is going badly.",
+          "bladder": "I filed a complaint at midnight. Nobody answered."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Through the wall, Dad's snoring is slow and even. Chloe's room next door is quiet. The taxi comes at eight. If she is ever going to go, it is now. Silently.",
+          "bladder": "There is a bathroom downstairs. Fourteen steps. I counted."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Slide out of bed slowly. Every spring of this mattress is a tattletale.",
+          "effects": [
+            {
+              "minutes": 4
+            },
+            {
+              "stat": "control",
+              "add": -6
+            }
+          ],
+          "next": "hallway"
+        },
+        {
+          "text": "Just get UP. Speed over silence. Not one more minute.",
+          "effects": [
+            {
+              "minutes": 1
+            },
+            {
+              "stat": "suspicion",
+              "add": 30
+            },
+            {
+              "stat": "control",
+              "add": 3
+            }
+          ],
+          "next": "hallway"
+        },
+        {
+          "text": "Lie still one more minute and listen to the house. Be sure.",
+          "effects": [
+            {
+              "minutes": 3
+            },
+            {
+              "stat": "control",
+              "add": -4
+            },
+            {
+              "flag": "listened"
+            }
+          ],
+          "next": "hallway"
+        }
+      ]
+    },
+    {
+      "id": "hallway",
+      "title": "4:14 AM — The Hallway",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The landing is cold under her feet. Chloe's door is open a hand's width."
+        },
+        {
+          "speaker": "narrator",
+          "text": "She already knows which board outside Chloe's door complains. She steps over it.",
+          "if": [
+            {
+              "flag": "listened"
+            }
+          ]
+        },
+        {
+          "speaker": "chloe",
+          "text": "Mmh... Bonnie...?",
+          "bladder": "She's awake. We are DONE. Abort, or run for it?",
+          "mood": "sleepy"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Slip back to my room and KEEP HOLDING. The record is not over.",
+          "effects": [
+            {
+              "flag": "hard_mode"
+            },
+            {
+              "stat": "halo",
+              "add": 10
+            },
+            {
+              "minutes": 2
+            }
+          ],
+          "next": "back_in_bed"
+        },
+        {
+          "set": "noise_response",
+          "texts": {
+            "freeze": "Freeze. Wait. Let her settle back into sleep, then carry on.",
+            "push_on": "Whisper \"just getting water\" and keep walking."
+          },
+          "next": "stairs"
+        }
+      ]
+    },
+    {
+      "id": "back_in_bed",
+      "title": "4:17 AM — Back Under the Blanket",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Bonnie eases the door shut and climbs back into bed like someone defusing it. Hard mode. Nobody asked her to. That is rather the point."
+        },
+        {
+          "speaker": "narrator",
+          "text": "The wave arrives on schedule.",
+          "bladder": "You had ONE chance. You were RIGHT THERE."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Face it. Ride out the wave.",
+          "effects": [
+            {
+              "minutes": 20
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Hold the line! Hold it!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ],
+              "next": "ending_hard"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -15
+                }
+              ],
+              "next": "second_thoughts"
+            }
+          }
+        },
+        {
+          "text": "This is absurd. Go. Now. Properly this time.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            }
+          ],
+          "next": "second_thoughts"
+        }
+      ]
+    },
+    {
+      "id": "second_thoughts",
+      "title": "4:38 AM — Second Thoughts",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The record can stand some other night. Bonnie is out of bed and past Chloe's door before she can talk herself out of it.",
+          "bladder": "Finally. FINALLY. Left at the banister."
+        }
+      ],
+      "next": "stairs"
+    },
+    {
+      "id": "stairs",
+      "title": "The Stairs",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Fourteen stairs. The fourth and the seventh creak; she mapped them years ago, coming home late."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Every step down is a small negotiation.",
+          "bladder": "Faster. No. Slower. No. FASTER."
+        }
+      ],
+      "choices": [
+        {
+          "text": "One stair at a time, weight on the banister, slow as syrup.",
+          "effects": [
+            {
+              "minutes": 5
+            },
+            {
+              "stat": "control",
+              "add": -9
+            }
+          ],
+          "next": "bathroom_door"
+        },
+        {
+          "text": "Skip the fourth and the seventh. Muscle memory.",
+          "effects": [
+            {
+              "minutes": 1
+            }
+          ],
+          "minigame": {
+            "id": "tremor_lock",
+            "difficulty": 2,
+            "prompt": "Steady. Step on my count.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 4
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 30
+                }
+              ]
+            }
+          },
+          "next": "bathroom_door"
+        },
+        {
+          "text": "Sit down and go step by step on my hands. Undignified. Silent.",
+          "effects": [
+            {
+              "minutes": 6
+            },
+            {
+              "stat": "halo",
+              "add": -15
+            },
+            {
+              "stat": "control",
+              "add": -4
+            }
+          ],
+          "next": "bathroom_door"
+        }
+      ]
+    },
+    {
+      "id": "house_stirs",
+      "title": "The House Stirs",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Somewhere above, bedsprings shift. A floorboard answers the one she just stepped on.",
+          "bladder": "They heard that. Everyone heard that."
+        }
+      ],
+      "choices": [
+        {
+          "set": "noise_response",
+          "texts": {
+            "freeze": "FREEZE. Become furniture. Wait for the silence to heal.",
+            "push_on": "Push on. So close. Fortune favors the desperate."
+          },
+          "next": "return"
+        }
+      ]
+    },
+    {
+      "id": "bathroom_door",
+      "title": "The Downstairs Bathroom",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The door closes with a click she feels in her teeth. The lock turns. Nobody is coming."
+        },
+        {
+          "speaker": "narrator",
+          "text": "The pipes in this house carry sound like a telephone.",
+          "bladder": "I do not care about the pipes. I have never cared less about anything."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Now. Speed over silence. Not one more breath.",
+          "effects": [
+            {
+              "void": true
+            },
+            {
+              "stat": "suspicion",
+              "add": 25
+            },
+            {
+              "stat": "control",
+              "set": 100
+            },
+            {
+              "minutes": 2
+            }
+          ],
+          "next": "flush"
+        },
+        {
+          "text": "Ease down and let go as slowly, as silently, as humanly possible.",
+          "effects": [
+            {
+              "minutes": 1
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 2,
+            "prompt": "Slowly. Breathe. Slow-ly.",
+            "success": {
+              "effects": [
+                {
+                  "void": true
+                },
+                {
+                  "stat": "control",
+                  "set": 100
+                },
+                {
+                  "stat": "halo",
+                  "add": 5
+                },
+                {
+                  "minutes": 4
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "void": true
+                },
+                {
+                  "stat": "control",
+                  "set": 100
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 20
+                },
+                {
+                  "minutes": 2
+                }
+              ]
+            }
+          },
+          "next": "flush"
+        }
+      ]
+    },
+    {
+      "id": "flush",
+      "title": "The Flush",
+      "chapter": "Chapter 1",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Relief. Complete, ridiculous, hard-earned relief. Bonnie leans on the sink and grins at nobody.",
+          "bladder": "Thank you. I take back most of what I said."
+        },
+        {
+          "speaker": "narrator",
+          "text": "One problem left: the cistern in this house fills like a jet engine."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Don't flush. Lid down, leave silently, flush 'casually' once everyone is up.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -20
+            },
+            {
+              "minutes": 2
+            }
+          ],
+          "next": "ending_reset"
+        },
+        {
+          "text": "Flush and sprint. Beat the pipes back up the stairs.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 25
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Run! Run run run!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": -25
+                },
+                {
+                  "minutes": 1
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 30
+                },
+                {
+                  "minutes": 1
+                }
+              ]
+            }
+          },
+          "next": "ending_reset"
+        }
+      ]
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending_reset",
+      "kind": "good",
+      "title": "The Clock Is Reset",
+      "text": "Back under the blanket by half past four, nobody the wiser. The clock is reset. The real journey starts at eight, and it is twenty hours long."
+    },
+    {
+      "id": "ending_hard",
+      "kind": "neutral",
+      "title": "Hard Mode",
+      "text": "The wave passes. The record stands, and so does the problem. Bonnie stares at the ceiling until the alarm goes. Everything from here will be harder. She is, somehow, pleased."
+    },
+    {
+      "id": "ending_caught",
+      "kind": "bad",
+      "title": "\"It's Four in the Morning\"",
+      "text": "The landing light snaps on. Chloe, hair everywhere, squints down the stairs. \"Bonnie. It's four in the morning. Just GO to the bathroom like a normal person.\" The perfect record ends with a witness."
+    },
+    {
+      "id": "ending_lost",
+      "kind": "bad",
+      "title": "Not Quite",
+      "text": "Control gives out a few steps short. Nothing a quiet load of laundry cannot fix before eight, but the perfect record is over before the journey has begun."
+    }
+  ],
+  "scorecard": [
+    {
+      "label": "Control",
+      "stat": "control"
+    },
+    {
+      "label": "Halo",
+      "stat": "halo"
+    },
+    {
+      "label": "Noise made",
+      "stat": "suspicion"
+    },
+    {
+      "label": "Hard mode",
+      "flag": "hard_mode"
+    }
+  ]
+}

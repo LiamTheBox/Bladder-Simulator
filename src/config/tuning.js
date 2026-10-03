@@ -24,12 +24,12 @@ export const TUNING = {
   spikeMinVolume: 55,
   spikeFirstCooldown: 15,        // seconds
   spikeCooldownMin: 15, spikeCooldownSpread: 10,
-  // Sim mode picks one of these at random, at this difficulty
+  // Sim mode picks one of these at random
   simSpikePool: ['mash', 'leaks', 'breathe'],
-  simSpikeDifficulty: 3,
+  simSpikeDifficulty: 2,         // the default; the player can change it in Settings (1..5)
   minigameDefaultDuration: 5.0,  // for a game that does not say how long it takes
 
-  // Per-game settings. The "...ByDifficulty" lists run from difficulty 1 to 5; the middle value is the prototype's.
+  // Per-game settings. The "...ByDifficulty" lists run from difficulty 1 to 5; the middle value (difficulty 3) is the prototype's.
   mash: { duration: 5.0, tapsByDifficulty: [9, 12, 15, 18, 22] },
   breathe: { duration: 6.0, phaseSec: 1.5, winFractionByDifficulty: [0.55, 0.6, 0.65, 0.72, 0.8] },
   leaks: { duration: 5.0, countByDifficulty: [1, 2, 3, 4, 5], hitRadius: 50, arcStart: Math.PI * 0.95, arcSpan: Math.PI * 1.1, jitter: 0.3 },

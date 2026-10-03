@@ -11,7 +11,8 @@ Object.defineProperty(window, 'speechSynthesis', { configurable: true, value: {
 `;
 
 // Opens the game at the given viewport and collects page errors (and optionally console errors).
-export async function openGame(browser, width, height, { consoleErrors = false } = {}) {
+// difficulty: pre-seeds the saved Settings choice (the game's own default is used when omitted)
+export async function openGame(browser, width, height, { consoleErrors = false, difficulty } = {}) {
   const context = await browser.newContext({ viewport: { width, height } });
   const pg = await context.newPage();
   const errors = [];
@@ -22,6 +23,7 @@ export async function openGame(browser, width, height, { consoleErrors = false }
     });
   }
   await pg.addInitScript(MOCK_SPEECH);
+  if (difficulty) await pg.addInitScript(`try { if (!localStorage.getItem('bladderSim.settings')) localStorage.setItem('bladderSim.settings', '{"difficulty":${difficulty}}'); } catch (e) {}`);
   await pg.goto('/');
   await pg.waitForTimeout(300);
   return { context, pg, errors };

@@ -53,7 +53,7 @@ on('accident', () => {
   if (st.minigame.active) endMinigame(false, true);
   vibe([200, 100, 200, 100, 200]); speak('accident', true);
 });
-on('spikeDue', () => { startMinigame(); }); // sim mode: random game from TUNING.simSpikePool
+on('spikeDue', () => { startMinigame(); }); // sim mode: random game from TUNING.simSpikePool, at the Settings difficulty
 on('spikeCancelled', () => { endMinigame(false, true); });
 on('heartbeat', () => { playHeartbeat(); vibe(45); });
 

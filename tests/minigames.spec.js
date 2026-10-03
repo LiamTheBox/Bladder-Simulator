@@ -110,14 +110,14 @@ test('a cancelled game costs nothing and reports cancelled', async ({ browser })
     await ev(`startMinigame({ id: '${id}' })`);
     await ev('st.volume=40'); await wait(150); // the hold ended: bladder dropped below 50%
     const results = await ev('window.__results');
-    expect(results).toEqual([{ id, difficulty: 3, success: false, cancelled: true }]);
+    expect(results).toEqual([{ id, difficulty: 2, success: false, cancelled: true }]);
     expect(await ev('st.stamina'), `${id}: no stamina penalty`).toBeGreaterThanOrEqual(50);
     expect(await ev(controls)).toEqual(ALL_HIDDEN);
   }
   // asking for a new game while one runs cancels the running one
   await ev(READY);
   await ev("startMinigame({ id: 'mash' }); startMinigame({ id: 'leaks' })");
-  expect(await ev('window.__results')).toEqual([{ id: 'mash', difficulty: 3, success: false, cancelled: true }]);
+  expect(await ev('window.__results')).toEqual([{ id: 'mash', difficulty: 2, success: false, cancelled: true }]);
   expect(await ev('st.minigame.type')).toBe('leaks');
   expect(await ev(controls)).toEqual({ panel: 'flex', mash: 'none', breathe: 'none', leaks: 'flex' });
   await context.close();

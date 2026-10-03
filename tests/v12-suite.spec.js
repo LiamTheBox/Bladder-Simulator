@@ -20,7 +20,7 @@ const DANCE_THRESHOLDS = {
 for (const [W, H, label] of [[390, 700, 'phone'], [520, 900, 'desktop']]) {
   test(`v12 suite: ${label} ${W}x${H} (64 checks)`, async ({ browser }) => {
     const check = makeChecker();
-    const { context, pg, errors } = await openGame(browser, W, H);
+    const { context, pg, errors } = await openGame(browser, W, H, { difficulty: 3 }); // the reference script assumes the prototype's numbers (15 taps, 3 cracks)
     const ev = (js) => pg.evaluate(js);
     const wait = (ms) => pg.waitForTimeout(ms);
     await pg.mouse.click(Math.floor(W / 2), Math.floor(H / 2)); await wait(300);

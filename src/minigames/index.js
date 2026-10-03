@@ -6,6 +6,7 @@
 // The bladder announces each urge spike in its speech bubble. Any control the minigame needs appears in the
 // bottom panel where SPEED UP / VOID normally are, so nothing covers the bladder.
 import { TUNING } from '../config/tuning.js';
+import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { emit } from '../sim/events.js';
 import { vibe } from '../audio/haptics.js';
@@ -28,7 +29,8 @@ function retireCurrent() {
   st.minigame.freezeBody = false;
 }
 
-// request: { id, difficulty, duration, text, onResult }, all optional. Without an id, sim mode picks at random.
+// request: { id, difficulty, duration, text, onResult }, all optional. Without an id, sim mode picks at random;
+// without a difficulty, the player's Settings choice is used.
 // Returns false (and starts nothing) if the id is unknown.
 export function startMinigame(request = {}) {
   const pool = TUNING.simSpikePool;
@@ -40,7 +42,7 @@ export function startMinigame(request = {}) {
   if (st.minigame.active && current) endMinigame(false, true);
   else retireCurrent(); // clears a game whose "active" flag was switched off from outside
   const config = {
-    difficulty: clampDifficulty(request.difficulty ?? TUNING.simSpikeDifficulty),
+    difficulty: clampDifficulty(request.difficulty ?? settings.difficulty),
     text: request.text ?? {},
   };
   config.duration = request.duration ?? (game.duration ? game.duration(config.difficulty) : TUNING.minigameDefaultDuration);

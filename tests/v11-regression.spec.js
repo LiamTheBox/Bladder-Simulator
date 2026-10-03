@@ -4,7 +4,7 @@ import { openGame, makeChecker, GEOM_JS } from './helpers.js';
 
 test('v11 regression (38 checks)', async ({ browser }) => {
   const check = makeChecker();
-  const { context, pg, errors } = await openGame(browser, 520, 900, { consoleErrors: true });
+  const { context, pg, errors } = await openGame(browser, 520, 900, { consoleErrors: true, difficulty: 3 }); // the reference script assumes the prototype's numbers
   const ev = (js) => pg.evaluate(js);
   const wait = (ms) => pg.waitForTimeout(ms);
 

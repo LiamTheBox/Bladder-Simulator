@@ -40,6 +40,13 @@ export function updateClenchUI() {
   }
 }
 
+// Puts all three buttons back in step with a freshly reset state
+export function resetControls() {
+  btnSpeedup.classList.remove('holding');
+  btnVoid.disabled = false;
+  updateClenchUI();
+}
+
 btnSpeedup.addEventListener('pointerdown', (e) => {
   e.preventDefault(); st.isSpeedingUp = true; btnSpeedup.classList.add('holding');
   if (st.pendingFluid > 0) vibe(10); // sound starts from the game loop while there is fluid to digest

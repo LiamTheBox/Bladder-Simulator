@@ -2,7 +2,8 @@
 // read it (and a few of them write the parts they drive: input sets drag/squeeze/soothe, speech sets its timers).
 import { TUNING } from '../config/tuning.js';
 
-export const st = {
+function initialState() {
+  return {
   volume: TUNING.startVolume, pendingFluid: 0,
   isClosed: true, isSpeedingUp: false, isVoiding: false,
   stamina: 100, failureEvent: false,
@@ -26,4 +27,10 @@ export const st = {
   slosh: { val: 0, vel: 0 }, gravity: { x: 0, targetX: 0 },
   viscoelasticCreep: 0,
   desperateTimer: TUNING.desperateFirstSec, beggingTimer: TUNING.beggingFirstSec, lastBand: 0, voidBtnDisabled: false
-};
+  };
+}
+
+export const st = initialState();
+
+// Back to the opening state, in place: every module keeps its reference to the same object
+export function resetState() { Object.assign(st, initialState()); }

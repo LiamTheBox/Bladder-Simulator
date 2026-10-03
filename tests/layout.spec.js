@@ -4,7 +4,7 @@ import { openGame } from './helpers.js';
 
 for (const [W, H] of [[360, 640], [390, 844], [768, 1024]]) {
   test(`layout fits at ${W}x${H}`, async ({ browser }) => {
-    const { context, pg, errors } = await openGame(browser, W, H);
+    const { context, pg, errors } = await openGame(browser, W, H, { difficulty: 5 }); // the most crowded case
     const ev = (js) => pg.evaluate(js);
     await pg.mouse.click(Math.floor(W / 2), Math.floor(H / 2)); await pg.waitForTimeout(300);
     await ev('st.pendingFluid=0; st.minigame.cooldown=999; st.volume=100; st.faceTimer=0');

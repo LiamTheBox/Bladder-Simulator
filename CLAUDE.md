@@ -69,7 +69,9 @@ The runner (`src/minigames/index.js`) owns what games share: countdown and timer
 prompt, stamina reward/penalty. Request one with
 `startMinigame({ id, difficulty, duration?, text?, onResult? })`; it also emits `minigameStarted` and
 `minigameEnded` on the sim event bus. Stories request a minigame by `id` + `difficulty`; they never know how it
-works. Sim mode picks from `TUNING.simSpikePool` at `TUNING.simSpikeDifficulty` (3 = the prototype's values).
+works. Sim mode picks from `TUNING.simSpikePool` at the player's Settings difficulty (default 2; 3 = the prototype's
+values). Changing it restarts the game (`src/ui/reset.js`) and is remembered in `localStorage`
+(`src/config/settings.js`, guarded for blocked or corrupt storage).
 
 To add a game: one file in `src/minigames/`, its controls in `index.html` inside `#mg-panel`, register it in
 `index.js`, add its difficulty table to `TUNING`, and add win/lose/cancel tests in `tests/minigames.spec.js`.

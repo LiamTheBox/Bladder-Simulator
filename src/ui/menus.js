@@ -5,6 +5,8 @@ import { startAudio, stopAllWater, playGulp } from '../audio/engine.js';
 import { vibe } from '../audio/haptics.js';
 import { speak, speakDirect } from '../audio/speech.js';
 import { clearPointers } from './input.js';
+import { settings, saveSettings, isValidDifficulty } from '../config/settings.js';
+import { resetGame } from './reset.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
 const shopOverlayEl = document.getElementById('shop-overlay');
@@ -19,6 +21,16 @@ export function isPaused() {
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { stopAllWater(); clearPointers(); if (window.speechSynthesis) window.speechSynthesis.cancel(); }
+});
+
+// Difficulty: changing it starts the game over, so a run is always played at one difficulty
+const difficultyEl = document.getElementById('difficulty-select');
+difficultyEl.value = String(settings.difficulty);
+difficultyEl.addEventListener('change', () => {
+  const d = Number(difficultyEl.value);
+  if (!isValidDifficulty(d) || d === settings.difficulty) return;
+  settings.difficulty = d; saveSettings();
+  resetGame();
 });
 
 // Custom voice lines

@@ -123,9 +123,11 @@ advances per scene beat, banked reserves (earned coping moves) spent during spik
 suspicion" style meters. Stories choose which blocks they use via `stats` in the JSON.
 
 ## Content and safety rules (non-negotiable)
-- **Every character in every story must declare an age of 18 or over, and the story context must be
-  consistent with that** (adult life circumstances; no childlike framing, no parent-driven/school settings
-  for the main cast). The validator rejects stories missing ages or with an age under 18.
+- **Every character in every story must declare an age of 18 or over and be written as the adult they are.**
+  Adult life comes in many shapes: living with parents or family, university or exchange study and host
+  families are all fine settings. What stays out is a child or teenager in all but the stated number:
+  no childlike depiction of a character's body, speech, behaviour or treatment.
+  The validator rejects stories missing ages or with an age under 18.
 - No minors. No real people. No non-consensual themes. **No explicit sexual content.**
 - Player controls: intensity setting, per-tag opt-outs, ability to disable individual minigames, a persistent pause/exit button.
 - If asked to write or port story content that conflicts with these rules, decline and say why briefly.

@@ -265,7 +265,7 @@ test('sim mode picks at random and never repeats one of the last two games', asy
   for (let i = 2; i < picks.length; i++) {
     expect(picks[i] !== picks[i - 1] && picks[i] !== picks[i - 2], `pick ${i} (${picks.slice(i - 2, i + 1)})`).toBe(true);
   }
-  expect([...new Set(picks)].sort()).toEqual(['breathe', 'distraction_popups', 'leaks', 'mash', 'swipe_away', 'tremor_lock']);
+  expect([...new Set(picks)].sort()).toEqual(['breathe', 'distraction_popups', 'leaks', 'mash', 'steady_the_slosh', 'swipe_away', 'think_of_something_else', 'tiptoe', 'tremor_lock']);
   // an explicitly requested game is never refused, even right after itself
   await ev("startMinigame({ id: 'mash' }); endMinigame(false, true)");
   expect(await ev("startMinigame({ id: 'mash' })")).toBe(true);

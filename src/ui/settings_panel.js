@@ -54,6 +54,7 @@ export function showTagSettings(tags, onChange) {
 }
 
 // Try-outs for games that are not in the random pool yet: closes Settings (which unpauses) and starts the game
+document.getElementById('settings-try').hidden = TUNING.practiceMinigames.length === 0;
 document.getElementById('settings-try-list').append(...TUNING.practiceMinigames.map((id) => {
   const b = document.createElement('button'); b.className = 'age-btn'; b.dataset.try = id;
   b.textContent = minigameNames[id] ?? id;

@@ -68,14 +68,14 @@ test('a switched-off minigame never appears: not in free play, not in a story', 
   await pg.mouse.click(195, 300); await pg.waitForTimeout(300);
   await pg.evaluate('st.pendingFluid=0; st.minigame.cooldown=999');
   await pg.locator('#btn-settings').dispatchEvent('pointerdown');
-  await expect(pg.locator('#settings-minigames .setting-check')).toHaveCount(6);
+  await expect(pg.locator('#settings-minigames .setting-check')).toHaveCount(9);
   for (const name of ['Clench', 'Swipe away', 'Distractions']) await pg.locator('#settings-minigames .setting-check', { hasText: name }).locator('input').uncheck();
   await pg.locator('.close-modal[data-target=settings-overlay]').dispatchEvent('pointerdown');
 
   const off = ['mash', 'swipe_away', 'distraction_popups'];
   const picks = new Set();
   for (let i = 0; i < 80; i++) { await pg.evaluate('startMinigame()'); picks.add(await pg.evaluate('st.minigame.type')); await pg.evaluate('endMinigame(false, true)'); }
-  expect([...picks].sort(), 'free play only picks the enabled games').toEqual(['breathe', 'leaks', 'tremor_lock']);
+  expect([...picks].sort(), 'free play only picks the enabled games').toEqual(['breathe', 'leaks', 'steady_the_slosh', 'think_of_something_else', 'tiptoe', 'tremor_lock']);
   // a story that asks for a switched-off game gets an enabled one instead
   for (const id of off) {
     expect(await pg.evaluate(`startMinigame({ id: '${id}', difficulty: 2 })`)).toBe(true);

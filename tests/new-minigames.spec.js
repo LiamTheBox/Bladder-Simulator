@@ -1,5 +1,5 @@
-// The three try-out minigames (tiptoe, steady_the_slosh, think_of_something_else): their win and lose paths,
-// and the "Try a new minigame" section of Settings that starts them as practice.
+// tiptoe, steady_the_slosh and think_of_something_else: their win and lose paths, and practice mode (how a
+// game on trial is started from the "Try a new minigame" section of Settings).
 import { test, expect } from '@playwright/test';
 import { openGame } from './helpers.js';
 
@@ -112,21 +112,26 @@ test('think_of_something_else: tap in order to win; a wrong tap costs time; the 
   await context.close();
 });
 
-test('Settings offers the new games as practice: no stamina at stake, not cancelled by an empty bladder, not in the random pool', async ({ browser }) => {
-  const { context, pg, ev, wait, errors } = await started(browser);
-  await ev('st.volume=10; st.stamina=60'); // well under the level where a real spike would be cancelled
+test('the three games are approved: in the random pool, each with an on/off switch; the try-out section is hidden while nothing is on trial', async ({ browser }) => {
+  const { context, pg, ev, errors } = await started(browser);
+  expect(await ev('TUNING.simSpikePool')).toEqual(expect.arrayContaining(['tiptoe', 'steady_the_slosh', 'think_of_something_else']));
+  expect(await ev('TUNING.practiceMinigames')).toEqual([]);
   await pg.locator('#btn-settings').dispatchEvent('pointerdown');
-  await expect(pg.locator('#settings-try-list button')).toHaveText(['Tiptoe (drag slowly)', 'Steady the slosh (keep the wave centred)', 'Think of something else (tap the numbers in order)']);
-  await pg.locator('#settings-try-list button[data-try=think_of_something_else]').click();
-  await expect(pg.locator('#settings-overlay')).toBeHidden();
+  await expect(pg.locator('#settings-minigames .setting-check')).toHaveCount(9);
+  await expect(pg.locator('#settings-try')).toBeHidden();
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('practice mode (kept for future try-outs): no stamina at stake, not cancelled by an empty bladder', async ({ browser }) => {
+  const { context, ev, wait, errors } = await started(browser);
+  await ev('st.volume=10; st.stamina=60'); // well under the level where a real spike would be cancelled
+  expect(await ev("startMinigame({ id: 'think_of_something_else', practice: true })")).toBe(true);
   await wait(400);
   expect(await ev('({active: st.minigame.active, type: st.minigame.type, practice: st.minigame.practice})')).toEqual({ active: true, type: 'think_of_something_else', practice: true });
   await ev('endMinigame(false)');
   expect(await ev('st.stamina'), 'losing a practice game costs nothing').toBeGreaterThanOrEqual(60);
   expect(await ev('st.minigame.practice')).toBe(false);
-
-  expect(await ev('TUNING.simSpikePool.some((id) => TUNING.practiceMinigames.includes(id))'), 'not in the random pool').toBe(false);
-  expect(await pg.locator('#settings-minigames .setting-check').count(), 'only the six approved games have an on/off switch').toBe(6);
   expect(errors).toEqual([]);
   await context.close();
 });

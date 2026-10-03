@@ -33,7 +33,7 @@ export const TUNING = {
   spikeFirstCooldown: 15,        // seconds
   spikeCooldownMin: 15, spikeCooldownSpread: 10,
   // Sim mode picks one of these at random, but never one of the last simSpikeNoRepeat games played
-  simSpikePool: ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock'],
+  simSpikePool: ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'],
   simSpikeNoRepeat: 2,
   simSpikeDifficulty: 2,         // the default; the player can change it in Settings (1..5)
   minigameDefaultDuration: 5.0,  // for a game that does not say how long it takes
@@ -85,8 +85,9 @@ export const TUNING = {
     wrongTapCostSec: 0.7,
     firstHeckleSec: 0.9, heckleEverySec: 1.1,
   },
-  // Games offered under "Try a new minigame" in Settings. They are not in simSpikePool until they are approved.
-  practiceMinigames: ['tiptoe', 'steady_the_slosh', 'think_of_something_else'],
+  // Games on trial: registered but not in simSpikePool, and offered under "Try a new minigame" in Settings.
+  // Approving one = moving its id to simSpikePool. Empty = the Settings section is hidden.
+  practiceMinigames: [],
 
   // Stretch (pixels)
   stretchGrabBand: 55,           // how close to the edge a touch must land to grab it

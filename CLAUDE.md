@@ -81,12 +81,12 @@ values). Changing it restarts the game (`src/ui/reset.js`) and is remembered in 
 To add a game: one file in `src/minigames/`, its controls in `index.html` inside `#mg-panel`, register it in
 `index.js`, add its difficulty table to `TUNING`, and add win/lose/cancel tests in `tests/minigames.spec.js`.
 
-Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`.
-On trial (registered, but only reachable from "Try a new minigame" at the bottom of Settings, listed in
-`TUNING.practiceMinigames`): `tiptoe` (drag slowly, a speed limit), `steady_the_slosh` (keep a drifting wave
-centred), `think_of_something_else` (tap numbers in order while the bladder calls wrong ones). A try-out runs
-as `startMinigame({ id, practice: true })`: no stamina at stake and not cancelled by the spike rules. To approve
-one, move its id from `practiceMinigames` to `simSpikePool`. Tests: `tests/new-minigames.spec.js`. In sim mode the
+Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`, `tiptoe` (drag slowly,
+a speed limit), `steady_the_slosh` (keep a drifting wave centred), `think_of_something_else` (tap numbers in
+order while the bladder calls wrong ones). All nine are in `TUNING.simSpikePool`.
+Trying a new game before approving it: register it, list its id in `TUNING.practiceMinigames` instead of the
+pool, and it appears under "Try a new minigame" at the bottom of Settings (hidden while the list is empty). It
+runs as `startMinigame({ id, practice: true })`: no stamina at stake, not cancelled by the spike rules. In sim mode the
 UI-intrusion games cover the bottom control panel (never the bladder); in story mode they are meant to cover the dialogue choices.
 
 Backlog of cross-platform "UI-intrusion" ideas (all drag/tap/hold, no special hardware):

@@ -82,7 +82,7 @@
       "thresholds": [
         {
           "atOrBelow": 0,
-          "goto": "ending_lost"
+          "goto": "breakdown"
         }
       ]
     },
@@ -109,7 +109,18 @@
     "startFullness": 86,
     "fillPerMinute": 0.03,
     "absorbPerMinute": 0.5,
-    "capacityMl": 2400
+    "capacityMl": 2400,
+    "leakOnFail": {
+      "above": 80,
+      "amount": 1,
+      "effects": [
+        {
+          "stat": "suspicion",
+          "add": 3
+        }
+      ],
+      "bladder": "That was a spasm. A little got out. I am SO sorry."
+    }
   },
   "clock": {
     "start": "04:10"
@@ -2593,6 +2604,36 @@
           "next": "sneak"
         }
       ]
+    },
+    {
+      "id": "breakdown",
+      "title": "The Breaking Point",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "It stops being a decision. Bonnie goes rigid mid-breath, every muscle she owns clamped around one last, failing idea.",
+          "bladder": "I can't. I'm sorry. I held as long as I could. I really, really did."
+        },
+        {
+          "speaker": "bonnie",
+          "text": "No. No, no, no. Not now. Please. Thirty more seconds. I will do anything.",
+          "mood": "whispering",
+          "bladder": "You said that at four this morning. I have nothing left to give you."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Her eyes sting. All those hours of flawless manners, and the one thing she cannot be polite to is her own body.",
+          "bladder": "It is not your fault. It is not mine either. We were both very brave and very stubborn."
+        },
+        {
+          "speaker": "bonnie",
+          "text": "...Okay. Okay. I know. I'm sorry too.",
+          "mood": "shaking",
+          "bladder": "Letting go now. Don't look at anybody."
+        }
+      ],
+      "next": "ending_lost",
+      "closing": true
     },
     {
       "id": "noticed_mild",

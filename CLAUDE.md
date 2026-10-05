@@ -125,7 +125,9 @@ endings, placeholder wording; **generated** by `tools/build_bonnie.py`, so edit 
 `tools/walk_story.mjs` validates a story and random-plays it thousands of times to show how runs end. Beyond the sketch below, the format has
 choice sets (one kind of decision, reworded per scene), interruptions (`"scene"` triggers with `"return"`),
 story-wide triggers, modes (a flag that makes minigames harder and filling faster, e.g. hard mode),
-conditional lines, `void` and `clock` effects, and accident endings (`"accident": true`: the bladder empties by itself on arrival). `src/story/library.js` keeps imported stories and one
+conditional lines, `void` and `clock` effects, accident endings (`"accident": true`: the bladder empties by itself on arrival), closing scenes
+(`"closing": true`: a game-over scene such as a breakdown, after which nothing interrupts) and `bladder.leakOnFail` (a lost
+minigame on a very full bladder leaks a little and applies effects). `src/story/library.js` keeps imported stories and one
 automatic save per story in `localStorage`; `src/ui/story_menu.js` is the list with import / export.
 Not built yet: minigames that act on the dialogue itself. The original sketch, for intent:
 

@@ -16,6 +16,9 @@ export const TUNING = {
   digestFastPerSec: 25.0,        // while SPEED UP is held
   leakPerSec: 20,                // sphincter open
   voidPerSec: 40,                // VOID pressed, or an accident
+  spasmDrops: 14,                // a spasm (a story's leak after a lost minigame): drops that escape at once
+  spasmFaceSec: 1.5,             // how long the shocked face stays
+  spasmHaptic: [60, 40, 120],
 
   // Marks announced with a thresholdCrossed event when the value passes them in either direction
   volumeThresholds: [10, 20, 30, 40, 50, 60, 70, 80, 90, 100],

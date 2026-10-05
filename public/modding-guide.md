@@ -87,6 +87,14 @@ The built-in stat `"fullness"` (0 to 100) can be used in conditions and on the s
 **Stats** are yours to invent, up to 12. A stat's `"thresholds"` can end the story or jump to a scene when
 it reaches a limit, from anywhere.
 
+**Game over scenes.** Give a scene `"closing": true` and point a threshold at it instead of straight at
+the ending, to play a last scene first (a breakdown, a confession). Once a closing scene starts, nothing
+interrupts any more and no threshold fires: the story runs on to the ending you send it to.
+
+**Leaks.** In `"bladder"`, `"leakOnFail": { "above": 80, "amount": 1, "effects": [ ... ], "bladder": "..." }`
+makes every lost minigame cost a little extra while the bladder is more than 80 percent full: it spasms,
+1 percent leaks out, the effects apply (a little suspicion, say) and the bladder says the line.
+
 **Endings.** Add `"accident": true` to an ending where control is lost: on arriving there the bladder gives
 out and empties by itself. A threshold can jump to an ending from anywhere, so this is the place to say it.
 The scorecard still shows how full the bladder was at that moment.

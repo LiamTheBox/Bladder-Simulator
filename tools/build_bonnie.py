@@ -34,13 +34,14 @@ def G(id, difficulty, prompt, win=None, lose=None, win_next=None, lose_next=None
     return g
 def OFFER(refuse, hover, busy, next):
     return {"set": "bathroom_offer", "texts": {"refuse": refuse, "hover": hover, "busy": busy}, "next": next}
-def scene(id, title, chapter, lines, choices=None, next=None, enter=None, triggers=None):
+def scene(id, title, chapter, lines, choices=None, next=None, enter=None, triggers=None, closing=False):
     d = {"id": id, "title": title, "chapter": chapter}
     if enter: d["onEnter"] = enter
     d["lines"] = lines
     if triggers: d["triggers"] = triggers
     if choices: d["choices"] = choices
     if next: d["next"] = next
+    if closing: d["closing"] = True
     return d
 
 DAY = [{"flag": "day_started"}]
@@ -306,6 +307,14 @@ scenes = [
    C("Down the trellis. Behind the hedge. May the rosebush forgive me.", [{"void": True}, S("halo", -40)], "ending_garden"),
    C("...I am not a garden person. The bedroom route. Final answer.", None, "sneak")]),
 
+ # ---------------- game over: control hits zero, wherever she is ----------------
+ scene("breakdown", "The Breaking Point", None, [
+   L(N, "It stops being a decision. Bonnie goes rigid mid-breath, every muscle she owns clamped around one last, failing idea.", "I can't. I'm sorry. I held as long as I could. I really, really did."),
+   L("bonnie", "No. No, no, no. Not now. Please. Thirty more seconds. I will do anything.", "You said that at four this morning. I have nothing left to give you.", mood="whispering"),
+   L(N, "Her eyes sting. All those hours of flawless manners, and the one thing she cannot be polite to is her own body.", "It is not your fault. It is not mine either. We were both very brave and very stubborn."),
+   L("bonnie", "...Okay. Okay. I know. I'm sorry too.", "Letting go now. Don't look at anybody.", mood="shaking")],
+  next="ending_lost", closing=True),
+
  # ---------------- interruptions: somebody notices ----------------
  scene("noticed_mild", "Somebody Notices", None, [
    L(N, "A sideways look. \"You keep shifting about. Everything alright?\"", "Tell them. They ASKED. It would be rude not to answer honestly.")],
@@ -334,10 +343,11 @@ story = {
    {"id": "mrs_higgins", "name": "Mrs. Higgins", "age": 51, "notes": "Host. Hugs first, asks later."},
    {"id": "bladder", "name": "Bladder", "kind": "bladder"}],
  "stats": [
-   {"id": "control", "label": "Control", "start": 48, "thresholds": [{"atOrBelow": 0, "goto": "ending_lost"}]},
+   {"id": "control", "label": "Control", "start": 48, "thresholds": [{"atOrBelow": 0, "goto": "breakdown"}]},
    {"id": "halo", "label": "Halo", "icon": "😇", "start": 100},
    {"id": "suspicion", "label": "Suspicion", "icon": "👀", "start": 0, "thresholds": [{"atOrAbove": 100, "goto": "ending_found_out"}]}],
- "bladder": {"startFullness": 86, "fillPerMinute": 0.03, "absorbPerMinute": 0.5, "capacityMl": 2400},
+ "bladder": {"startFullness": 86, "fillPerMinute": 0.03, "absorbPerMinute": 0.5, "capacityMl": 2400,
+   "leakOnFail": {"above": 80, "amount": 1, "effects": [S("suspicion", 3)], "bladder": "That was a spasm. A little got out. I am SO sorry."}},
  "clock": {"start": "04:10"},
  "modes": [{"flag": "hard_mode", "label": "Hard mode", "minigameDifficulty": 1, "fillMultiplier": 1.5}],
  "choiceSets": [

@@ -3,6 +3,7 @@
 import { TUNING as T } from '../config/tuning.js';
 import { st } from './state.js';
 import { emit } from './events.js';
+import { bladderGeom } from './geometry.js';
 
 // Opens or closes the sphincter. The fluid jolts each time, except during an accident (it is already pouring).
 export function setSphincter(closed, reason) {
@@ -36,6 +37,23 @@ export function triggerAccident() {
   setSphincter(false, 'accident');
   st.faceState = { e: 'wide_shake', m: 'small_o' }; st.faceTimer = 10.0;
   emit('accident');
+}
+
+// A spasm: a spurt escapes although the sphincter stays shut (a story's leak after a lost minigame). Only the
+// look and feel: how much is lost is the caller's business. Returns false if there is nothing to show.
+export function spasmLeak() {
+  if (st.failureEvent || st.isVoiding || st.volume <= 0) return false;
+  const g = bladderGeom();
+  for (let i = 0; i < T.spasmDrops; i++) {
+    st.particles.push({
+      x: g.cx + (Math.random() - 0.5) * 15, y: g.cy + g.Rr + 8,
+      vx: (Math.random() - 0.5) * 20, vy: 200 + Math.random() * 200, life: 1.0, size: Math.random() * 4 + 3
+    });
+  }
+  st.slosh.vel += (Math.random() - 0.5) * T.clenchSloshKick;
+  st.faceState = { e: 'wide_shake', m: 'small_o' }; st.faceTimer = T.spasmFaceSec;
+  emit('haptic', T.spasmHaptic);
+  return true;
 }
 
 export function setSpeedUp(on) { st.isSpeedingUp = on; }

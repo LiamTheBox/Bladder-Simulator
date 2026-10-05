@@ -120,6 +120,45 @@ test('an accident ending empties the bladder, and the scorecard keeps how full i
   expect(v.scorecard.find((row) => row.label === 'How full').value).toBe(String(Math.round(before)));
 });
 
+test('a closing scene plays before the ending: no threshold or interruption cuts in again', () => {
+  const story = load('placeholder');
+  story.scenes.push({ id: 'breakdown', closing: true, lines: [{ speaker: 'narrator', text: 'One.' }, { speaker: 'narrator', text: 'Two.' }], next: 'ending_dash' });
+  story.stats.find((s) => s.id === 'control').thresholds[0].goto = 'breakdown';
+  // a story-wide interruption that would otherwise fire as soon as the lines are read
+  story.triggers.push({ when: [{ stat: 'control', lte: 0 }], minigame: { id: 'mash', difficulty: 1 } });
+  story.scenes[1].triggers[0].minigame.fail.effects = [{ stat: 'control', add: -90 }];
+  const r = createRunner(story); read(r);
+  r.choose(0); read(r);
+  r.minigameDone(false);
+  expect(r.view()).toMatchObject({ phase: 'lines', lines: [{ text: 'One.' }] });
+  expect(stat(r.view(), 'control')).toBe(0);
+  const resumed = createRunner(story, JSON.parse(JSON.stringify(r.snapshot()))); // a save taken mid-breakdown
+  for (const run of [r, resumed]) {
+    run.next();
+    expect(run.view().lines.length).toBe(2);
+    run.next();
+    expect(run.view()).toMatchObject({ phase: 'ended', ending: { id: 'ending_dash' } });
+  }
+});
+
+test('leakOnFail: a lost minigame above the mark leaks a little and applies its effects; a win or a lower bladder does not', () => {
+  const play = (fullness, success) => {
+    const story = load('placeholder');
+    story.bladder.startFullness = fullness; story.bladder.fillPerMinute = 0; story.scenes[0].onEnter = [];
+    story.bladder.leakOnFail = { above: 80, amount: 1, effects: [{ stat: 'suspicion', add: 3 }], bladder: 'Oops.' };
+    story.triggers = [];
+    story.scenes[0].choices = [{ text: 'Hold.', minigame: { id: 'mash', difficulty: 1, fail: { effects: [{ stat: 'control', add: -5 }] } }, next: 'ending_dash' }];
+    const r = createRunner(story); read(r);
+    const before = { suspicion: stat(r.view(), 'suspicion'), control: stat(r.view(), 'control') };
+    r.choose(0); r.minigameDone(success);
+    const v = r.view();
+    return { leaks: v.leaks, fullness: v.fullness, suspicion: stat(v, 'suspicion') - before.suspicion, control: stat(v, 'control') - before.control, line: v.leakLine };
+  };
+  expect(play(90, false)).toEqual({ leaks: 1, fullness: 89, suspicion: 3, control: -5, line: 'Oops.' });
+  expect(play(90, true)).toEqual({ leaks: 0, fullness: 90, suspicion: 0, control: 0, line: 'Oops.' });
+  expect(play(80, false), 'exactly at the mark is not above it').toEqual({ leaks: 0, fullness: 80, suspicion: 0, control: -5, line: 'Oops.' });
+});
+
 test('the clock effect changes the time shown without time passing', () => {
   const story = load('placeholder');
   story.scenes[0].choices = [{ text: 'Land.', effects: [{ clock: '20:30' }], next: 'slide_twenty' }];

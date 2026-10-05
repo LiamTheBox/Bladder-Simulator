@@ -202,11 +202,18 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     });
   });
 
-  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'absorbPerMinute', 'capacityMl'])) {
+  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'absorbPerMinute', 'capacityMl', 'leakOnFail'])) {
     number(data.bladder.startFullness, 'bladder.startFullness', 0, 100);
     if ('fillPerMinute' in data.bladder) number(data.bladder.fillPerMinute, 'bladder.fillPerMinute', 0, 100);
     if ('absorbPerMinute' in data.bladder) number(data.bladder.absorbPerMinute, 'bladder.absorbPerMinute', 0, 100);
     if ('capacityMl' in data.bladder) number(data.bladder.capacityMl, 'bladder.capacityMl', 100, 10000);
+    const leak = data.bladder.leakOnFail;
+    if ('leakOnFail' in data.bladder && keys(leak, 'bladder.leakOnFail', ['above', 'amount'], ['effects', 'bladder'])) {
+      number(leak.above, 'bladder.leakOnFail.above', 0, 100);
+      number(leak.amount, 'bladder.leakOnFail.amount', 0, 100);
+      if ('effects' in leak) effects(leak.effects, 'bladder.leakOnFail.effects');
+      if ('bladder' in leak) text(leak.bladder, 'bladder.leakOnFail.bladder');
+    }
   }
   if ('clock' in data && keys(data.clock, 'clock', ['start']) && (typeof data.clock.start !== 'string' || !CLOCK_PATTERN.test(data.clock.start))) {
     err('clock.start', 'must be a 24-hour time like "04:10"');
@@ -310,10 +317,11 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   scenes.forEach((s, i) => {
     sceneId = isObject(s) && typeof s.id === 'string' ? s.id : null;
     const p = sceneId ? '' : `scenes[${i}]`, at = (f) => sub(p, f);
-    if (!keys(s, p, ['id', 'lines'], ['title', 'chapter', 'onEnter', 'choices', 'next', 'triggers'])) return;
+    if (!keys(s, p, ['id', 'lines'], ['title', 'chapter', 'onEnter', 'choices', 'next', 'triggers', 'closing'])) return;
     const out = [];
     if ('title' in s) text(s.title, at('title'), LIMITS.shortText);
     if ('chapter' in s) text(s.chapter, at('chapter'), LIMITS.shortText);
+    if ('closing' in s && typeof s.closing !== 'boolean') err(at('closing'), 'must be true or false');
     if (list(s.lines, at('lines'), LIMITS.linesPerScene, { min: 1 })) s.lines.forEach((l, j) => {
       const lp = at(`lines[${j}]`);
       if (!keys(l, lp, ['speaker', 'text'], ['mood', 'bladder', 'if'])) return;

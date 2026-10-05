@@ -30,6 +30,8 @@ export function createRunner(story, saved = null) {
     fired: new Set(),   // triggers that already went off (those with "once", the default)
     stack: [],          // scenes that were interrupted and wait for a "return"
     voided: 0,          // counts "void" effects, so the screen can tell a new one happened
+    leaks: 0,           // counts leaks after a lost minigame ("leakOnFail"), for the screen likewise
+    closing: false,     // a "closing" scene was entered: no more interruptions, no more thresholds
     accident: false,    // the story ended in an accident (an ending with "accident")
     finalFullness: null, // how full the bladder was when that happened, for the scorecard
   };
@@ -65,6 +67,7 @@ export function createRunner(story, saved = null) {
       else if ('flag' in e) state.flags[e.flag] = e.value ?? true;
       else if ('void' in e) { state.fullness = 0; state.voided++; }
     }
+    if (state.closing) return null; // the closing sequence runs to its ending undisturbed
     for (const [id, s] of stats) {
       for (const t of s.thresholds || []) {
         if ('atOrBelow' in t ? state.stats[id] <= t.atOrBelow : state.stats[id] >= t.atOrAbove) return t.goto;
@@ -95,6 +98,7 @@ export function createRunner(story, saved = null) {
     }
     const scene = scenes.get(target);
     state.sceneId = target; state.minigame = null;
+    if (scene.closing) { state.closing = true; state.stack.length = 0; }
     const forced = apply(scene.onEnter);
     if (forced && forced !== target) { state.stack.length = 0; go(forced); return; }
     state.lines = scene.lines.filter((l) => holds(l.if));
@@ -108,7 +112,7 @@ export function createRunner(story, saved = null) {
   function settle() {
     const scene = scenes.get(state.sceneId);
     const hasChoices = scene.choices && scene.choices.length > 0;
-    if (hasChoices && (state.stack.length || !findTrigger())) afterLines();
+    if (hasChoices && (state.stack.length || state.closing || !findTrigger())) afterLines();
   }
 
   function expandedChoices(scene) {
@@ -130,7 +134,7 @@ export function createRunner(story, saved = null) {
   // All lines of the scene are on screen: interruptions first, then the scene's choices or its "next"
   function afterLines() {
     const scene = scenes.get(state.sceneId);
-    const hit = state.stack.length ? null : findTrigger(); // an interruption is not itself interrupted
+    const hit = state.stack.length || state.closing ? null : findTrigger(); // an interruption is not itself interrupted
     if (hit) {
       const [key, t] = hit;
       state.fired.add(key);
@@ -173,6 +177,7 @@ export function createRunner(story, saved = null) {
         phase: s.phase, sceneId: s.sceneId, lineIndex: s.lineIndex, lines, stack, fired: new Set(s.fired),
         fullness: clamp(s.fullness, 0, 100), pending: Math.max(0, s.pending), minutes: story.clock ? s.minutes : null,
         elapsed: s.elapsed, voided: s.voided, ending: null, minigame: null,
+        leaks: Number.isFinite(s.leaks) ? s.leaks : 0, closing: s.closing === true, // absent in older saves
       });
       if (state.phase === 'choices' && availableChoices().length === 0) state.phase = 'stuck';
       return true;
@@ -205,7 +210,14 @@ export function createRunner(story, saved = null) {
       const { spec, fallback } = state.minigame;
       const outcome = spec[success ? 'success' : 'fail'] || {};
       state.minigame = null;
-      applyThenGo(outcome.effects, outcome.next ?? fallback);
+      // A lost game on a very full bladder: a little escapes, before the story's own consequence
+      const leak = bladder.leakOnFail;
+      let effects = outcome.effects;
+      if (!success && leak && state.fullness > leak.above) {
+        state.leaks++;
+        effects = [{ fullness: -leak.amount }, ...(leak.effects || []), ...(outcome.effects || [])];
+      }
+      applyThenGo(effects, outcome.next ?? fallback);
     },
 
     // Plain data that createRunner(story, snapshot) can continue from. Only taken at rest (reading or choosing);
@@ -216,6 +228,7 @@ export function createRunner(story, saved = null) {
         v: 1, phase: state.phase, sceneId: state.sceneId, lineIndex: state.lineIndex, lines: positions(state.sceneId, state.lines),
         stats: { ...state.stats }, flags: { ...state.flags }, fullness: state.fullness, pending: state.pending,
         minutes: state.minutes, elapsed: state.elapsed, voided: state.voided, fired: [...state.fired],
+        leaks: state.leaks, closing: state.closing,
         stack: state.stack.map((e) => ({ sceneId: e.sceneId, lines: positions(e.sceneId, e.lines) })),
       };
     },
@@ -234,6 +247,7 @@ export function createRunner(story, saved = null) {
         minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt } : null,
         stats: [...stats.values()].filter((s) => !s.hidden).map((s) => ({ id: s.id, label: s.label, icon: s.icon ?? '', value: state.stats[s.id], min: s.min, max: s.max })),
         fullness: state.fullness, voided: state.voided, accident: state.accident,
+        leaks: state.leaks, leakLine: bladder.leakOnFail?.bladder ?? null,
         modes: activeModes().map((m) => m.label),
         ending: state.ending,
         scorecard: state.phase !== 'ended' ? [] : (story.scorecard || []).map((row) => ({

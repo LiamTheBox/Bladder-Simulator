@@ -7,14 +7,15 @@
 //                   { "id": "bladder", "name", "kind": "bladder" } ],        // the bladder needs no age
 //   "stats":      [ { "id", "label", "start", "min"?: 0, "max"?: 100, "icon"?, "hidden"?: bool,
 //                     "thresholds"?: [ { "atOrBelow" | "atOrAbove": number, "goto": target } ] } ],
-//   "bladder":    { "startFullness": 0..100, "fillPerMinute"?: n, "absorbPerMinute"?: n, "capacityMl"?: n },
+//   "bladder":    { "startFullness": 0..100, "fillPerMinute"?: n, "absorbPerMinute"?: n, "capacityMl"?: n,
+//                   "leakOnFail"?: { "above": 0..100, "amount": n, "effects"?: [effect], "bladder"?: text } },
 //   "clock":      { "start": "HH:MM" },
 //   "modes":      [ { "flag", "label", "minigameDifficulty"?: -2..2, "fillMultiplier"?: 0.25..4 } ],
 //   "choiceSets": [ { "id", "options": [ { "key", "effects"?: [effect] } ] } ],
 //   "triggers":   [ trigger ],                                                // watched in every scene
 //   "start":      scene id,
 //   "scenes":     [ { "id", "title"?, "chapter"?, "lines": [line], "onEnter"?: [effect],
-//                     "choices"?: [choice | set use], "next"?: target, "triggers"?: [trigger] } ],
+//                     "choices"?: [choice | set use], "next"?: target, "triggers"?: [trigger], "closing"?: bool } ],
 //   "endings":    [ { "id", "title", "text", "kind"?: "good" | "neutral" | "bad", "accident"?: bool } ],
 //   "scorecard":  [ { "label", "stat" } | { "label", "flag" } ]
 // }
@@ -40,6 +41,11 @@
 //             changes the time shown (a new time zone, a new day) without any time passing.
 //   condition { "stat", one of "lt" | "lte" | "gt" | "gte" | "eq": n } | { "flag": id, "is"?: bool (default true) }
 //   target    a scene id or an ending id (they share one namespace), or "return" inside an interruption
+//   closing   a scene with "closing": true starts the story's closing sequence (a game-over scene, say a breakdown
+//             before the bad ending): from there on nothing interrupts and no threshold fires any more. Point a
+//             stat threshold at it instead of straight at the ending.
+//   leakOnFail  whenever a minigame is lost while fullness is above "above", the bladder spasms and "amount"
+//             percent leaks out; "effects" apply as well (say, a little suspicion) and "bladder" is what it says.
 //   ending    with "accident": true the bladder gives out on arrival: it empties by itself, as an accident (for the
 //             ending a "lost all control" threshold jumps to). The scorecard still shows how full it was.
 //   mode      while its flag is set, every minigame is that much harder and the bladder fills that much faster

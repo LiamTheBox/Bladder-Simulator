@@ -95,16 +95,23 @@ test('a story minigame takes the place of the choices, and its result moves the 
   const box = await pg.locator('#controls').boundingBox();
   expect(box.y + box.height, 'game panel inside the viewport').toBeLessThanOrEqual(844.5);
 
-  await ev('endMinigame(false)'); // lose: the story's own consequence applies
+  const full = await ev('storyView().fullness');
+  expect(full, 'full enough for the story\'s leak rule').toBeGreaterThan(80);
+  await ev('st.particles.length = 0; endMinigame(false)'); // lose: the story's own consequence applies
   await expect(pg.locator('#toy-container')).not.toHaveClass(/mg-active/);
   await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · The Downstairs Bathroom');
-  await expect(pg.locator('.story-stat-head').nth(2)).toHaveText(/Suspicion\s*30/);
+  // and, the bladder being over 80% full, it spasms: 1% leaks and suspicion rises a little more (30 + 3)
+  await expect(pg.locator('.story-stat-head').nth(2)).toHaveText(/Suspicion\s*33/);
+  expect(await ev('storyView().leaks')).toBe(1);
+  expect(await ev('storyView().fullness')).toBeCloseTo(full - 1, 5);
+  expect(await ev('st.particles.length'), 'drops escape').toBeGreaterThan(0);
+  expect(await ev('st.isClosed && !st.isVoiding && !st.failureEvent'), 'a spurt, not a void').toBe(true);
   expect(await ev('st.stamina'), 'the sim stamina penalty does not matter in a story').toBeGreaterThanOrEqual(0);
   expect(errors).toEqual([]);
   await context.close();
 });
 
-test('losing all control ends in an accident: the bladder on screen empties by itself', async ({ browser }) => {
+test('losing all control: a breakdown scene, then an accident empties the bladder on screen', async ({ browser }) => {
   const { context, pg, ev, errors } = await openStory(browser);
   // the same story, started with almost no control left: the first lost wave crosses its "control at 0" threshold
   const bonnie = JSON.parse(readFileSync(new URL('../stories/bonnies_journey.json', import.meta.url), 'utf8'));
@@ -120,6 +127,15 @@ test('losing all control ends in an accident: the bladder on screen empties by i
   await readOn(pg); await choice(pg, 'Slip back to my room').click();
   await readOn(pg); await choice(pg, 'Face it').click();
   await ev('endMinigame(false)');
+  // first the breakdown: Bonnie and the bladder give up together, and nothing has let go yet
+  await expect(pg.locator('#story-chapter')).toHaveText('The Breaking Point');
+  await expect(pg.locator('.story-stat-head').nth(0)).toHaveText(/Control\s*0/);
+  await expect(pg.locator('#bladder-bubble')).toHaveText(/I held as long as I could/);
+  expect(await ev('window.__events')).toEqual([]);
+  for (let i = 0; i < 3; i++) await pg.locator('.story-continue').click(); // its other three lines
+  await expect(pg.locator('.story-speaker').first()).toHaveText(/Bonnie/);
+  await expect(pg.locator('#bladder-bubble')).toHaveText(/Letting go now/);
+  await pg.locator('.story-continue').click();
   await expect(pg.locator('.story-ending-title')).toHaveText('Not Quite');
   expect(await ev('window.__events'), 'an accident, not a chosen void').toEqual(['accident']);
   expect(await ev('st.failureEvent && st.isVoiding && !st.isClosed'), 'the bladder is pouring').toBe(true);

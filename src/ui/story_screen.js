@@ -5,7 +5,7 @@ import { createRunner } from '../story/runner.js';
 import { NARRATOR } from '../story/schema.js';
 import { on } from '../sim/events.js';
 import { st } from '../sim/state.js';
-import { setStoryMode, setVolume, easeVolumeToward, startVoid, triggerAccident } from '../sim/actions.js';
+import { setStoryMode, setVolume, easeVolumeToward, startVoid, triggerAccident, spasmLeak } from '../sim/actions.js';
 import { speakLine } from '../audio/speech.js';
 import { startMinigame } from '../minigames/index.js';
 import { saveProgress, clearProgress } from '../story/library.js';
@@ -27,6 +27,7 @@ let story = null, runner = null, names = {};
 let spokenKey = '';     // the last line whose bladder reply was voiced, so re-drawing does not repeat it
 let voidsSeen = 0;
 let accidentSeen = false;
+let leaksSeen = 0;
 let resetting = false;  // true while this file itself resets the game
 let onExit = () => {};
 let slot = null;        // { key, hash }: where this story's progress is saved automatically (null = not saved)
@@ -56,7 +57,7 @@ export function startStory(validStory, options = {}) {
   story = validStory; runner = createRunner(story, options.saved ?? null);
   names = Object.fromEntries(story.characters.map((c) => [c.id, c.name]));
   const first = runner.view();
-  spokenKey = ''; voidsSeen = first.voided; accidentSeen = false; // a void that happened before the save is not replayed
+  spokenKey = ''; voidsSeen = first.voided; accidentSeen = false; leaksSeen = first.leaks; // a void that happened before the save is not replayed
   setStoryMode(true);
   setVolume(first.fullness);
   const capacity = story.bladder?.capacityMl;
@@ -149,6 +150,12 @@ function render() {
 
   // Keep the newest line in view (after the choices are in place: they change how tall the text area is)
   elLog.scrollTop = v.phase === 'ended' ? 0 : elLog.scrollHeight;
+
+  // A leak after a lost minigame: the bladder spasms and says so (a new line's reply, below, takes the bubble over)
+  if (v.leaks > leaksSeen) {
+    leaksSeen = v.leaks;
+    if (spasmLeak() && v.leakLine && v.phase !== 'ended') { speakLine(v.leakLine, true); showBubble(v.leakLine, BUBBLE_SEC); }
+  }
 
   // Double dialogue: the newest line's bladder reply goes in the bladder's bubble and is spoken
   const last = v.lines[v.lines.length - 1];

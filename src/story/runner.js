@@ -37,7 +37,7 @@ export function createRunner(story, saved = null) {
     voided: 0,          // counts "void" effects, so the screen can tell a new one happened
     chapter: -1,        // position in the chapter list; scenes without a chapter (interruptions) leave it alone
     leaks: 0,           // counts leaks ("leakOnFail" after a lost minigame, "overflow" past full), for the screen likewise
-    leakLine: null,     // what the bladder says about the latest of them
+    leakCause: null,    // the latest of them: 'fail' or 'overflow' (the bladder has a line for each)
     closing: false,     // a "closing" scene was entered: no more interruptions, no more thresholds
     accident: false,    // the story ended in an accident (an ending with "accident")
     finalFullness: null, // how full the bladder was when that happened, for the scorecard
@@ -84,7 +84,7 @@ export function createRunner(story, saved = null) {
     // overflow again, so this happens at most once per call.
     const spill = bladder.overflow;
     if (run(effects) && spill) {
-      state.leaks++; state.leakLine = spill.bladder ?? null;
+      state.leaks++; state.leakCause = 'overflow';
       state.fullness = clamp(100 - (spill.amount ?? 0), 0, 100);
       run(spill.effects);
     }
@@ -200,6 +200,7 @@ export function createRunner(story, saved = null) {
         fullness: clamp(s.fullness, 0, 100), pending: Math.max(0, s.pending), minutes: story.clock ? s.minutes : null,
         elapsed: s.elapsed, voided: s.voided, ending: null, minigame: null,
         leaks: Number.isFinite(s.leaks) ? s.leaks : 0, closing: s.closing === true, // absent in older saves
+        leakCause: ['fail', 'overflow'].includes(s.leakCause) ? s.leakCause : null,
         chapter: Number.isInteger(s.chapter) && s.chapter >= -1 && s.chapter < chapters.length ? s.chapter : (chapterIndex.get(scenes.get(s.sceneId).chapter) ?? -1),
       });
       if (state.phase === 'choices' && availableChoices().length === 0) state.phase = 'stuck';
@@ -240,7 +241,7 @@ export function createRunner(story, saved = null) {
       // (not during a visit to the toilet: a game with "relief" lets go on purpose)
       const leak = bladder.leakOnFail;
       if (!success && leak && !('relief' in spec) && state.fullness > leak.above) {
-        state.leaks++; state.leakLine = leak.bladder ?? null;
+        state.leaks++; state.leakCause = 'fail';
         effects = [{ fullness: -leak.amount }, ...(leak.effects || []), ...effects];
       }
       // What the game itself measured comes first: how much got out, and how much of it was noticed
@@ -258,7 +259,7 @@ export function createRunner(story, saved = null) {
         v: 1, phase: state.phase, sceneId: state.sceneId, lineIndex: state.lineIndex, lines: positions(state.sceneId, state.lines),
         stats: { ...state.stats }, flags: { ...state.flags }, fullness: state.fullness, pending: state.pending,
         minutes: state.minutes, elapsed: state.elapsed, voided: state.voided, fired: [...state.fired],
-        leaks: state.leaks, closing: state.closing, chapter: state.chapter,
+        leaks: state.leaks, leakCause: state.leakCause, closing: state.closing, chapter: state.chapter,
         stack: state.stack.map((e) => ({ sceneId: e.sceneId, lines: positions(e.sceneId, e.lines) })),
       };
     },
@@ -278,7 +279,7 @@ export function createRunner(story, saved = null) {
         minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt, relief: state.minigame.spec.relief, lines: state.minigame.spec.lines } : null,
         stats: [...stats.values()].filter((s) => !s.hidden).map((s) => ({ id: s.id, label: s.label, icon: s.icon ?? '', value: state.stats[s.id], min: s.min, max: s.max })),
         fullness: state.fullness, voided: state.voided, accident: state.accident,
-        leaks: state.leaks, leakLine: state.leakLine,
+        leaks: state.leaks, leakLine: (state.leakCause === 'overflow' ? bladder.overflow?.bladder : state.leakCause === 'fail' ? bladder.leakOnFail?.bladder : null) ?? null,
         modes: activeModes().map((m) => m.label),
         ending: state.ending,
         scorecard: state.phase !== 'ended' ? [] : (story.scorecard || []).map((row) => ({

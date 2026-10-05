@@ -65,7 +65,17 @@
   "bladder": {
     "startFullness": 55,
     "fillPerMinute": 0.5,
-    "capacityMl": 800
+    "capacityMl": 800,
+    "overflow": {
+      "amount": 2,
+      "effects": [
+        {
+          "stat": "suspicion",
+          "add": 5
+        }
+      ],
+      "bladder": "No room! Some of that just left."
+    }
   },
   "clock": {
     "start": "14:00"
@@ -243,6 +253,38 @@
             }
           ],
           "next": "ending_excused"
+        },
+        {
+          "text": "Slip out during the questions. Be back before slide 21.",
+          "effects": [
+            {
+              "stat": "composure",
+              "add": -10
+            }
+          ],
+          "next": "ending_excused",
+          "minigame": {
+            "id": "sneak_a_pee",
+            "difficulty": 2,
+            "prompt": "Quick! And stop if anyone knocks!",
+            "relief": 50,
+            "heard": {
+              "stat": "suspicion",
+              "max": 10
+            },
+            "lines": [
+              "Sam? Dana's asking for you.",
+              "Sam, are you in there?"
+            ],
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 20
+                }
+              ]
+            }
+          }
         }
       ]
     },

@@ -41,8 +41,10 @@ test('drinks are absorbed as minutes pass, the clock advances, and a trigger int
   expect(r.state.pending).toBe(0);
   let v = r.view();
   expect(v.clock).toBe('14:40');
-  // 40 minutes: all 20 absorbed, +0.5 a minute, +15 on entering = 55 + 20 + 20 + 15 = 100 (capped)
-  expect(v.fullness).toBe(100);
+  // 40 minutes: all 20 absorbed, +0.5 a minute, +15 on entering = 55 + 20 + 20 + 15 = 110: past full, so the
+  // story's overflow spasm lets 2 out and somebody half notices
+  expect(v).toMatchObject({ fullness: 98, leaks: 1, leakLine: 'No room! Some of that just left.' });
+  expect(stat(v, 'suspicion')).toBe(5);
   r.next(); v = r.view();
   expect(v.lines.length).toBe(2);
   expect(v.phase, 'the trigger waits for the player to read the last line').toBe('lines');
@@ -52,7 +54,7 @@ test('drinks are absorbed as minutes pass, the clock advances, and a trigger int
   expect(v.minigame).toEqual({ id: 'swipe_away', difficulty: 2, prompt: 'That is IT. I am leaving, with or without you.' });
   r.minigameDone(false); v = r.view();
   expect(stat(v, 'control')).toBe(50);
-  expect(stat(v, 'suspicion')).toBe(20);
+  expect(stat(v, 'suspicion'), '5 from the overflow, 20 from the lost game').toBe(25);
   // suspicion 20 sets off the story-wide interruption; afterwards the story returns to the interrupted scene
   expect(v.title).toBe('Dana notices');
   expect(v.choices).toEqual(['"Could I... get some water, actually?"', '"All good! Carry on."', 'Laugh it off, far too loudly.']);
@@ -66,7 +68,7 @@ test('drinks are absorbed as minutes pass, the clock advances, and a trigger int
   expect(v.ending).toMatchObject({ id: 'ending_excused', kind: 'neutral' });
   expect(v.scorecard).toEqual([
     { label: 'Control left', value: '50' }, { label: 'Composure', value: '75' }, // +5 is capped at 100, then -5 and -20
-    { label: 'How full', value: '100' }, { label: 'Refused the coffee', value: 'Yes' },
+    { label: 'How full', value: '98' }, { label: 'Refused the coffee', value: 'Yes' },
   ]);
 });
 
@@ -86,8 +88,8 @@ test('a mode makes minigames harder and filling faster while its flag is set', (
   r.choose(2); // the double espresso
   let v = r.view();
   expect(v.modes).toEqual(['Double espresso']);
-  // 35 queued, all absorbed in 40 minutes, plus 20 filling, times 1.5, plus 15: capped at 100
-  expect(v.fullness).toBe(100);
+  // 35 queued, all absorbed in 40 minutes, plus 20 filling, times 1.5, plus 15: far past full, so it overflows
+  expect(v.fullness).toBe(98);
   v = read(r);
   expect(v.lines.map((l) => l.text)).toContain('The double espresso has opinions.');
   expect(v.minigame.difficulty, 'difficulty 2 becomes 3').toBe(3);
@@ -181,7 +183,7 @@ test('overflow: a drink that pushes the bladder past full escapes as a spasm, on
   const play = (overflow, drink) => {
     const story = load('placeholder');
     story.bladder.startFullness = 96; story.bladder.fillPerMinute = 0; story.scenes[0].onEnter = [];
-    if (overflow) story.bladder.overflow = overflow;
+    if (overflow) story.bladder.overflow = overflow; else delete story.bladder.overflow;
     story.triggers = [];
     story.scenes[0].choices = [{ text: 'Drink up.', effects: [{ drink: drink }, { minutes: 30 }, { fullness: 50 }], next: 'ending_dash' }];
     const r = createRunner(story); read(r);

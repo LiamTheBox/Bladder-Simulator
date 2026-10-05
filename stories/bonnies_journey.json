@@ -120,6 +120,20 @@
         }
       ],
       "bladder": "That was a spasm. A little got out. I am SO sorry."
+    },
+    "overflow": {
+      "amount": 2,
+      "effects": [
+        {
+          "stat": "suspicion",
+          "add": 8
+        },
+        {
+          "stat": "control",
+          "add": -5
+        }
+      ],
+      "bladder": "There is no more room. NONE. Some of that just left."
     }
   },
   "clock": {
@@ -763,21 +777,18 @@
           "next": "flush"
         },
         {
-          "text": "Ease down and let go as slowly, as silently, as humanly possible.",
+          "text": "Ease down and go quietly, stopping dead whenever the house stirs.",
           "effects": [
             {
               "minutes": 1
             }
           ],
           "minigame": {
-            "id": "breathe",
+            "id": "sneak_a_pee",
             "difficulty": 2,
-            "prompt": "Slowly. Breathe. Slow-ly.",
+            "prompt": "Quietly! And STOP if anyone calls!",
             "success": {
               "effects": [
-                {
-                  "void": true
-                },
                 {
                   "stat": "control",
                   "set": 100
@@ -794,9 +805,6 @@
             "fail": {
               "effects": [
                 {
-                  "void": true
-                },
-                {
                   "stat": "control",
                   "set": 100
                 },
@@ -808,7 +816,17 @@
                   "minutes": 2
                 }
               ]
-            }
+            },
+            "relief": 100,
+            "heard": {
+              "stat": "suspicion",
+              "max": 10
+            },
+            "lines": [
+              "Bonnie? Is that you, sweetheart?",
+              "Bonnie... are you up?",
+              "Is somebody downstairs?"
+            ]
           },
           "next": "flush"
         }
@@ -1504,6 +1522,10 @@
             {
               "stat": "halo",
               "add": 5
+            },
+            {
+              "stat": "suspicion",
+              "add": -8
             }
           ],
           "next": "turbulence"
@@ -1601,6 +1623,57 @@
             "refuse": "Stay put. \"I'm fine!\" she tells nobody at all.",
             "hover": "Unbuckle... half stand... and sit back down as he returns.",
             "busy": "Tidy the seat pocket instead. Fold the blanket. Very busy."
+          },
+          "next": "descent"
+        },
+        {
+          "text": "Go. A hurried half-visit, before the queue at the lavatory door loses patience.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "flag": "went_once"
+            },
+            {
+              "minutes": 4
+            }
+          ],
+          "minigame": {
+            "id": "sneak_a_pee",
+            "difficulty": 2,
+            "prompt": "Quick! While nobody is knocking!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 15
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 8
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 15
+                }
+              ]
+            },
+            "relief": 35,
+            "heard": {
+              "stat": "suspicion",
+              "max": 10
+            },
+            "lines": [
+              "Miss? Is everything all right in there?",
+              "Excuse me, there is a queue out here.",
+              "Hello? Miss?"
+            ]
           },
           "next": "descent"
         }
@@ -2028,7 +2101,7 @@
       ],
       "choices": [
         {
-          "text": "Down it: graceful, grateful, gone.",
+          "text": "Down it: graceful, grateful, gone. Nobody with a problem drinks like that.",
           "effects": [
             {
               "drink": 12
@@ -2036,6 +2109,10 @@
             {
               "stat": "halo",
               "add": 10
+            },
+            {
+              "stat": "suspicion",
+              "add": -10
             },
             {
               "minutes": 10
@@ -2777,6 +2854,10 @@
     {
       "label": "Made a friend",
       "flag": "friends"
+    },
+    {
+      "label": "Sneaked a visit on the plane",
+      "flag": "went_once"
     }
   ]
 }

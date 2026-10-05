@@ -1,0 +1,867 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "id": "the_tasting_menu",
+    "title": "The Tasting Menu",
+    "author": "Engine Showcase",
+    "rating": "18+",
+    "tags": [
+      "desperation",
+      "date",
+      "restaurant",
+      "extended"
+    ],
+    "description": "An expanded showcase story. A first date, a grueling seven-course meal, spicy ceviche, tableside theatrics, and a waiter who simply refuses to let your water glass fall below the brim."
+  },
+  "characters": [
+    {
+      "id": "player",
+      "name": "Alex",
+      "age": 28,
+      "notes": "Really likes this date. Really regrets the pre-date nervous pint."
+    },
+    {
+      "id": "jordan",
+      "name": "Jordan",
+      "age": 28,
+      "notes": "The date. Gorgeous, highly observant, and easily distracted by culinary theatrics."
+    },
+    {
+      "id": "waiter",
+      "name": "The Waiter",
+      "age": 40,
+      "notes": "A culinary ninja. His life's mission is topping up water glasses and enforcing restaurant pacing."
+    },
+    {
+      "id": "bladder",
+      "name": "Bladder",
+      "kind": "bladder"
+    }
+  ],
+  "stats": [
+    {
+      "id": "control",
+      "label": "Control",
+      "start": 80,
+      "thresholds": [
+        {
+          "atOrBelow": 0,
+          "goto": "breakdown"
+        }
+      ]
+    },
+    {
+      "id": "romance",
+      "label": "Romance",
+      "icon": "💖",
+      "start": 100
+    },
+    {
+      "id": "suspicion",
+      "label": "Suspicion",
+      "icon": "🤨",
+      "start": 0,
+      "thresholds": [
+        {
+          "atOrAbove": 100,
+          "goto": "ending_caught"
+        }
+      ]
+    }
+  ],
+  "bladder": {
+    "startFullness": 65,
+    "fillPerMinute": 0.35,
+    "capacityMl": 1000,
+    "leakOnFail": {
+      "above": 80,
+      "amount": 1,
+      "effects": [
+        {
+          "stat": "suspicion",
+          "add": 3
+        }
+      ],
+      "bladder": "That was a spasm. A little got out. Cross your legs and act natural."
+    }
+  },
+  "clock": {
+    "start": "19:00"
+  },
+  "chapters": [
+    {
+      "name": "Appetizers",
+      "icon": "🥗"
+    },
+    {
+      "name": "Intermezzo",
+      "icon": "🍋"
+    },
+    {
+      "name": "Main Courses",
+      "icon": "🍽️"
+    },
+    {
+      "name": "Dessert",
+      "icon": "🍰"
+    },
+    {
+      "name": "The End",
+      "icon": "🧾"
+    }
+  ],
+  "modes": [
+    {
+      "flag": "nervous_drinker",
+      "label": "Nervous Drinker",
+      "minigameDifficulty": 1,
+      "fillMultiplier": 1.2
+    }
+  ],
+  "choiceSets": [
+    {
+      "id": "drink_choices",
+      "options": [
+        {
+          "key": "sip_wine",
+          "effects": [
+            {
+              "drink": 15
+            },
+            {
+              "stat": "romance",
+              "add": 5
+            }
+          ]
+        },
+        {
+          "key": "chug_water",
+          "effects": [
+            {
+              "drink": 30
+            },
+            {
+              "stat": "control",
+              "add": 5
+            }
+          ]
+        },
+        {
+          "key": "ignore_glass",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 10
+            },
+            {
+              "stat": "romance",
+              "add": -5
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "triggers": [
+    {
+      "when": [
+        {
+          "stat": "suspicion",
+          "gte": 50
+        }
+      ],
+      "scene": "jordan_asks"
+    },
+    {
+      "when": [
+        {
+          "stat": "fullness",
+          "gte": 80
+        }
+      ],
+      "bladder": "Warning. We have bypassed 'uncomfortable' and are rapidly approaching 'critical.'",
+      "minigame": {
+        "id": "tremor_lock",
+        "difficulty": 2,
+        "prompt": "Stop bouncing your leg.",
+        "success": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": 10
+            }
+          ]
+        },
+        "fail": {
+          "effects": [
+            {
+              "stat": "control",
+              "add": -25
+            },
+            {
+              "stat": "suspicion",
+              "add": 15
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "start": "course_one",
+  "scenes": [
+    {
+      "id": "course_one",
+      "title": "7:00 PM — The Amuse-Bouche",
+      "chapter": "Appetizers",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The restaurant is dim, romantic, and extremely expensive. The pre-date pint you had to calm your nerves is already making its presence known."
+        },
+        {
+          "speaker": "jordan",
+          "text": "I'm so glad we finally did this! I've been dying to try their seven-course menu."
+        },
+        {
+          "speaker": "waiter",
+          "text": "Sparkling water for the table? Excellent."
+        },
+        {
+          "speaker": "bladder",
+          "text": "He poured it. It's sitting right there, bubbling at you."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Toast to a great evening. Take a healthy sip of wine.",
+          "effects": [
+            {
+              "flag": "nervous_drinker"
+            },
+            {
+              "drink": 20
+            },
+            {
+              "stat": "romance",
+              "add": 15
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "course_two"
+        },
+        {
+          "text": "Toast, but fake-sip. Let the liquid hit your lip and go no further.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 10
+            },
+            {
+              "stat": "control",
+              "add": 5
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "course_two"
+        }
+      ]
+    },
+    {
+      "id": "course_two",
+      "title": "7:20 PM — Course Two: The Fire",
+      "chapter": "Appetizers",
+      "onEnter": [
+        {
+          "clock": "19:20"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Course two arrives. It is a delicate scallop ceviche bathed in a bright orange chili oil."
+        },
+        {
+          "speaker": "jordan",
+          "text": "Oh wow! That has a serious kick to it. I love spicy food, do you?"
+        },
+        {
+          "speaker": "bladder",
+          "text": "Do not eat that. If you eat that, you will burn. If you burn, you will drink. If you drink, we sink."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Eat it boldly to match their energy. Reach for the ice water.",
+          "effects": [
+            {
+              "drink": 25
+            },
+            {
+              "stat": "romance",
+              "add": 15
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "course_three"
+        },
+        {
+          "text": "Take a tiny bite and suffer the burn in total, stoic silence.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -15
+            },
+            {
+              "stat": "romance",
+              "add": 5
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 2,
+            "prompt": "Do not sweat. Do not cough.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 15
+                }
+              ]
+            }
+          },
+          "next": "course_three"
+        },
+        {
+          "text": "Pretend to eat it, strategically moving the scallops around the plate.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 20
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "course_three"
+        }
+      ]
+    },
+    {
+      "id": "course_three",
+      "title": "7:40 PM — Course Three: The Trap",
+      "chapter": "Intermezzo",
+      "onEnter": [
+        {
+          "clock": "19:40"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The ceviche plates are cleared. A golden opportunity. You place your hands on your armrests to stand up."
+        },
+        {
+          "speaker": "waiter",
+          "text": "For our intermezzo, a smoked rosemary infusion. Please, remain seated for your safety while I pour the liquid nitrogen."
+        },
+        {
+          "speaker": "bladder",
+          "text": "He is doing this on purpose. I know it."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Sit back down obediently. Do not disrupt the liquid nitrogen.",
+          "effects": [
+            {
+              "stat": "romance",
+              "add": 10
+            },
+            {
+              "stat": "control",
+              "add": -15
+            },
+            {
+              "minutes": 25
+            }
+          ],
+          "next": "course_four"
+        },
+        {
+          "text": "\"Excuse me just a moment!\" Make a break for it before he starts pouring.",
+          "minigame": {
+            "id": "mash",
+            "difficulty": 3,
+            "prompt": "Stand up! Quick!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "romance",
+                  "add": -15
+                }
+              ],
+              "next": "ending_early_bathroom"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -20
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 25
+                }
+              ],
+              "next": "course_four"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "course_four",
+      "title": "8:05 PM — Course Four: The Endless Story",
+      "chapter": "Main Courses",
+      "onEnter": [
+        {
+          "clock": "20:05"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Course four. The nitrogen fog has cleared. Jordan is deep into a fascinating, uninterrupted story about their childhood golden retriever."
+        },
+        {
+          "speaker": "jordan",
+          "text": "...and so Barnaby just sat there, covered in paint! Anyway, sorry, I'm rambling. Are you okay? You look a bit rigid."
+        },
+        {
+          "speaker": "bladder",
+          "text": "Do not stand up. If you stand up right now, it's game over."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"I'm just captivated! Tell me more about Barnaby.\"",
+          "minigame": {
+            "id": "think_of_something_else",
+            "difficulty": 3,
+            "prompt": "Count the candles. In order. Look fascinated.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "romance",
+                  "add": 20
+                },
+                {
+                  "stat": "control",
+                  "add": -10
+                },
+                {
+                  "minutes": 30
+                }
+              ],
+              "next": "course_five"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -30
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 25
+                },
+                {
+                  "minutes": 30
+                }
+              ],
+              "next": "course_five"
+            }
+          }
+        },
+        {
+          "text": "\"I'm great. Let me just use the restroom real quick before the next course.\"",
+          "effects": [
+            {
+              "stat": "romance",
+              "add": -25
+            },
+            {
+              "stat": "suspicion",
+              "add": 10
+            }
+          ],
+          "next": "ending_awkward_excuse"
+        }
+      ]
+    },
+    {
+      "id": "course_five",
+      "title": "8:35 PM — Course Five: The Abandonment",
+      "chapter": "Main Courses",
+      "onEnter": [
+        {
+          "clock": "20:35"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The dog story ends. Course five is cleared. Suddenly, Jordan's phone vibrates. They look at the screen, wincing."
+        },
+        {
+          "speaker": "jordan",
+          "text": "It's my sister, it's an emergency. I have to step outside for just a second. I am so sorry!"
+        },
+        {
+          "speaker": "narrator",
+          "text": "Jordan rushes outside. You are alone. The restroom is fifty feet away."
+        },
+        {
+          "speaker": "bladder",
+          "text": "THEY LEFT. WE ARE ALONE. STAND UP AND WALK."
+        },
+        {
+          "speaker": "waiter",
+          "text": "Sir, while your guest is away, the Chef insists you try this complimentary liquid sphere tasting. It must be consumed immediately."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Nod politely, eat the liquid sphere, and wait for Jordan to return.",
+          "effects": [
+            {
+              "drink": 15
+            },
+            {
+              "stat": "control",
+              "add": -15
+            },
+            {
+              "minutes": 15
+            }
+          ],
+          "next": "the_waiter_strikes"
+        },
+        {
+          "text": "Use the alone time to secretly squirm in your chair and relieve the pressure.",
+          "minigame": {
+            "id": "swipe_away",
+            "difficulty": 3,
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 20
+                },
+                {
+                  "minutes": 15
+                }
+              ],
+              "next": "the_waiter_strikes"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 25
+                },
+                {
+                  "stat": "control",
+                  "add": -20
+                },
+                {
+                  "minutes": 15
+                }
+              ],
+              "next": "the_waiter_strikes"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "the_waiter_strikes",
+      "title": "8:50 PM — The Phantom Pour",
+      "chapter": "Dessert",
+      "onEnter": [
+        {
+          "clock": "20:50"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Jordan returns, apologizing profusely. You survived the gap. But while you were distracted greeting them, a shadow falls over the table."
+        },
+        {
+          "speaker": "waiter",
+          "text": "Allow me to top that up for you."
+        },
+        {
+          "speaker": "narrator",
+          "text": "The waiter pours ice-cold water into your glass. The sound of trickling water fills your ears. It is deafening."
+        },
+        {
+          "speaker": "bladder",
+          "text": "MAKE IT STOP."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Stare at the tablecloth and try to block out the sound.",
+          "minigame": {
+            "id": "steady_the_slosh",
+            "difficulty": 4,
+            "prompt": "Block out the pouring. Keep me level.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 15
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -35
+                }
+              ]
+            }
+          },
+          "next": "the_bill"
+        },
+        {
+          "text": "Clang your fork against your plate to drown out the noise.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 30
+            },
+            {
+              "stat": "romance",
+              "add": -15
+            }
+          ],
+          "next": "the_bill"
+        }
+      ]
+    },
+    {
+      "id": "jordan_asks",
+      "title": "Suspicion Rises",
+      "lines": [
+        {
+          "speaker": "jordan",
+          "text": "Hey... are you sure you're okay? You keep shifting around and you've barely touched your wine."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"Just a bit of a back spasm! I'm totally fine.\"",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": -10
+            },
+            {
+              "stat": "control",
+              "add": -10
+            }
+          ],
+          "next": "return"
+        },
+        {
+          "text": "\"Actually, I think the ceviche is disagreeing with me...\"",
+          "effects": [
+            {
+              "stat": "romance",
+              "add": -30
+            }
+          ],
+          "next": "ending_stomach_ache"
+        }
+      ]
+    },
+    {
+      "id": "the_bill",
+      "title": "9:15 PM — The Machine Is Updating",
+      "chapter": "The End",
+      "onEnter": [
+        {
+          "clock": "21:15"
+        },
+        {
+          "minutes": 25
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Dessert is finished. The date went beautifully. The waiter brings the card machine."
+        },
+        {
+          "speaker": "waiter",
+          "text": "Apologies, the terminal is just running a software update. It should only be another five minutes."
+        },
+        {
+          "speaker": "bladder",
+          "text": "Five minutes. We don't have five seconds. Throw cash at him and run."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Smile through the pain. Maintain eye contact. Do not vibrate.",
+          "minigame": {
+            "id": "leaks",
+            "difficulty": 4,
+            "prompt": "I'm cracking! Patch me! HOLD IT TOGETHER!",
+            "success": {
+              "effects": [
+                {
+                  "void": true
+                }
+              ],
+              "next": "ending_triumph"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -100
+                }
+              ],
+              "next": "ending_disaster"
+            }
+          }
+        },
+        {
+          "text": "Throw a hundred dollar bill on the table and stand up abruptly.",
+          "effects": [
+            {
+              "stat": "romance",
+              "add": -15
+            },
+            {
+              "stat": "suspicion",
+              "add": 20
+            }
+          ],
+          "next": "ending_rich_escape"
+        }
+      ]
+    },
+    {
+      "id": "breakdown",
+      "title": "The Breaking Point",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "You stop mid-sentence. Jordan is still talking, but the words have turned into a pleasant noise somewhere far away.",
+          "bladder": "I'm done. I'm sorry. I gave you every course I had."
+        },
+        {
+          "speaker": "player",
+          "text": "No. Not at the table. Just until the bill. Please.",
+          "mood": "under your breath",
+          "bladder": "There is no 'until' left. I checked. Twice."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Your knuckles are white on the tablecloth. The one evening you wanted to go perfectly, and your own body has filed its resignation.",
+          "bladder": "It was a lovely date. You were charming. I was heroic. It simply ran long."
+        },
+        {
+          "speaker": "player",
+          "text": "...Okay. Okay.",
+          "mood": "very quietly",
+          "bladder": "Letting go now. Reach for the water glass. It will explain a lot."
+        }
+      ],
+      "next": "ending_disaster",
+      "closing": true
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending_triumph",
+      "kind": "good",
+      "title": "A Flawless Evening",
+      "text": "The machine beeps. Payment approved. You walk Jordan to a cab at a perfectly measured pace, secure a second date, and then sprint into the nearest dark alleyway the moment their car turns the corner. A complete success."
+    },
+    {
+      "id": "ending_early_bathroom",
+      "kind": "neutral",
+      "title": "The Bathroom Break",
+      "text": "You successfully bolted to the restroom mid-meal. When you return, the Waiter is glaring at you, and the delicate timing of the tasting menu is ruined. Jordan is polite about it, but you definitely lost points for abandoning the liquid nitrogen."
+    },
+    {
+      "id": "ending_rich_escape",
+      "kind": "neutral",
+      "title": "The Eccentric Exit",
+      "text": "You drop the cash, mumble something about 'hating to wait,' and speed-walk to the restrooms. Jordan thinks you're weirdly impatient and a terrible tipper, but at least you kept your dignity. Mostly."
+    },
+    {
+      "id": "ending_awkward_excuse",
+      "kind": "neutral",
+      "title": "The Mood Killer",
+      "text": "You interrupted Barnaby the dog's climax to run to the toilet. When you return, the magic is gone. Jordan is scrolling on their phone. You survived, but there won't be a second date."
+    },
+    {
+      "id": "ending_stomach_ache",
+      "kind": "bad",
+      "title": "The Sickly Date",
+      "text": "You blamed the ceviche. Now Jordan feels terrible for picking the restaurant, the waiter is offended, and you spend the rest of the night pretending to have food poisoning. It's safe to say romance is dead."
+    },
+    {
+      "id": "ending_caught",
+      "kind": "bad",
+      "title": "The Jig Is Up",
+      "text": "Jordan stops mid-sentence. 'Are you doing a pee dance? Oh my god, just go to the bathroom!' You are officially a 28-year-old who needs permission to pee. Mortifying."
+    },
+    {
+      "id": "ending_disaster",
+      "kind": "bad",
+      "accident": true,
+      "title": "Check Please",
+      "text": "The five-minute terminal update was the final straw. Control fails right there at the table. You knock over the water glass trying to stand up, but the water on the chair definitely isn't from the glass. Check, please."
+    }
+  ],
+  "scorecard": [
+    {
+      "label": "Romance Score",
+      "stat": "romance"
+    },
+    {
+      "label": "Control Remaining",
+      "stat": "control"
+    },
+    {
+      "label": "Bladder Fullness",
+      "stat": "fullness"
+    }
+  ]
+}

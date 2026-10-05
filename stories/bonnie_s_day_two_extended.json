@@ -1,0 +1,1778 @@
+{
+  "schemaVersion": 1,
+  "meta": {
+    "id": "bonnies_journey_day_two",
+    "title": "Bonnie's Long Journey: Day Two Extended",
+    "author": "LiamBox & AI",
+    "rating": "18+",
+    "tags": [
+      "desperation",
+      "orientation",
+      "politeness",
+      "sequel",
+      "extended"
+    ],
+    "description": "Day two of the exchange program. A grueling extended cut featuring a mandatory orientation, an overly enthusiastic tour guide, awful public transit, and a complete unwillingness to inconvenience the group."
+  },
+  "characters": [
+    {
+      "id": "bonnie",
+      "name": "Bonnie",
+      "age": 23,
+      "notes": "Survived the flight, but now has to survive orientation."
+    },
+    {
+      "id": "irina",
+      "name": "Irina",
+      "age": 23,
+      "notes": "Bonnie's host. Loud, warm, and walks incredibly fast."
+    },
+    {
+      "id": "dean_martin",
+      "name": "Dean Martin",
+      "age": 62,
+      "notes": "Loves the sound of his own voice. Never met a tangent he didn't take."
+    },
+    {
+      "id": "brad",
+      "name": "Brad",
+      "age": 21,
+      "notes": "Student campus tour guide. Walks backwards, talks loudly, ignores the group's fatigue."
+    },
+    {
+      "id": "prof_yates",
+      "name": "Professor Yates",
+      "age": 55,
+      "notes": "Department head. Speaks very slowly and asks open-ended questions."
+    },
+    {
+      "id": "mrs_higgins",
+      "name": "Mrs. Higgins",
+      "age": 51,
+      "notes": "Loves to chat on the porch."
+    },
+    {
+      "id": "bladder",
+      "name": "Bladder",
+      "kind": "bladder"
+    }
+  ],
+  "stats": [
+    {
+      "id": "control",
+      "label": "Control",
+      "start": 100,
+      "thresholds": [
+        {
+          "atOrBelow": 0,
+          "goto": "breakdown"
+        }
+      ]
+    },
+    {
+      "id": "halo",
+      "label": "Halo",
+      "icon": "😇",
+      "start": 100
+    },
+    {
+      "id": "suspicion",
+      "label": "Suspicion",
+      "icon": "👀",
+      "start": 0,
+      "thresholds": [
+        {
+          "atOrAbove": 100,
+          "goto": "ending_day_two_fail"
+        }
+      ]
+    }
+  ],
+  "bladder": {
+    "startFullness": 30,
+    "fillPerMinute": 0.15,
+    "capacityMl": 2500,
+    "leakOnFail": {
+      "above": 80,
+      "amount": 1,
+      "effects": [
+        {
+          "stat": "suspicion",
+          "add": 3
+        }
+      ],
+      "bladder": "A spasm. A little got out. Nobody saw. Probably."
+    }
+  },
+  "clock": {
+    "start": "08:00"
+  },
+  "chapters": [
+    {
+      "name": "Chapter 8",
+      "icon": "🚆"
+    },
+    {
+      "name": "Chapter 9",
+      "icon": "🎓"
+    },
+    {
+      "name": "Chapter 10",
+      "icon": "🗺️"
+    },
+    {
+      "name": "Chapter 11",
+      "icon": "🥂"
+    },
+    {
+      "name": "Chapter 12",
+      "icon": "🚌"
+    },
+    {
+      "name": "Chapter 13",
+      "icon": "🚪"
+    }
+  ],
+  "start": "day_two_start",
+  "scenes": [
+    {
+      "id": "day_two_start",
+      "title": "8:00 AM — Day Two: The Reset",
+      "chapter": "Chapter 8",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Morning breaks. Bonnie survived the night. She is showered, dressed, and her record is intact. The slate is clean."
+        },
+        {
+          "speaker": "bladder",
+          "text": "We did it. We survived. Let us never, ever do that again."
+        },
+        {
+          "speaker": "irina",
+          "text": "Morning! I made us travel smoothies for the train! Mango, spinach, and a liter of coconut water!"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Accept the smoothie with glowing gratitude. It is day one; impressions matter.",
+          "effects": [
+            {
+              "drink": 20
+            },
+            {
+              "stat": "halo",
+              "add": 10
+            }
+          ],
+          "next": "train_platform"
+        },
+        {
+          "text": "\"Oh, I couldn't possibly! I'm so full from breakfast.\"",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "stat": "suspicion",
+              "add": 5
+            }
+          ],
+          "next": "train_platform"
+        },
+        {
+          "text": "Take it, but pretend to drink it. The houseplant in the hall looks thirsty.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": 5
+            }
+          ],
+          "next": "train_platform"
+        }
+      ]
+    },
+    {
+      "id": "train_platform",
+      "title": "8:25 AM — The Delayed Platform",
+      "chapter": "Chapter 8",
+      "onEnter": [
+        {
+          "clock": "08:25"
+        },
+        {
+          "minutes": 25
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The wind at the station is biting. Above them, the departure board clicks. The 8:30 train is delayed by twenty minutes."
+        },
+        {
+          "speaker": "irina",
+          "text": "Ugh, typical! We should grab a quick coffee while we wait to stay warm."
+        },
+        {
+          "speaker": "bladder",
+          "text": "A cold wind and hot coffee. A deadly combination."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"Great idea! I'll get us lattes.\"",
+          "effects": [
+            {
+              "drink": 15
+            },
+            {
+              "stat": "halo",
+              "add": 15
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "the_commute"
+        },
+        {
+          "text": "\"I think I'll just stand here and shiver, thanks!\"",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -10
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "the_commute"
+        },
+        {
+          "text": "Do a subtle jog in place to stay warm without drinking anything.",
+          "effects": [
+            {
+              "stat": "suspicion",
+              "add": 15
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "the_commute"
+        }
+      ]
+    },
+    {
+      "id": "the_commute",
+      "title": "9:00 AM — The Bumpy Train",
+      "chapter": "Chapter 8",
+      "onEnter": [
+        {
+          "clock": "09:00"
+        },
+        {
+          "minutes": 45
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The commuter train finally arrives and is standing-room only. Bonnie holds an overhead rail. The tracks are famously unmaintained."
+        },
+        {
+          "speaker": "bladder",
+          "text": "Every jolt is a personal attack. Brace yourself."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Lock the knees. Sway with the train like a sailor.",
+          "minigame": {
+            "id": "steady_the_slosh",
+            "difficulty": 2,
+            "prompt": "Absorb the bumps. Keep me level.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -15
+                }
+              ]
+            }
+          },
+          "next": "campus_gates"
+        },
+        {
+          "text": "Tense every muscle in my core to build a fortress.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": -8
+            }
+          ],
+          "next": "campus_gates"
+        }
+      ]
+    },
+    {
+      "id": "campus_gates",
+      "title": "9:50 AM — Arrival on Campus",
+      "chapter": "Chapter 9",
+      "onEnter": [
+        {
+          "clock": "09:50"
+        },
+        {
+          "minutes": 15
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "They step off the train and rush toward the sprawling campus. Student volunteers are handing out \"Welcome Packs\" containing heavy metal water bottles."
+        },
+        {
+          "speaker": "irina",
+          "text": "Oh, free merch! We better hurry to the main hall, they're starting!"
+        }
+      ],
+      "choices": [
+        {
+          "text": "Power-walk alongside Irina. Ignore the heavy feeling settling in.",
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Walk fast! Keep up!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -15
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 10
+                }
+              ]
+            }
+          },
+          "next": "orientation_hall"
+        },
+        {
+          "text": "Ask Irina to slow down for just one minute.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "stat": "suspicion",
+              "add": 10
+            }
+          ],
+          "next": "orientation_hall"
+        }
+      ]
+    },
+    {
+      "id": "orientation_hall",
+      "title": "10:15 AM — The Orientation Assembly",
+      "chapter": "Chapter 9",
+      "onEnter": [
+        {
+          "clock": "10:15"
+        },
+        {
+          "minutes": 10
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The auditorium is vast. Irina drags Bonnie to the exact center of a row of thirty seats."
+        },
+        {
+          "speaker": "dean_martin",
+          "text": "Welcome, exchange students! I'd like to take a brief hour to recount the history of this great institution..."
+        },
+        {
+          "speaker": "bladder",
+          "text": "He said a 'brief hour.' That is an oxymoron. We are flanked by strangers."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Sit perfectly still, attentive and smiling, for the entire hour.",
+          "effects": [
+            {
+              "minutes": 60
+            },
+            {
+              "stat": "halo",
+              "add": 15
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 3,
+            "prompt": "Look fascinated. Breathe.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -25
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 15
+                }
+              ]
+            }
+          },
+          "next": "orientation_end"
+        },
+        {
+          "text": "Cross and uncross legs endlessly. The subtle shuffle.",
+          "effects": [
+            {
+              "minutes": 60
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 2,
+            "prompt": "Shift! Shift! Shift!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 20
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -20
+                }
+              ]
+            }
+          },
+          "next": "orientation_end"
+        }
+      ]
+    },
+    {
+      "id": "orientation_end",
+      "title": "11:15 AM — Assembly Dismissed",
+      "chapter": "Chapter 9",
+      "lines": [
+        {
+          "speaker": "dean_martin",
+          "text": "...and that brings us to 1994! But I see our tour guides are waving at me. Break into your groups, everyone!"
+        },
+        {
+          "speaker": "irina",
+          "text": "Come on, our group is leaving right now! Hurry!"
+        },
+        {
+          "speaker": "bladder",
+          "text": "Do NOT follow her. There is a restroom at the back of the hall. Make an excuse!"
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"I'll catch up! I just need to... ask the Dean a question.\"",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "stat": "suspicion",
+              "add": 15
+            }
+          ],
+          "next": "tour_start"
+        },
+        {
+          "text": "\"Right behind you!\" Fall into line. Never inconvenience the group.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": -10
+            }
+          ],
+          "next": "tour_start"
+        }
+      ]
+    },
+    {
+      "id": "tour_start",
+      "title": "11:30 AM — The Campus Tour",
+      "chapter": "Chapter 10",
+      "onEnter": [
+        {
+          "clock": "11:30"
+        },
+        {
+          "minutes": 15
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Brad walks backward across the sunny quad, shouting through a megaphone."
+        },
+        {
+          "speaker": "brad",
+          "text": "We've got a massive campus, guys! Two solid hours of walking ahead of us. No stopping!"
+        },
+        {
+          "speaker": "bladder",
+          "text": "Two. Hours. Walking. We won't make it past the library."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Walk at the front of the pack. Match his energy. Be a star student.",
+          "effects": [
+            {
+              "minutes": 30
+            },
+            {
+              "stat": "halo",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": -15
+            }
+          ],
+          "next": "library_tour"
+        },
+        {
+          "text": "Linger at the back of the pack. Walk slowly. Conserve everything.",
+          "effects": [
+            {
+              "minutes": 30
+            },
+            {
+              "stat": "suspicion",
+              "add": 15
+            }
+          ],
+          "minigame": {
+            "id": "tiptoe",
+            "difficulty": 3,
+            "prompt": "Careful steps. Slowly. Hold it together.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -20
+                }
+              ]
+            }
+          },
+          "next": "library_tour"
+        }
+      ]
+    },
+    {
+      "id": "library_tour",
+      "title": "12:00 PM — The Silent Library",
+      "chapter": "Chapter 10",
+      "onEnter": [
+        {
+          "clock": "12:00"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Brad leads the group into the university's central library. It is echoingly, suffocatingly quiet."
+        },
+        {
+          "speaker": "brad",
+          "text": "(Whispering) This is the quiet study zone. Total silence in here, guys."
+        },
+        {
+          "speaker": "bladder",
+          "text": "Don't you dare sigh. Don't you dare whimper. They will all hear it."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Hold breath and tiptoe through the aisles.",
+          "minigame": {
+            "id": "tiptoe",
+            "difficulty": 4,
+            "prompt": "Not a sound. Not a peep. Slowly.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 15
+                },
+                {
+                  "minutes": 20
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -25
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 30
+                },
+                {
+                  "minutes": 20
+                }
+              ]
+            }
+          },
+          "next": "tour_midpoint"
+        },
+        {
+          "text": "Drop a textbook on purpose to mask the sound of a desperate shuffle.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -20
+            },
+            {
+              "stat": "suspicion",
+              "add": 25
+            },
+            {
+              "stat": "control",
+              "add": 5
+            },
+            {
+              "minutes": 20
+            }
+          ],
+          "next": "tour_midpoint"
+        }
+      ]
+    },
+    {
+      "id": "tour_midpoint",
+      "title": "12:30 PM — The Water Fountain",
+      "chapter": "Chapter 10",
+      "onEnter": [
+        {
+          "clock": "12:30"
+        },
+        {
+          "minutes": 10
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The group emerges from the library and stops near a courtyard fountain. The sound of running water is crystal clear and aggressively loud."
+        },
+        {
+          "speaker": "brad",
+          "text": "Alright guys, grab a quick drink from the bubbler here if you want! Next stop is the botanical gardens!"
+        },
+        {
+          "speaker": "bladder",
+          "text": "The sound. Make him turn off the fountain. Throw a rock at it."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Stare at the itinerary. Ignore the splashing water.",
+          "minigame": {
+            "id": "swipe_away",
+            "difficulty": 3,
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -30
+                }
+              ]
+            }
+          },
+          "next": "greenhouse_tour"
+        },
+        {
+          "text": "Put in headphones. Pretend I'm listening to a crucial voice note.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -15
+            },
+            {
+              "stat": "control",
+              "add": 5
+            }
+          ],
+          "next": "greenhouse_tour"
+        }
+      ]
+    },
+    {
+      "id": "greenhouse_tour",
+      "title": "1:00 PM — The Sweltering Greenhouse",
+      "chapter": "Chapter 10",
+      "onEnter": [
+        {
+          "clock": "13:00"
+        },
+        {
+          "minutes": 30
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The group is herded into the botanical greenhouse. It is 95 degrees and 100% humidity. Sweat instantly beads on Bonnie's forehead."
+        },
+        {
+          "speaker": "irina",
+          "text": "Wow, it's a sauna in here! Don't you want a sip from your welcome bottle?"
+        },
+        {
+          "speaker": "bladder",
+          "text": "Actually, sweating is good. Sweating releases water. Let it bake."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Drink the water. Dehydration is dangerous.",
+          "effects": [
+            {
+              "drink": 15
+            },
+            {
+              "stat": "halo",
+              "add": 5
+            },
+            {
+              "minutes": 30
+            }
+          ],
+          "next": "group_photo"
+        },
+        {
+          "text": "Refuse the water. Embrace the heat. Suffer for control.",
+          "effects": [
+            {
+              "stat": "control",
+              "add": 15
+            },
+            {
+              "stat": "suspicion",
+              "add": 10
+            },
+            {
+              "minutes": 30
+            }
+          ],
+          "minigame": {
+            "id": "distraction_popups",
+            "difficulty": 3,
+            "prompt": "Heat! Thirst! Twinges! Tap them all away!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "suspicion",
+                  "add": 15
+                }
+              ]
+            }
+          },
+          "next": "group_photo"
+        }
+      ]
+    },
+    {
+      "id": "group_photo",
+      "title": "1:45 PM — Say Cheese",
+      "chapter": "Chapter 10",
+      "onEnter": [
+        {
+          "clock": "13:45"
+        },
+        {
+          "minutes": 15
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The tour concludes on the front steps of the administration building. A photographer is waiting."
+        },
+        {
+          "speaker": "brad",
+          "text": "Group photo time! Everyone squeeze together on the steps! Hold still... holding..."
+        },
+        {
+          "speaker": "bladder",
+          "text": "He is taking forever to focus that camera. We cannot hold a smile this long."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Freeze in place with a perfect, desperate grin.",
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 4,
+            "prompt": "Hold the smile. Do NOT squirm.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "halo",
+                  "add": 15
+                },
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -30
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 35
+                }
+              ]
+            }
+          },
+          "next": "the_mixer"
+        },
+        {
+          "text": "Hide in the very back row and hunch over slightly.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "stat": "control",
+              "add": -10
+            }
+          ],
+          "next": "the_mixer"
+        }
+      ]
+    },
+    {
+      "id": "the_mixer",
+      "title": "2:00 PM — Department Mixer",
+      "chapter": "Chapter 11",
+      "onEnter": [
+        {
+          "clock": "14:00"
+        },
+        {
+          "minutes": 15
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "They move into a crowded reception hall. Faculty members are mingling. Waiters are passing out flutes of sparkling cider."
+        },
+        {
+          "speaker": "prof_yates",
+          "text": "Ah, you must be Bonnie! I have so much to ask you about your home university!"
+        },
+        {
+          "speaker": "bladder",
+          "text": "He has cornered us. And a waiter is approaching with a tray of liquids."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Take a glass to be polite. Toast the Professor. Sip gracefully.",
+          "effects": [
+            {
+              "drink": 10
+            },
+            {
+              "stat": "halo",
+              "add": 15
+            },
+            {
+              "minutes": 15
+            }
+          ],
+          "next": "mixer_conversation"
+        },
+        {
+          "text": "Refuse the drink. Focus entirely on surviving this conversation.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -5
+            },
+            {
+              "minutes": 15
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 3,
+            "prompt": "Nod. Smile. Do not grimace.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -20
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 20
+                }
+              ]
+            }
+          },
+          "next": "mixer_conversation"
+        }
+      ]
+    },
+    {
+      "id": "mixer_conversation",
+      "title": "2:30 PM — The Never-Ending Story",
+      "chapter": "Chapter 11",
+      "onEnter": [
+        {
+          "clock": "14:30"
+        },
+        {
+          "minutes": 20
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Professor Yates speaks at a glacial pace. He is currently describing the history of the department's filing system."
+        },
+        {
+          "speaker": "prof_yates",
+          "text": "...and so in 1982, we switched to alphabetical. Fascinating transition, don't you think?"
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"Absolutely fascinating.\" Feign total engagement.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 15
+            },
+            {
+              "minutes": 15
+            }
+          ],
+          "minigame": {
+            "id": "think_of_something_else",
+            "difficulty": 4,
+            "prompt": "Count something. Anything. In order.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -25
+                }
+              ]
+            }
+          },
+          "next": "mixer_escape"
+        },
+        {
+          "text": "\"Oh my, look at the time! Irina is waving at me, I must run!\"",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -20
+            },
+            {
+              "stat": "suspicion",
+              "add": 15
+            }
+          ],
+          "next": "mixer_escape"
+        }
+      ]
+    },
+    {
+      "id": "mixer_escape",
+      "title": "2:45 PM — The Line",
+      "chapter": "Chapter 11",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Yates finally walks away. The ladies' room is across the hall, but there is a line of eight people snaking out the door."
+        },
+        {
+          "speaker": "irina",
+          "text": "Whew, I'm exhausted. Ready to grab the bus home?"
+        },
+        {
+          "speaker": "bladder",
+          "text": "EIGHT PEOPLE. That is twenty minutes minimum. But the bus is right now."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"Actually, I'm just going to jump in that line. Save me a seat on the bus?\"",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -10
+            },
+            {
+              "minutes": 25
+            }
+          ],
+          "next": "the_wrong_bus"
+        },
+        {
+          "text": "\"Yes, let's just go. I'm fine until we get back.\"",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 10
+            },
+            {
+              "stat": "control",
+              "add": -15
+            }
+          ],
+          "next": "the_wrong_bus"
+        }
+      ]
+    },
+    {
+      "id": "the_wrong_bus",
+      "title": "3:15 PM — A Navigational Error",
+      "chapter": "Chapter 12",
+      "onEnter": [
+        {
+          "clock": "15:15"
+        },
+        {
+          "minutes": 15
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "They rush out to the transit center and jump on a waiting bus. It pulls away instantly."
+        },
+        {
+          "speaker": "irina",
+          "text": "Oh... wait. This is the 42B. We needed the 42A. It's going the wrong way! We have to get off at the next stop!"
+        },
+        {
+          "speaker": "bladder",
+          "text": "You have to be joking. Every single thing in this city is out to get us."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"No worries at all! Public transit, right?\" Smile through the agony.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": -10
+            },
+            {
+              "minutes": 10
+            }
+          ],
+          "next": "bus_stop_wait"
+        },
+        {
+          "text": "Let out a strained, high-pitched whimper and clutch your stomach.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -15
+            },
+            {
+              "stat": "suspicion",
+              "add": 25
+            },
+            {
+              "minutes": 10
+            }
+          ],
+          "next": "bus_stop_wait"
+        }
+      ]
+    },
+    {
+      "id": "bus_stop_wait",
+      "title": "3:30 PM — The Rainy Stop",
+      "chapter": "Chapter 12",
+      "onEnter": [
+        {
+          "clock": "15:30"
+        },
+        {
+          "minutes": 20
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "They hop off the wrong bus and stand at a desolate stop. Rain begins to hammer loudly against the metal roof."
+        },
+        {
+          "speaker": "bladder",
+          "text": "Water falling from the sky. Splashing onto the pavement. Just fantastic."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Pace relentlessly back and forth. The \"bus-waiting\" dance.",
+          "effects": [
+            {
+              "minutes": 15
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 3,
+            "prompt": "Pace! Pace! Pace!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 15
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -20
+                }
+              ]
+            }
+          },
+          "next": "bus_ride"
+        },
+        {
+          "text": "Sit perfectly still on the wet bench. Do not acknowledge the rain.",
+          "effects": [
+            {
+              "minutes": 15
+            }
+          ],
+          "minigame": {
+            "id": "leaks",
+            "difficulty": 3,
+            "prompt": "Ignore the splashing. Patch the cracks!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -35
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 10
+                }
+              ]
+            }
+          },
+          "next": "bus_ride"
+        }
+      ]
+    },
+    {
+      "id": "bus_ride",
+      "title": "4:00 PM — Gridlock",
+      "chapter": "Chapter 12",
+      "onEnter": [
+        {
+          "clock": "16:00"
+        },
+        {
+          "minutes": 30
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The correct bus arrives, but within blocks, it is caught in dead-stopped afternoon traffic."
+        },
+        {
+          "speaker": "bladder",
+          "text": "We are trapped in a metal box moving three inches per hour."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Squeeze eyes shut and pray to the gods of infrastructure.",
+          "minigame": {
+            "id": "mash",
+            "difficulty": 4,
+            "prompt": "Hold! The bus will move!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 15
+                },
+                {
+                  "minutes": 45
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -30
+                },
+                {
+                  "minutes": 45
+                }
+              ]
+            }
+          },
+          "next": "bus_seatmate"
+        },
+        {
+          "text": "Start chatting animatedly with Irina to distract yourself.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 10
+            },
+            {
+              "stat": "suspicion",
+              "add": 20
+            },
+            {
+              "minutes": 45
+            },
+            {
+              "stat": "control",
+              "add": -15
+            }
+          ],
+          "next": "bus_seatmate"
+        }
+      ]
+    },
+    {
+      "id": "bus_seatmate",
+      "title": "4:45 PM — The Chatty Stranger",
+      "chapter": "Chapter 12",
+      "onEnter": [
+        {
+          "clock": "16:45"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The bus crawls forward. A man across the aisle leans over."
+        },
+        {
+          "speaker": "dean_martin",
+          "text": "Excuse me, weren't you girls at my orientation this morning? How are you liking the city?"
+        },
+        {
+          "speaker": "bladder",
+          "text": "It's him again. Ignore him. We are fighting a war here."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Engage politely. Answer his questions. Represent the exchange program well.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 20
+            },
+            {
+              "minutes": 15
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 4,
+            "prompt": "Breathe and speak normally.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -25
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 20
+                }
+              ]
+            }
+          },
+          "next": "the_walk_home"
+        },
+        {
+          "text": "Pretend to fall asleep. Slump against the window.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -20
+            },
+            {
+              "stat": "control",
+              "add": 10
+            },
+            {
+              "minutes": 15
+            }
+          ],
+          "next": "the_walk_home"
+        }
+      ]
+    },
+    {
+      "id": "the_walk_home",
+      "title": "5:00 PM — Bailing Out",
+      "chapter": "Chapter 13",
+      "onEnter": [
+        {
+          "clock": "17:00"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "irina",
+          "text": "Traffic is awful. We're only five blocks away. Let's just walk it!"
+        },
+        {
+          "speaker": "narrator",
+          "text": "Irina hits the bell. They step off the bus into a brisk power-walk."
+        },
+        {
+          "speaker": "bladder",
+          "text": "Every step is a gamble. Keep the knees tight. Move."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Power-walk like an Olympic athlete. Speed is everything.",
+          "effects": [
+            {
+              "minutes": 15
+            }
+          ],
+          "minigame": {
+            "id": "mash",
+            "difficulty": 4,
+            "prompt": "Walk! Faster!",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                }
+              ]
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -35
+                },
+                {
+                  "stat": "suspicion",
+                  "add": 20
+                }
+              ]
+            }
+          },
+          "next": "the_doorstep"
+        },
+        {
+          "text": "\"You go ahead, I need to walk slowly... bad ankle!\"",
+          "effects": [
+            {
+              "minutes": 25
+            },
+            {
+              "stat": "suspicion",
+              "add": 15
+            },
+            {
+              "stat": "control",
+              "add": -15
+            }
+          ],
+          "next": "the_doorstep"
+        }
+      ]
+    },
+    {
+      "id": "the_doorstep",
+      "title": "5:30 PM — The Front Door",
+      "chapter": "Chapter 13",
+      "onEnter": [
+        {
+          "clock": "17:30"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "They make it to the Higgins' front porch. Bonnie is sweating, trembling, and practically vibrating on the spot."
+        },
+        {
+          "speaker": "irina",
+          "text": "Oh, shoot. Where are my keys? Give me a sec to dig through my bag..."
+        },
+        {
+          "speaker": "bladder",
+          "text": "We are on the porch. The finish line is three feet away. Break the window."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Do the \"desperation dance\" openly. Dignity is dead. Speed is all that matters.",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -30
+            },
+            {
+              "stat": "suspicion",
+              "add": 50
+            },
+            {
+              "minutes": 5
+            }
+          ],
+          "next": "porch_chat"
+        },
+        {
+          "text": "Stand perfectly rigid. Suffer in absolute, suffocating silence.",
+          "minigame": {
+            "id": "tremor_lock",
+            "difficulty": 4,
+            "prompt": "Do not move a muscle.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 10
+                },
+                {
+                  "minutes": 5
+                }
+              ],
+              "next": "porch_chat"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -100
+                }
+              ],
+              "next": "ending_day_two_fail"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "porch_chat",
+      "title": "5:35 PM — The Final Boss",
+      "chapter": "Chapter 13",
+      "onEnter": [
+        {
+          "clock": "17:35"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Irina finally finds her keys and unlocks the door, but Mrs. Higgins is standing right inside the entryway."
+        },
+        {
+          "speaker": "mrs_higgins",
+          "text": "Oh, you made it back! How was the first day? Did you see the library? Tell me everything before you go upstairs!"
+        },
+        {
+          "speaker": "bladder",
+          "text": "NO. NO. NO."
+        }
+      ],
+      "choices": [
+        {
+          "text": "\"It was lovely! The library was so... quiet!\" (Stand and chat)",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": 20
+            }
+          ],
+          "minigame": {
+            "id": "breathe",
+            "difficulty": 5,
+            "prompt": "Hold on for dear life.",
+            "success": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": 5
+                }
+              ],
+              "next": "day_two_finale"
+            },
+            "fail": {
+              "effects": [
+                {
+                  "stat": "control",
+                  "add": -100
+                }
+              ],
+              "next": "ending_day_two_fail"
+            }
+          }
+        },
+        {
+          "text": "\"So sorry, I desperately need the restroom!\"",
+          "effects": [
+            {
+              "stat": "halo",
+              "add": -25
+            },
+            {
+              "stat": "suspicion",
+              "add": 40
+            }
+          ],
+          "next": "day_two_finale"
+        }
+      ]
+    },
+    {
+      "id": "day_two_finale",
+      "title": "5:40 PM — The Threshold",
+      "chapter": "Chapter 13",
+      "onEnter": [
+        {
+          "clock": "17:40"
+        }
+      ],
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "The path to the stairs is finally clear."
+        }
+      ],
+      "choices": [
+        {
+          "text": "Sprint for the stairs. No words. Just speed.",
+          "effects": [
+            {
+              "void": true
+            }
+          ],
+          "next": "ending_day_two_success"
+        },
+        {
+          "text": "\"Thank you so much!\" Smile, step inside politely, then power-walk.",
+          "effects": [
+            {
+              "void": true
+            },
+            {
+              "stat": "halo",
+              "add": 20
+            }
+          ],
+          "next": "ending_day_two_perfect"
+        }
+      ]
+    },
+    {
+      "id": "breakdown",
+      "title": "The Breaking Point",
+      "lines": [
+        {
+          "speaker": "narrator",
+          "text": "Day two, and the same wall. Bonnie stops mid-step, mid-smile, mid-sentence, and simply cannot start again.",
+          "bladder": "That's it. That's everything. I am so sorry, I have nothing left."
+        },
+        {
+          "speaker": "bonnie",
+          "text": "Not here. Please, not here. One more minute. I am begging you.",
+          "mood": "whispering",
+          "bladder": "You begged yesterday too. I listened yesterday. Today I can't."
+        },
+        {
+          "speaker": "narrator",
+          "text": "Her hands are shaking. She has been gracious to a dean, a tour guide and an entire bus, and it has bought her nothing at all.",
+          "bladder": "We tried. Honestly, we were magnificent. We were also very stubborn."
+        },
+        {
+          "speaker": "bonnie",
+          "text": "...I know. It's all right. It's all right.",
+          "mood": "shaking",
+          "bladder": "Letting go. Keep smiling if it helps."
+        }
+      ],
+      "next": "ending_day_two_fail",
+      "closing": true
+    }
+  ],
+  "endings": [
+    {
+      "id": "ending_day_two_success",
+      "kind": "good",
+      "title": "Made it to Tuesday",
+      "text": "Bonnie scrambles up the stairs, leaving Irina and Mrs. Higgins confused in the foyer. The bathroom door slams shut, and the ultimate relief washes over her. Day two of the exchange program is over, and while she might be known as the 'weird, sprinty girl', she made it."
+    },
+    {
+      "id": "ending_day_two_perfect",
+      "kind": "good",
+      "title": "The Ultimate Martyr",
+      "text": "She smiles. She power-walks. She maintains her immaculate manners right up until the bathroom door locks. She has conquered an assembly, a tour, a sweltering greenhouse, and a broken transit system, all without inconveniencing a single soul. She is a legend."
+    },
+    {
+      "id": "ending_day_two_fail",
+      "kind": "bad",
+      "accident": true,
+      "title": "The Breaking Point",
+      "text": "Right there in the entryway, trapped in polite conversation with Mrs. Higgins, the dam finally breaks. Irina stops digging in her bag and stares. The polite facade shatters entirely. The rest of the semester is going to be very, very awkward."
+    }
+  ],
+  "scorecard": [
+    {
+      "label": "Control Remaining",
+      "stat": "control"
+    },
+    {
+      "label": "Final Halo",
+      "stat": "halo"
+    }
+  ]
+}

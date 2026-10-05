@@ -36,7 +36,8 @@ export function createRunner(story, saved = null) {
     stack: [],          // scenes that were interrupted and wait for a "return"
     voided: 0,          // counts "void" effects, so the screen can tell a new one happened
     chapter: -1,        // position in the chapter list; scenes without a chapter (interruptions) leave it alone
-    leaks: 0,           // counts leaks after a lost minigame ("leakOnFail"), for the screen likewise
+    leaks: 0,           // counts leaks ("leakOnFail" after a lost minigame, "overflow" past full), for the screen likewise
+    leakLine: null,     // what the bladder says about the latest of them
     closing: false,     // a "closing" scene was entered: no more interruptions, no more thresholds
     accident: false,    // the story ended in an accident (an ending with "accident")
     finalFullness: null, // how full the bladder was when that happened, for the scorecard
@@ -55,23 +56,37 @@ export function createRunner(story, saved = null) {
   const fillMultiplier = () => activeModes().reduce((x, m) => x * (m.fillMultiplier ?? 1), 1);
   const difficulty = (base) => clamp(base + activeModes().reduce((x, m) => x + (m.minigameDifficulty ?? 0), 0), 1, 5);
 
-  // Applies effects. Returns the target of a stat threshold that was crossed, if any.
-  function apply(effects) {
+  // Applies each effect in turn. Returns true if the bladder was pushed past full on the way.
+  function run(effects) {
+    let over = false;
+    const fill = (amount) => { if (state.fullness + amount > 100) over = true; state.fullness = clamp(state.fullness + amount, 0, 100); };
     for (const e of effects || []) {
       if ('stat' in e) {
         const s = stats.get(e.stat);
         state.stats[e.stat] = clamp('add' in e ? state.stats[e.stat] + e.add : e.set, s.min, s.max);
-      } else if ('fullness' in e) state.fullness = clamp(state.fullness + e.fullness, 0, 100);
+      } else if ('fullness' in e) fill(e.fullness);
       else if ('drink' in e) state.pending += e.drink;
       else if ('minutes' in e) {
         if (state.minutes !== null) state.minutes += e.minutes;
         state.elapsed += e.minutes;
         const absorbed = Math.min(state.pending, e.minutes * bladder.absorbPerMinute);
         state.pending -= absorbed;
-        state.fullness = clamp(state.fullness + (absorbed + e.minutes * bladder.fillPerMinute) * fillMultiplier(), 0, 100);
+        fill((absorbed + e.minutes * bladder.fillPerMinute) * fillMultiplier());
       } else if ('clock' in e) { if (state.minutes !== null) state.minutes = clockMinutes(e.clock); }
       else if ('flag' in e) state.flags[e.flag] = e.value ?? true;
       else if ('void' in e) { state.fullness = 0; state.voided++; }
+    }
+    return over;
+  }
+  // Applies effects. Returns the target of a stat threshold that was crossed, if any.
+  function apply(effects) {
+    // More than the bladder can hold: the excess escapes as a spasm ("overflow"). Its own effects cannot
+    // overflow again, so this happens at most once per call.
+    const spill = bladder.overflow;
+    if (run(effects) && spill) {
+      state.leaks++; state.leakLine = spill.bladder ?? null;
+      state.fullness = clamp(100 - (spill.amount ?? 0), 0, 100);
+      run(spill.effects);
     }
     if (state.closing) return null; // the closing sequence runs to its ending undisturbed
     for (const [id, s] of stats) {
@@ -222,7 +237,7 @@ export function createRunner(story, saved = null) {
       const leak = bladder.leakOnFail;
       let effects = outcome.effects;
       if (!success && leak && state.fullness > leak.above) {
-        state.leaks++;
+        state.leaks++; state.leakLine = leak.bladder ?? null;
         effects = [{ fullness: -leak.amount }, ...(leak.effects || []), ...(outcome.effects || [])];
       }
       applyThenGo(effects, outcome.next ?? fallback);
@@ -256,7 +271,7 @@ export function createRunner(story, saved = null) {
         minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt } : null,
         stats: [...stats.values()].filter((s) => !s.hidden).map((s) => ({ id: s.id, label: s.label, icon: s.icon ?? '', value: state.stats[s.id], min: s.min, max: s.max })),
         fullness: state.fullness, voided: state.voided, accident: state.accident,
-        leaks: state.leaks, leakLine: bladder.leakOnFail?.bladder ?? null,
+        leaks: state.leaks, leakLine: state.leakLine,
         modes: activeModes().map((m) => m.label),
         ending: state.ending,
         scorecard: state.phase !== 'ended' ? [] : (story.scorecard || []).map((row) => ({

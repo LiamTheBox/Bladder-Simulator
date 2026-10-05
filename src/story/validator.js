@@ -217,7 +217,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     });
   });
 
-  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'absorbPerMinute', 'capacityMl', 'leakOnFail'])) {
+  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'absorbPerMinute', 'capacityMl', 'leakOnFail', 'overflow'])) {
     number(data.bladder.startFullness, 'bladder.startFullness', 0, 100);
     if ('fillPerMinute' in data.bladder) number(data.bladder.fillPerMinute, 'bladder.fillPerMinute', 0, 100);
     if ('absorbPerMinute' in data.bladder) number(data.bladder.absorbPerMinute, 'bladder.absorbPerMinute', 0, 100);
@@ -228,6 +228,12 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
       number(leak.amount, 'bladder.leakOnFail.amount', 0, 100);
       if ('effects' in leak) effects(leak.effects, 'bladder.leakOnFail.effects');
       if ('bladder' in leak) text(leak.bladder, 'bladder.leakOnFail.bladder');
+    }
+    const spill = data.bladder.overflow;
+    if ('overflow' in data.bladder && keys(spill, 'bladder.overflow', [], ['amount', 'effects', 'bladder'])) {
+      if ('amount' in spill) number(spill.amount, 'bladder.overflow.amount', 0, 100);
+      if ('effects' in spill) effects(spill.effects, 'bladder.overflow.effects');
+      if ('bladder' in spill) text(spill.bladder, 'bladder.overflow.bladder');
     }
   }
   if ('clock' in data && keys(data.clock, 'clock', ['start']) && (typeof data.clock.start !== 'string' || !CLOCK_PATTERN.test(data.clock.start))) {

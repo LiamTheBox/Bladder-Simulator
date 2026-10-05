@@ -8,7 +8,8 @@
 //   "stats":      [ { "id", "label", "start", "min"?: 0, "max"?: 100, "icon"?, "hidden"?: bool,
 //                     "thresholds"?: [ { "atOrBelow" | "atOrAbove": number, "goto": target } ] } ],
 //   "bladder":    { "startFullness": 0..100, "fillPerMinute"?: n, "absorbPerMinute"?: n, "capacityMl"?: n,
-//                   "leakOnFail"?: { "above": 0..100, "amount": n, "effects"?: [effect], "bladder"?: text } },
+//                   "leakOnFail"?: { "above": 0..100, "amount": n, "effects"?: [effect], "bladder"?: text },
+//                   "overflow"?: { "amount"?: n, "effects"?: [effect], "bladder"?: text } },
 //   "clock":      { "start": "HH:MM" },
 //   "chapters":   [ { "name": text, "icon": emoji } ],                        // in reading order
 //   "modes":      [ { "flag", "label", "minigameDifficulty"?: -2..2, "fillMultiplier"?: 0.25..4 } ],
@@ -51,6 +52,9 @@
 //             stat threshold at it instead of straight at the ending.
 //   leakOnFail  whenever a minigame is lost while fullness is above "above", the bladder spasms and "amount"
 //             percent leaks out; "effects" apply as well (say, a little suspicion) and "bladder" is what it says.
+//   overflow  whenever the bladder would go past 100 (a drink arriving in a full bladder, say), the excess escapes
+//             as a spasm: fullness ends at 100 minus "amount" (default 0), "effects" apply and "bladder" is what
+//             it says. Without this block the bladder silently stays at 100.
 //   ending    with "accident": true the bladder gives out on arrival: it empties by itself, as an accident (for the
 //             ending a "lost all control" threshold jumps to). The scorecard still shows how full it was.
 //   mode      while its flag is set, every minigame is that much harder and the bladder fills that much faster

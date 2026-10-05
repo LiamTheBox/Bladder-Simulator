@@ -104,6 +104,11 @@ test('ids, duplicates and misspelled fields are caught', () => {
   expectError((s) => { s.bladder.leakOnFail = { above: 180, amount: 1 }; }, /bladder\.leakOnFail\.above: must be between 0 and 100/);
   expectError((s) => { s.bladder.leakOnFail = { above: 80, amount: 1, effects: [{ stat: 'nope', add: 1 }] }; }, /bladder\.leakOnFail\.effects\[0\]\.stat: "nope" is not one of this story's stats/);
   expect(errorsAfter((s) => { s.bladder.leakOnFail = { above: 80, amount: 1, effects: [{ stat: 'suspicion', add: 3 }], bladder: 'Oops.' }; })).toEqual([]);
+  expectError((s) => { s.bladder.overflow = { amount: 120 }; }, /bladder\.overflow\.amount: must be between 0 and 100/);
+  expectError((s) => { s.bladder.overflow = { above: 90 }; }, /bladder\.overflow\.above: unknown field/);
+  expectError((s) => { s.bladder.overflow = { effects: [{ stat: 'nope', add: 1 }] }; }, /bladder\.overflow\.effects\[0\]\.stat: "nope" is not one of this story's stats/);
+  expect(errorsAfter((s) => { s.bladder.overflow = {}; })).toEqual([]);
+  expect(errorsAfter((s) => { s.bladder.overflow = { amount: 2, effects: [{ stat: 'suspicion', add: 3 }], bladder: 'Too much!' }; })).toEqual([]);
   expectError((s) => { s.characters[1].id = 'sam'; }, /"sam" is used more than once/);
   expectError((s) => { s.characters[0].id = 'narrator'; }, /"narrator" is reserved/);
   expectError((s) => { s.scenes[0].choises = []; }, /scene "slide_one": choises: unknown field \(check the spelling\)/);

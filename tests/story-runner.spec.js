@@ -173,8 +173,37 @@ test('leakOnFail: a lost minigame above the mark leaks a little and applies its 
     return { leaks: v.leaks, fullness: v.fullness, suspicion: stat(v, 'suspicion') - before.suspicion, control: stat(v, 'control') - before.control, line: v.leakLine };
   };
   expect(play(90, false)).toEqual({ leaks: 1, fullness: 89, suspicion: 3, control: -5, line: 'Oops.' });
-  expect(play(90, true)).toEqual({ leaks: 0, fullness: 90, suspicion: 0, control: 0, line: 'Oops.' });
-  expect(play(80, false), 'exactly at the mark is not above it').toEqual({ leaks: 0, fullness: 80, suspicion: 0, control: -5, line: 'Oops.' });
+  expect(play(90, true)).toEqual({ leaks: 0, fullness: 90, suspicion: 0, control: 0, line: null });
+  expect(play(80, false), 'exactly at the mark is not above it').toEqual({ leaks: 0, fullness: 80, suspicion: 0, control: -5, line: null });
+});
+
+test('overflow: a drink that pushes the bladder past full escapes as a spasm, once per step; without the block it just stays full', () => {
+  const play = (overflow, drink) => {
+    const story = load('placeholder');
+    story.bladder.startFullness = 96; story.bladder.fillPerMinute = 0; story.scenes[0].onEnter = [];
+    if (overflow) story.bladder.overflow = overflow;
+    story.triggers = [];
+    story.scenes[0].choices = [{ text: 'Drink up.', effects: [{ drink: drink }, { minutes: 30 }, { fullness: 50 }], next: 'ending_dash' }];
+    const r = createRunner(story); read(r);
+    const before = stat(r.view(), 'suspicion');
+    r.choose(0);
+    const v = r.view();
+    return { leaks: v.leaks, fullness: r.state.fullness, suspicion: stat(v, 'suspicion') - before, line: v.leakLine };
+  };
+  const block = { amount: 2, effects: [{ stat: 'suspicion', add: 4 }, { fullness: 50 }], bladder: 'Too much!' };
+  expect(play(block, 10), 'two effects went past full, one spasm; its own effects cannot spill again').toEqual({ leaks: 1, fullness: 100, suspicion: 4, line: 'Too much!' });
+  expect(play({}, 10), 'every part is optional').toEqual({ leaks: 1, fullness: 100, suspicion: 0, line: null });
+  expect(play(null, 10)).toEqual({ leaks: 0, fullness: 100, suspicion: 0, line: null });
+
+  // exactly full is not past full
+  const story = load('placeholder');
+  story.bladder = { startFullness: 90, overflow: { amount: 5 } }; story.triggers = []; story.scenes[0].onEnter = [];
+  story.scenes[0].choices = [{ text: 'A sip.', effects: [{ fullness: 10 }], next: 'slide_twenty' }, { text: 'A gulp.', effects: [{ fullness: 11 }], next: 'slide_twenty' }];
+  story.scenes[1].onEnter = []; story.scenes[1].triggers = [];
+  let r = createRunner(story); read(r); r.choose(0);
+  expect(r.state).toMatchObject({ fullness: 100, leaks: 0 });
+  r = createRunner(story); read(r); r.choose(1);
+  expect(r.state).toMatchObject({ fullness: 95, leaks: 1 });
 });
 
 test('the clock effect changes the time shown without time passing', () => {

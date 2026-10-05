@@ -49,7 +49,7 @@ The game refuses a story that breaks the first two, and tells you where.
   ],
   "endings": [
     { "id": "ending_good", "kind": "good", "title": "Made it", "text": "..." },
-    { "id": "ending_bad", "kind": "bad", "title": "Not quite", "text": "..." }
+    { "id": "ending_bad", "kind": "bad", "accident": true, "title": "Not quite", "text": "..." }
   ],
   "scorecard": [ { "label": "Control left", "stat": "control" } ]
 }
@@ -87,9 +87,13 @@ The built-in stat `"fullness"` (0 to 100) can be used in conditions and on the s
 **Stats** are yours to invent, up to 12. A stat's `"thresholds"` can end the story or jump to a scene when
 it reaches a limit, from anywhere.
 
+**Endings.** Add `"accident": true` to an ending where control is lost: on arriving there the bladder gives
+out and empties by itself. A threshold can jump to an ending from anywhere, so this is the place to say it.
+The scorecard still shows how full the bladder was at that moment.
+
 **Minigames.** You name the game and a difficulty from 1 to 5; the game does the rest. Available:
-`mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`. `"prompt"` is what the
-bladder says to announce it. Players can switch individual minigames off; the game then substitutes another.
+`mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`, `tiptoe`, `steady_the_slosh`,
+`think_of_something_else`. `"prompt"` is what the bladder says to announce it. Players can switch individual minigames off; the game then substitutes another.
 
 **Triggers** interrupt. On a scene, or in a top-level `"triggers"` list to watch the whole story:
 

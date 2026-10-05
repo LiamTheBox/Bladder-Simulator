@@ -15,7 +15,7 @@
 //   "start":      scene id,
 //   "scenes":     [ { "id", "title"?, "chapter"?, "lines": [line], "onEnter"?: [effect],
 //                     "choices"?: [choice | set use], "next"?: target, "triggers"?: [trigger] } ],
-//   "endings":    [ { "id", "title", "text", "kind"?: "good" | "neutral" | "bad" } ],
+//   "endings":    [ { "id", "title", "text", "kind"?: "good" | "neutral" | "bad", "accident"?: bool } ],
 //   "scorecard":  [ { "label", "stat" } | { "label", "flag" } ]
 // }
 //
@@ -40,6 +40,8 @@
 //             changes the time shown (a new time zone, a new day) without any time passing.
 //   condition { "stat", one of "lt" | "lte" | "gt" | "gte" | "eq": n } | { "flag": id, "is"?: bool (default true) }
 //   target    a scene id or an ending id (they share one namespace), or "return" inside an interruption
+//   ending    with "accident": true the bladder gives out on arrival: it empties by itself, as an accident (for the
+//             ending a "lost all control" threshold jumps to). The scorecard still shows how full it was.
 //   mode      while its flag is set, every minigame is that much harder and the bladder fills that much faster
 //
 // "fullness" (0..100, how full the bladder is) is built in: usable as a "stat" in conditions and the scorecard,

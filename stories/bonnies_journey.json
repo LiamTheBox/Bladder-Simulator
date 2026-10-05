@@ -2677,6 +2677,7 @@
     {
       "id": "ending_lost",
       "kind": "bad",
+      "accident": true,
       "title": "Not Quite",
       "text": "Control gives out before the journey does. Nothing a change of clothes and a very long shower cannot fix, but the perfect record is over. She will tell this story at parties in about ten years."
     }

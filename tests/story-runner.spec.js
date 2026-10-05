@@ -105,6 +105,21 @@ test('a stat threshold ends the story from anywhere', () => {
   expect(r.view().ending.id).toBe('ending_dash');
 });
 
+test('an accident ending empties the bladder, and the scorecard keeps how full it was', () => {
+  const story = load('placeholder');
+  story.endings.find((e) => e.id === 'ending_dash').accident = true;
+  story.scenes[1].triggers[0].minigame.fail.effects = [{ stat: 'control', add: -90 }];
+  const r = createRunner(story); read(r);
+  r.choose(0); read(r);
+  expect(r.view().accident).toBe(false);
+  const before = r.view().fullness;
+  expect(before).toBeGreaterThan(0);
+  r.minigameDone(false);
+  const v = r.view();
+  expect(v).toMatchObject({ phase: 'ended', ending: { id: 'ending_dash' }, fullness: 0, accident: true, voided: 0 });
+  expect(v.scorecard.find((row) => row.label === 'How full').value).toBe(String(Math.round(before)));
+});
+
 test('the clock effect changes the time shown without time passing', () => {
   const story = load('placeholder');
   story.scenes[0].choices = [{ text: 'Land.', effects: [{ clock: '20:30' }], next: 'slide_twenty' }];

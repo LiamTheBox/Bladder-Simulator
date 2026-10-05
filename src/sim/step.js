@@ -5,14 +5,7 @@ import { TUNING as T } from '../config/tuning.js';
 import { st } from './state.js';
 import { bladderGeom } from './geometry.js';
 import { emit } from './events.js';
-import { setSphincter } from './actions.js';
-
-export function triggerAccident() {
-  st.failureEvent = true; st.isVoiding = true;
-  setSphincter(false, 'accident');
-  st.faceState = { e: 'wide_shake', m: 'small_o' }; st.faceTimer = 10.0;
-  emit('accident');
-}
+import { setSphincter, triggerAccident } from './actions.js';
 
 // pointerCount: how many fingers are on the play area right now (a two-finger squeeze holds its tension)
 export function stepSim(dt, pointerCount) {

@@ -30,6 +30,8 @@ export function createRunner(story, saved = null) {
     fired: new Set(),   // triggers that already went off (those with "once", the default)
     stack: [],          // scenes that were interrupted and wait for a "return"
     voided: 0,          // counts "void" effects, so the screen can tell a new one happened
+    accident: false,    // the story ended in an accident (an ending with "accident")
+    finalFullness: null, // how full the bladder was when that happened, for the scorecard
   };
 
   /* --- conditions, effects, modes --- */
@@ -86,7 +88,11 @@ export function createRunner(story, saved = null) {
       afterLines();
       return;
     }
-    if (endings.has(target)) { state.phase = 'ended'; state.ending = endings.get(target); state.minigame = null; return; }
+    if (endings.has(target)) {
+      state.phase = 'ended'; state.ending = endings.get(target); state.minigame = null;
+      if (state.ending.accident) { state.finalFullness = state.fullness; state.fullness = 0; state.accident = true; }
+      return;
+    }
     const scene = scenes.get(target);
     state.sceneId = target; state.minigame = null;
     const forced = apply(scene.onEnter);
@@ -227,12 +233,13 @@ export function createRunner(story, saved = null) {
         choices: state.phase === 'choices' ? availableChoices().map((c) => c.text) : [],
         minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt } : null,
         stats: [...stats.values()].filter((s) => !s.hidden).map((s) => ({ id: s.id, label: s.label, icon: s.icon ?? '', value: state.stats[s.id], min: s.min, max: s.max })),
-        fullness: state.fullness, voided: state.voided,
+        fullness: state.fullness, voided: state.voided, accident: state.accident,
         modes: activeModes().map((m) => m.label),
         ending: state.ending,
         scorecard: state.phase !== 'ended' ? [] : (story.scorecard || []).map((row) => ({
           label: row.label,
-          value: 'flag' in row ? (state.flags[row.flag] ? 'Yes' : 'No') : String(Math.round(value(row.stat))),
+          value: 'flag' in row ? (state.flags[row.flag] ? 'Yes' : 'No')
+            : String(Math.round(row.stat === FULLNESS && state.finalFullness !== null ? state.finalFullness : value(row.stat))),
         })),
       };
     },

@@ -357,9 +357,10 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   /* --- endings and scorecard --- */
   endings.forEach((e, i) => {
     const p = `endings[${i}]`;
-    if (!keys(e, p, ['id', 'title', 'text'], ['kind'])) return;
+    if (!keys(e, p, ['id', 'title', 'text'], ['kind', 'accident'])) return;
     text(e.title, `${p}.title`, LIMITS.shortText); text(e.text, `${p}.text`);
     if ('kind' in e && !ENDING_KINDS.includes(e.kind)) err(`${p}.kind`, `must be one of ${ENDING_KINDS.join(', ')}`);
+    if ('accident' in e && typeof e.accident !== 'boolean') err(`${p}.accident`, 'must be true or false');
   });
   if ('scorecard' in data && list(data.scorecard, 'scorecard', LIMITS.scorecard)) data.scorecard.forEach((row, i) => {
     const p = `scorecard[${i}]`;

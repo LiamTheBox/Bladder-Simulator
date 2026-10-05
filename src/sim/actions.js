@@ -29,6 +29,15 @@ export function startVoid() {
   return true;
 }
 
+// Control is lost: everything pours out, and nothing can stop it. Free play calls this when stamina runs out,
+// a story when it reaches an accident ending.
+export function triggerAccident() {
+  st.failureEvent = true; st.isVoiding = true;
+  setSphincter(false, 'accident');
+  st.faceState = { e: 'wide_shake', m: 'small_o' }; st.faceTimer = 10.0;
+  emit('accident');
+}
+
 export function setSpeedUp(on) { st.isSpeedingUp = on; }
 
 // amount is in percent of bladder capacity

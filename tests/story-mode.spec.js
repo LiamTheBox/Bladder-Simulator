@@ -1,6 +1,7 @@
 // Story mode end to end, in the browser: the start-screen entry, the story screen, minigames started by the
 // story, and the hand-over between story mode and free play.
 import { test, expect } from '@playwright/test';
+import { readFileSync } from 'node:fs';
 import { openGame } from './helpers.js';
 
 async function openStory(browser, title = /Bonnie/, size = [390, 844]) {
@@ -99,6 +100,33 @@ test('a story minigame takes the place of the choices, and its result moves the 
   await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · The Downstairs Bathroom');
   await expect(pg.locator('.story-stat-head').nth(2)).toHaveText(/Suspicion\s*30/);
   expect(await ev('st.stamina'), 'the sim stamina penalty does not matter in a story').toBeGreaterThanOrEqual(0);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('losing all control ends in an accident: the bladder on screen empties by itself', async ({ browser }) => {
+  const { context, pg, ev, errors } = await openStory(browser);
+  // the same story, started with almost no control left: the first lost wave crosses its "control at 0" threshold
+  const bonnie = JSON.parse(readFileSync(new URL('../stories/bonnies_journey.json', import.meta.url), 'utf8'));
+  bonnie.stats.find((s) => s.id === 'control').start = 15; // 15 - 4 for listening, then - 15 for the lost wave
+  await pg.evaluate((text) => {
+    const r = window.parseStory(text, { file: 'bonnie.json', minigameIds: window.minigameIds() });
+    window.startStory(r.story, { slot: null });
+    window.__events = [];
+    window.onSimEvent('accident', () => { window.__events.push('accident'); });
+    window.onSimEvent('voidStarted', () => { window.__events.push('void'); });
+  }, JSON.stringify(bonnie));
+  await readOn(pg); await choice(pg, 'Lie still one more minute').click();
+  await readOn(pg); await choice(pg, 'Slip back to my room').click();
+  await readOn(pg); await choice(pg, 'Face it').click();
+  await ev('endMinigame(false)');
+  await expect(pg.locator('.story-ending-title')).toHaveText('Not Quite');
+  expect(await ev('window.__events'), 'an accident, not a chosen void').toEqual(['accident']);
+  expect(await ev('st.failureEvent && st.isVoiding && !st.isClosed'), 'the bladder is pouring').toBe(true);
+  await expect.poll(() => ev('st.volume'), { timeout: 6000 }).toBe(0);
+  await pg.waitForTimeout(600);
+  expect(await ev('st.volume'), 'and it stays empty').toBe(0);
+  await expect(pg.locator('.story-score-row', { hasText: 'How full at the end' }).locator('.story-stat-value'), 'how full she was when it happened').not.toHaveText('0');
   expect(errors).toEqual([]);
   await context.close();
 });

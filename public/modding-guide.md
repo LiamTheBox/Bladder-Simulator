@@ -102,13 +102,34 @@ interrupts any more and no threshold fires: the story runs on to the ending you 
 makes every lost minigame cost a little extra while the bladder is more than 80 percent full: it spasms,
 1 percent leaks out, the effects apply (a little suspicion, say) and the bladder says the line.
 
+**Overflow.** Also in `"bladder"`, `"overflow": { "amount": 2, "effects": [ ... ], "bladder": "..." }` gives a
+drink on a full bladder a price. Whenever the bladder would go past 100 percent, the excess escapes as a
+spasm: it ends at 100 minus `"amount"`, the effects apply and the bladder says the line. Every part is
+optional. Without the block the bladder just stays at 100.
+
 **Endings.** Add `"accident": true` to an ending where control is lost: on arriving there the bladder gives
 out and empties by itself. A threshold can jump to an ending from anywhere, so this is the place to say it.
 The scorecard still shows how full the bladder was at that moment.
 
 **Minigames.** You name the game and a difficulty from 1 to 5; the game does the rest. Available:
 `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`, `tiptoe`, `steady_the_slosh`,
-`think_of_something_else`. `"prompt"` is what the bladder says to announce it. Players can switch individual minigames off; the game then substitutes another.
+`think_of_something_else`, `sneak_a_pee`. `"prompt"` is what the bladder says to announce it. Players can switch individual minigames off; the game then substitutes another.
+
+**A toilet visit.** `sneak_a_pee` is a hurried visit: the player holds a button to go and must stop while
+someone outside the door listens. Three extra keys say what it is worth:
+
+```json
+"minigame": { "id": "sneak_a_pee", "difficulty": 2,
+              "relief": 50,
+              "heard": { "stat": "suspicion", "max": 10 },
+              "lines": [ "Sam? Are you in there?", "Sam, Dana is asking for you." ],
+              "fail": { "effects": [ { "stat": "suspicion", "add": 20 } ] } }
+```
+
+`"relief"` is the most the visit can drain, in percent of the bladder; the player gets the share they
+managed. `"heard"` raises a stat by how much was overheard: with `"max": 10`, every 10 percent on the
+game's meter is 1 point. `"lines"` is what the person outside says. Being overheard completely is the
+`"fail"` outcome; anything less is a `"success"`, even if nothing got out.
 
 **Triggers** interrupt. On a scene, or in a top-level `"triggers"` list to watch the whole story:
 

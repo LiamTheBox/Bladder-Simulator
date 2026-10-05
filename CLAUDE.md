@@ -84,6 +84,11 @@ To add a game: one file in `src/minigames/`, its controls in `index.html` inside
 Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`, `tiptoe` (drag slowly,
 a speed limit), `steady_the_slosh` (keep a drifting wave centred), `think_of_something_else` (tap numbers in
 order while the bladder calls wrong ones). All nine are in `TUNING.simSpikePool`.
+On trial (in `TUNING.practiceMinigames`, **not yet playtested**): `sneak_a_pee`, a hurried toilet visit: hold to
+go, stop while someone outside listens. It is the one game that drains the bladder (`beginFlow` / `endFlow` in
+`sim/actions.js`) and reports `noise` (how much was overheard) next to `quality` (the share drained). It is
+meant for stories, which give it `relief`, `heard` and `lines`; it does not belong in the random pool, because
+free play cancels a spike when the bladder is opened.
 Trying a new game before approving it: register it, list its id in `TUNING.practiceMinigames` instead of the
 pool, and it appears under "Try a new minigame" at the bottom of Settings (hidden while the list is empty). It
 runs as `startMinigame({ id, practice: true })`: no stamina at stake, not cancelled by the spike rules. In sim mode the
@@ -127,8 +132,10 @@ choice sets (one kind of decision, reworded per scene), interruptions (`"scene"`
 story-wide triggers, modes (a flag that makes minigames harder and filling faster, e.g. hard mode),
 conditional lines, `void` and `clock` effects, accident endings (`"accident": true`: the bladder empties by itself on arrival), a `chapters` list (name + emoji, drawn as a progress strip of
 `TUNING.storyStripSize` squares plus a count of the rest), closing scenes
-(`"closing": true`: a game-over scene such as a breakdown, after which nothing interrupts) and `bladder.leakOnFail` (a lost
-minigame on a very full bladder leaks a little and applies effects). `src/story/library.js` keeps imported stories and one
+(`"closing": true`: a game-over scene such as a breakdown, after which nothing interrupts), `bladder.leakOnFail` (a lost
+minigame on a very full bladder leaks a little and applies effects) and `bladder.overflow` (a bladder pushed past
+100, say by a drink, spasms and applies effects). Design rule from the owner: suspicion moves only through
+choices and minigame results, never by itself over time. `src/story/library.js` keeps imported stories and one
 automatic save per story in `localStorage`; `src/ui/story_menu.js` is the list with import / export.
 Not built yet: minigames that act on the dialogue itself. The original sketch, for intent:
 
@@ -213,7 +220,8 @@ Publishing is the owner's decision; do not deploy without being asked.
 - `tests/layout.spec.js` covers the mobile viewports (360x640, 390x844, 768x1024); `tests/build.spec.js`
   smoke-tests the real production build and fails on any request to another host.
 - `tests/minigames.spec.js` covers the registry and each game's win / lose / cancel paths, difficulty and text
-  overrides; `tests/rules.spec.js` covers rule fixes made after the refactor.
+  overrides (`tests/new-minigames.spec.js` and `tests/sneak-a-pee.spec.js` do the same for the later games);
+  `tests/rules.spec.js` covers rule fixes made after the refactor.
 - `tests/events.spec.js` has a test per event (payload and order); `tests/settings.spec.js` covers the
   difficulty setting and blocked storage.
 - `tests/story-validator.spec.js` and `tests/story-runner.spec.js` cover the validator, loader and runner (they

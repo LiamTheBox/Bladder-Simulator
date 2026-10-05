@@ -230,6 +230,8 @@ Publishing is the owner's decision; do not deploy without being asked.
 - Prefer boring, readable code over clever code; comment *why*, not *what*.
 - Don't add dependencies without saying why.
 - When unsure about product or content direction, ask instead of guessing.
+- **Always phrase questions to the owner for a beginner developer:** plain words, any technical term
+  explained in a few words, and concrete options that say what each one changes in the game.
 
 ## Roadmap (do in order)
 1. Git init, tag baseline, scaffold Vite, split modules from the legacy file with identical behavior.

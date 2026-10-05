@@ -83,7 +83,7 @@ scenes = [
    L(N, "Every step down is a small negotiation.", "Faster. No. Slower. No. FASTER.")],
   choices=[
    C("One stair at a time, weight on the banister, slow as syrup.", [M(5), S("control", -9)], "bathroom_door"),
-   C("Skip the fourth and the seventh. Muscle memory.", [M(1)], "bathroom_door", minigame=G("tremor_lock", 2, "Steady. Step on my count.", win=[S("control", 4)], lose=[S("suspicion", 30)])),
+   C("Skip the fourth and the seventh. Muscle memory.", [M(1)], "bathroom_door", minigame=G("tiptoe", 2, "Slowly. One stair at a time. Slowly!", win=[S("control", 4)], lose=[S("suspicion", 30)])),
    C("Sit down and go step by step on my hands. Undignified. Silent.", [M(6), S("halo", -15), S("control", -4)], "bathroom_door")]),
  scene("house_stirs", "The House Stirs", CH[0], [
    L(N, "Somewhere above, bedsprings shift. A floorboard answers the one she just stepped on.", "They heard that. Everyone heard that.")],
@@ -142,7 +142,7 @@ scenes = [
  scene("queue", "10:20 AM — The Security Queue", CH[2], [
    L(N, "The queue snakes through six lanes of tape. Forty minutes, the sign says. The sign is an optimist.", "Forty minutes. Standing. On tile.")],
   choices=[
-   C("Stand perfectly still, like a mannequin of a polite young woman.", [M(40)], "scanner", minigame=G("breathe", 2, "Perfect stillness. Breathe.", win=[S("control", 6)], lose=[S("control", -6), S("suspicion", 15)])),
+   C("Stand perfectly still, like a mannequin of a polite young woman.", [M(40)], "scanner", minigame=G("steady_the_slosh", 2, "Perfectly still. Keep me level.", win=[S("control", 6)], lose=[S("control", -6), S("suspicion", 15)])),
    C("The subtle shuffle-clamp. Shuffle, clamp. Shuffle, clamp.", [M(40)], "scanner", minigame=G("tremor_lock", 2, "Shuffle. Clamp. On the beat.", win=[S("control", 9)], lose=[S("control", -8), S("suspicion", 10)])),
    C("Lean a hip against the luggage cart. It looks casual. It is load-bearing.", [M(40), S("control", -4)], "scanner")]),
  scene("scanner", "11:00 AM — The Scanner", CH[2], [
@@ -182,7 +182,7 @@ scenes = [
    L(N, "Hour five. The seatbelt sign chimes and the cabin drops a foot. The belt sits exactly where she wishes it did not.", "WHO APPROVED THIS? Who is flying this thing?")],
   enter=[M(180)],
   choices=[
-   C("Grip both armrests and ride it like a rodeo of pure regret.", None, "aisle_opens", minigame=G("mash", 2, "Brace! Brace! Brace!", win=[S("control", 6)], lose=[S("control", -14)])),
+   C("Grip both armrests and ride it like a rodeo of pure regret.", None, "aisle_opens", minigame=G("steady_the_slosh", 2, "Brace! Keep me level through the bumps!", win=[S("control", 6)], lose=[S("control", -14)])),
    C("Press the blanket down over my lap. Pressure against pressure.", [S("control", -5)], "aisle_opens"),
    C("Hum the safety video jingle. Panic, but organized.", [S("suspicion", 10), S("control", 3)], "aisle_opens")]),
  scene("aisle_opens", "9:00 PM — The Aisle Opens", CH[3], [
@@ -195,7 +195,7 @@ scenes = [
   choices=[
    C("Nod at every landmark. Smile. Be a lovely window companion.", [S("halo", 5), S("control", -8)], "immigration"),
    C("Fake sleep. Rude-adjacent, but faces can't leak secrets while unconscious.", [S("halo", -8), S("control", -3)], "immigration"),
-   C("Count the seconds between waves. Knowledge is power?", None, "immigration", minigame=G("tremor_lock", 3, "Ride the descent. On the beat.", win=[S("control", 8)], lose=[S("control", -12)]))]),
+   C("Count the seconds between waves. Knowledge is power?", None, "immigration", minigame=G("think_of_something_else", 3, "Count, then. In order. Ignore me.", win=[S("control", 8)], lose=[S("control", -12)]))]),
 
  # ---------------- Chapter 5: immigration ----------------
  scene("immigration", "8:30 PM (local) — Immigration", CH[4], [
@@ -263,7 +263,7 @@ scenes = [
   choices=[
    C("Wait her out. The record grows with every minute.", [M(90), S("control", -10), S("halo", 5)], "two_am"),
    C("Pace the room in tiny circles. Movement is management.", [M(60)], "two_am", minigame=G("tremor_lock", 2, "Small steps. On the beat.", win=[S("control", 7)], lose=[S("control", -8)])),
-   C("Lie perfectly still and go somewhere else in my head. A beach. A DRY beach.", [M(60)], "two_am", minigame=G("breathe", 2, "Dry beach. Dry. Beach.", win=[S("control", 9)], lose=[S("control", -10)]))]),
+   C("Lie perfectly still and go somewhere else in my head. A beach. A DRY beach.", [M(60)], "two_am", minigame=G("think_of_something_else", 2, "Dry beach. Count the palm trees. In order.", win=[S("control", 9)], lose=[S("control", -10)]))]),
  scene("two_am", "2:00 AM — The Final Threshold", CH[6], [
    L(N, "Two in the morning. The music has stopped. Twenty-two hours. She is a marvel of human engineering, and the dam is creaking."),
    L(N, "Three ways through this. None of them dignified.", "Pick one. ANY one. I vote for all three at once.")],
@@ -282,13 +282,13 @@ scenes = [
  scene("sneak_mid", "Three Steps Left", CH[6], [
    L(N, "Halfway. The strip of light is three steps away. The bed creaks behind her.", "THREE STEPS. I can see the door. I can SEE it.")],
   choices=[
-   C("The last three steps. Slow as continental drift.", None, None, minigame=G("breathe", 3, "Slow. Slower. Slow-est.", win=[{"void": True}], win_next="ending_sneak", lose=[{"void": True}], lose_next="ending_woke_irina")),
+   C("The last three steps. Slow as continental drift.", None, None, minigame=G("tiptoe", 3, "Slow. Slower. Slow-est.", win=[{"void": True}], win_next="ending_sneak", lose=[{"void": True}], lose_next="ending_woke_irina")),
    C("Just GO. Two quick steps and in.", None, None, minigame=G("mash", 3, "GO GO GO!", win=[{"void": True}], win_next="ending_sneak", lose=[{"void": True}], lose_next="ending_woke_irina"))]),
  scene("dawn_wait", "The Deep Night Hours", CH[6], [
    L(N, "Bonnie sits on the edge of the bed, breathes slowly, and waits. The waves come on the hour, each one taller.", "This is not a plan. This is a hostage situation.")],
   enter=[M(120)],
   choices=[
-   C("Face it. Fight the wave through this whole hour.", [M(120)], "dawn", minigame=G("mash", 3, "The wave! Hold! HOLD!", win=[S("control", 10)], lose=[S("control", -35)])),
+   C("Face it. Fight the wave through this whole hour.", [M(120)], "dawn", minigame=G("leaks", 3, "The wave! I am springing leaks! Patch them!", win=[S("control", 10)], lose=[S("control", -35)])),
    C("This is insane. Go NOW, through her room, before I shatter.", [S("halo", -5)], "sneak")]),
  scene("dawn", "6:58 AM — Dawn", CH[6], [
    L(N, "At exactly 6:58 the front door downstairs clicks shut. Footsteps crunch on gravel and fade.", "The house is EMPTY. The house is empty!", when=[{"flag": "friends", "is": False}]),
@@ -358,7 +358,7 @@ story = {
    {"when": [{"stat": "fullness", "gte": 60}] + DAY, "bladder": "Hello again. Remember me? I have news.",
     "minigame": G("tremor_lock", 2, "The first real wave. Steady...", win=[S("control", 4)], lose=[S("control", -14)])},
    {"when": [{"stat": "fullness", "gte": 80}] + DAY, "bladder": "This is no longer a request.",
-    "minigame": G("breathe", 2, "Breathe through it. In. Out.", win=[S("control", 5)], lose=[S("control", -18)])},
+    "minigame": G("distraction_popups", 2, "Too many twinges at once! Tap them away!", win=[S("control", 5)], lose=[S("control", -18)])},
    {"when": [{"stat": "fullness", "gte": 93}], "bladder": "Just let go. Right here. Who would ever know?",
     "minigame": G("swipe_away", 2, None, win=[S("control", 4)], lose=[S("control", -20)])}],
  "start": "bed",

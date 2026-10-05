@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRunner } from '../src/story/runner.js';
 import { validateStory } from '../src/story/validator.js';
 
-const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock'];
+const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'];
 const load = (name) => JSON.parse(readFileSync(new URL(`../stories/${name}.json`, import.meta.url), 'utf8'));
 const stat = (v, id) => v.stats.find((s) => s.id === id).value;
 // Reveals lines until something else is needed

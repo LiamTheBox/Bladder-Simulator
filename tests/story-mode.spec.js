@@ -88,10 +88,10 @@ test('a story minigame takes the place of the choices, and its result moves the 
   await readOn(pg); await choice(pg, 'Skip the fourth and the seventh').click();
 
   await expect(pg.locator('#toy-container')).toHaveClass(/mg-active/);
-  await expect(pg.locator('#mg-tremor-area')).toBeVisible();
+  await expect(pg.locator('#mg-tiptoe-area')).toBeVisible();
   await expect(pg.locator('#story-choices')).toBeHidden();
-  await expect(pg.locator('#bladder-bubble')).toHaveText('Steady. Step on my count.');
-  expect(await ev('window.__started')).toEqual([{ id: 'tremor_lock', difficulty: 2 }]);
+  await expect(pg.locator('#bladder-bubble')).toHaveText('Slowly. One stair at a time. Slowly!');
+  expect(await ev('window.__started')).toEqual([{ id: 'tiptoe', difficulty: 2 }]);
   const box = await pg.locator('#controls').boundingBox();
   expect(box.y + box.height, 'game panel inside the viewport').toBeLessThanOrEqual(844.5);
 
@@ -268,7 +268,8 @@ for (const [W, H] of [[360, 640], [390, 844], [768, 1024]]) {
 
     // every minigame, started the way a story starts it, fits too
     await choice(pg, 'Slide out of bed slowly').click(); await readOn(pg);
-    for (const [id, control] of [['mash', '#mg-btn-mash'], ['breathe', '#mg-breathe-area'], ['swipe_away', '#swipe-card'], ['tremor_lock', '#mg-tremor-area'], ['leaks', '#mg-leaks-area'], ['distraction_popups', '.mg-popup']]) {
+    for (const [id, control] of [['mash', '#mg-btn-mash'], ['breathe', '#mg-breathe-area'], ['swipe_away', '#swipe-card'], ['tremor_lock', '#mg-tremor-area'], ['leaks', '#mg-leaks-area'], ['distraction_popups', '.mg-popup'],
+      ['tiptoe', '#mg-tiptoe-area'], ['steady_the_slosh', '#mg-steady-area'], ['think_of_something_else', '#mg-count-area']]) {
       await ev(`document.getElementById('toy-container').classList.add('mg-active'); startMinigame({ id: '${id}', difficulty: 1 })`);
       await pg.waitForTimeout(id === 'distraction_popups' ? 1700 : 400);
       await inside('#controls', `${id}: game panel`); await inside(control, `${id}: its control`);

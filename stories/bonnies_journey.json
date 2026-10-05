@@ -326,9 +326,9 @@
       ],
       "bladder": "This is no longer a request.",
       "minigame": {
-        "id": "breathe",
+        "id": "distraction_popups",
         "difficulty": 2,
-        "prompt": "Breathe through it. In. Out.",
+        "prompt": "Too many twinges at once! Tap them away!",
         "success": {
           "effects": [
             {
@@ -622,9 +622,9 @@
             }
           ],
           "minigame": {
-            "id": "tremor_lock",
+            "id": "tiptoe",
             "difficulty": 2,
-            "prompt": "Steady. Step on my count.",
+            "prompt": "Slowly. One stair at a time. Slowly!",
             "success": {
               "effects": [
                 {
@@ -1114,9 +1114,9 @@
             }
           ],
           "minigame": {
-            "id": "breathe",
+            "id": "steady_the_slosh",
             "difficulty": 2,
-            "prompt": "Perfect stillness. Breathe.",
+            "prompt": "Perfectly still. Keep me level.",
             "success": {
               "effects": [
                 {
@@ -1489,9 +1489,9 @@
         {
           "text": "Grip both armrests and ride it like a rodeo of pure regret.",
           "minigame": {
-            "id": "mash",
+            "id": "steady_the_slosh",
             "difficulty": 2,
-            "prompt": "Brace! Brace! Brace!",
+            "prompt": "Brace! Keep me level through the bumps!",
             "success": {
               "effects": [
                 {
@@ -1613,9 +1613,9 @@
         {
           "text": "Count the seconds between waves. Knowledge is power?",
           "minigame": {
-            "id": "tremor_lock",
+            "id": "think_of_something_else",
             "difficulty": 3,
-            "prompt": "Ride the descent. On the beat.",
+            "prompt": "Count, then. In order. Ignore me.",
             "success": {
               "effects": [
                 {
@@ -2200,9 +2200,9 @@
             }
           ],
           "minigame": {
-            "id": "breathe",
+            "id": "think_of_something_else",
             "difficulty": 2,
-            "prompt": "Dry beach. Dry. Beach.",
+            "prompt": "Dry beach. Count the palm trees. In order.",
             "success": {
               "effects": [
                 {
@@ -2346,7 +2346,7 @@
         {
           "text": "The last three steps. Slow as continental drift.",
           "minigame": {
-            "id": "breathe",
+            "id": "tiptoe",
             "difficulty": 3,
             "prompt": "Slow. Slower. Slow-est.",
             "success": {
@@ -2418,9 +2418,9 @@
             }
           ],
           "minigame": {
-            "id": "mash",
+            "id": "leaks",
             "difficulty": 3,
-            "prompt": "The wave! Hold! HOLD!",
+            "prompt": "The wave! I am springing leaks! Patch them!",
             "success": {
               "effects": [
                 {

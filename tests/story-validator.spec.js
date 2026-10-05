@@ -5,7 +5,7 @@ import { validateStory } from '../src/story/validator.js';
 import { parseStory } from '../src/story/loader.js';
 import { LIMITS } from '../src/story/schema.js';
 
-const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock'];
+const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'];
 const FILE = 'stories/placeholder.json';
 const TEXT = readFileSync(new URL('../stories/placeholder.json', import.meta.url), 'utf8');
 const fresh = () => JSON.parse(TEXT);

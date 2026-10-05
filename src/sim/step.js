@@ -66,7 +66,7 @@ export function stepSim(dt, pointerCount) {
   // Voiding
   emit('drainFlow', !st.isClosed && st.volume > 0);
   if (!st.isClosed && st.volume > 0) {
-    st.volume = Math.max(0, st.volume - (st.isVoiding ? T.voidPerSec : T.leakPerSec) * dt);
+    st.volume = Math.max(0, st.volume - (st.isVoiding ? T.voidPerSec : st.flowRate ?? T.leakPerSec) * dt);
     st.slosh.vel += (Math.random() - 0.5) * T.drainSloshKick;
     if (st.isVoiding && Math.random() < 0.3) emit('haptic', 15);
     if (Math.random() < 0.6) {

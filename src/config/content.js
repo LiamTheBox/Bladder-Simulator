@@ -40,7 +40,8 @@ export const minigameLines = {
   tremor_lock: ["I'm shaking! Tap with my heartbeat to steady me!", "Steady... tap on the beat!"],
   tiptoe: ["Slowly! Every bump sloshes me!", "Tiptoe... don't you dare rush."],
   steady_the_slosh: ["I'm sloshing! Keep me level!", "It's running to one side! Pull it back!"],
-  think_of_something_else: ["Think of anything else! Count: one, two...", "Distract yourself! Tap the numbers in order."]
+  think_of_something_else: ["Think of anything else! Count: one, two...", "Distract yourself! Tap the numbers in order."],
+  sneak_a_pee: ["Quick, while nobody is listening! Hold to go!", "Now! Go! But stop when they call!"]
 };
 
 // Names shown in Settings, where each minigame can be switched off
@@ -49,8 +50,11 @@ export const minigameNames = {
   swipe_away: 'Swipe away (flick the card)', distraction_popups: 'Distractions (tap the popups)', tremor_lock: 'Steady (tap on the beat)',
   tiptoe: 'Tiptoe (drag slowly)', steady_the_slosh: 'Steady the slosh (keep the wave centred)',
   think_of_something_else: 'Think of something else (tap the numbers in order)',
+  sneak_a_pee: 'Sneak a pee (hold to go, stop when they listen)',
 };
 
+// What someone outside the door says during sneak_a_pee, unless a story gives its own lines
+export const outsideLines = ["Hello? Anyone in there?", "Everything all right in there?", "Are you nearly done?"];
 // Placeholder wording for the UI-intrusion minigames
 export const swipeCardTexts = ["JUST LET GO", "Nobody would know", "Open up, it's fine", "Give in already"];
 export const popupWords = ["Spasm!", "Ache!", "Twinge!", "Cramp!", "Throb!"];

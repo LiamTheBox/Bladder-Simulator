@@ -18,7 +18,7 @@
 //     spikeStarted                       an urge spike begins now; in sim mode the runner answers with a minigame
 //     spikeCancelled                     the hold ended (opened, voided, or dropped below the threshold) mid-spike
 //     minigameStarted  { id, difficulty }
-//     minigameEnded    { id, difficulty, success, cancelled, quality? }
+//     minigameEnded    { id, difficulty, success, cancelled, quality?, noise? }
 //
 //   Touching the bladder (sim/interactions.js)
 //     interaction      { type: 'poke'|'stretchStart'|'snapback'|'soothe'|'squeeze', force? }

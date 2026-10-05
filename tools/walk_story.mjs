@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRunner } from '../src/story/runner.js';
 import { validateStory } from '../src/story/validator.js';
 const story = JSON.parse(readFileSync(process.argv[2] ?? new URL('../stories/bonnies_journey.json', import.meta.url), 'utf8'));
-const ids = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'];
+const ids = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else', 'sneak_a_pee'];
 const v = validateStory(story, { file: process.argv[2] ?? 'bonnies_journey.json', minigameIds: ids });
 console.log('errors', v.errors.slice(0, 12), 'warnings', v.warnings.slice(0, 8));
 if (v.ok) for (const [label, win] of [['random (50% wins)', 0.5], ['good player (85% wins)', 0.85]]) {

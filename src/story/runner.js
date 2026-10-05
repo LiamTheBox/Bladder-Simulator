@@ -228,19 +228,26 @@ export function createRunner(story, saved = null) {
       } else applyThenGo(c.effects, c.next);
     },
 
-    minigameDone(success) {
+    // detail: { quality?, noise? } from the game, both 0..1 (see minigames/registry.js)
+    minigameDone(success, detail = {}) {
       if (state.phase !== 'minigame') return;
       const { spec, fallback } = state.minigame;
       const outcome = spec[success ? 'success' : 'fail'] || {};
       state.minigame = null;
+      const share = (v, fallbackValue) => clamp(Number.isFinite(v) ? v : fallbackValue, 0, 1);
+      let effects = outcome.effects || [];
       // A lost game on a very full bladder: a little escapes, before the story's own consequence
+      // (not during a visit to the toilet: a game with "relief" lets go on purpose)
       const leak = bladder.leakOnFail;
-      let effects = outcome.effects;
-      if (!success && leak && state.fullness > leak.above) {
+      if (!success && leak && !('relief' in spec) && state.fullness > leak.above) {
         state.leaks++; state.leakLine = leak.bladder ?? null;
-        effects = [{ fullness: -leak.amount }, ...(leak.effects || []), ...(outcome.effects || [])];
+        effects = [{ fullness: -leak.amount }, ...(leak.effects || []), ...effects];
       }
-      applyThenGo(effects, outcome.next ?? fallback);
+      // What the game itself measured comes first: how much got out, and how much of it was noticed
+      const measured = [];
+      if ('relief' in spec) measured.push({ fullness: -spec.relief * share(detail.quality, success ? 1 : 0) });
+      if (spec.heard) measured.push({ stat: spec.heard.stat, add: spec.heard.max * share(detail.noise, 0) });
+      applyThenGo([...measured, ...effects], outcome.next ?? fallback);
     },
 
     // Plain data that createRunner(story, snapshot) can continue from. Only taken at rest (reading or choosing);
@@ -268,7 +275,7 @@ export function createRunner(story, saved = null) {
         lines: shown,
         moreLines: state.phase === 'lines' && state.lineIndex < state.lines.length,
         choices: state.phase === 'choices' ? availableChoices().map((c) => c.text) : [],
-        minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt } : null,
+        minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt, relief: state.minigame.spec.relief, lines: state.minigame.spec.lines } : null,
         stats: [...stats.values()].filter((s) => !s.hidden).map((s) => ({ id: s.id, label: s.label, icon: s.icon ?? '', value: state.stats[s.id], min: s.min, max: s.max })),
         fullness: state.fullness, voided: state.voided, accident: state.accident,
         leaks: state.leaks, leakLine: state.leakLine,

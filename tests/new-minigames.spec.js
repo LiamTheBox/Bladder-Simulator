@@ -112,13 +112,14 @@ test('think_of_something_else: tap in order to win; a wrong tap costs time; the 
   await context.close();
 });
 
-test('the three games are approved: in the random pool, each with an on/off switch; the try-out section is hidden while nothing is on trial', async ({ browser }) => {
+test('the three games are approved: in the random pool, each with an on/off switch; a game on trial is offered in the try-out section instead', async ({ browser }) => {
   const { context, pg, ev, errors } = await started(browser);
   expect(await ev('TUNING.simSpikePool')).toEqual(expect.arrayContaining(['tiptoe', 'steady_the_slosh', 'think_of_something_else']));
-  expect(await ev('TUNING.practiceMinigames')).toEqual([]);
+  expect(await ev('TUNING.practiceMinigames')).toEqual(['sneak_a_pee']);
+  expect(await ev('TUNING.simSpikePool')).not.toContain('sneak_a_pee');
   await pg.locator('#btn-settings').dispatchEvent('pointerdown');
   await expect(pg.locator('#settings-minigames .setting-check')).toHaveCount(9);
-  await expect(pg.locator('#settings-try')).toBeHidden();
+  await expect(pg.locator('#settings-try-list button')).toHaveText(['Sneak a pee (hold to go, stop when they listen)']);
   expect(errors).toEqual([]);
   await context.close();
 });

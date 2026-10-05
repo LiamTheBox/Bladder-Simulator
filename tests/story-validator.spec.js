@@ -5,7 +5,7 @@ import { validateStory } from '../src/story/validator.js';
 import { parseStory } from '../src/story/loader.js';
 import { LIMITS } from '../src/story/schema.js';
 
-const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'];
+const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else', 'sneak_a_pee'];
 const FILE = 'stories/placeholder.json';
 const TEXT = readFileSync(new URL('../stories/placeholder.json', import.meta.url), 'utf8');
 const fresh = () => JSON.parse(TEXT);
@@ -68,6 +68,14 @@ test('minigames must be ones the game has, at difficulty 1 to 5', () => {
   expectError((s) => { s.scenes[1].choices[0].minigame.difficulty = 6; }, /minigame\.difficulty: must be a whole number from 1 to 5/);
   expectError((s) => { s.scenes[1].choices[0].minigame.difficulty = 2.5; }, /whole number from 1 to 5/);
   expectError((s) => { s.scenes[1].triggers[0].when = []; }, /triggers\[0\]\.when: needs at least one condition/);
+  const visit = (extra) => (s) => { Object.assign(s.scenes[1].choices[0].minigame, { id: 'sneak_a_pee' }, extra); };
+  expect(errorsAfter(visit({ relief: 40, heard: { stat: 'suspicion', max: 10 }, lines: ['Sam? You in there?'] }))).toEqual([]);
+  expectError(visit({ relief: 140 }), /minigame\.relief: must be between 0 and 100/);
+  expectError(visit({ heard: { stat: 'nope', max: 10 } }), /minigame\.heard\.stat: "nope" is not one of this story's stats/);
+  expectError(visit({ heard: { stat: 'suspicion' } }), /minigame\.heard\.max: is required/);
+  expectError(visit({ lines: [] }), /minigame\.lines: needs at least 1 entry/);
+  expectError(visit({ lines: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }), /minigame\.lines: has too many entries/);
+  expectError(visit({ lines: [5] }), /minigame\.lines\[0\]: must be non-empty text/);
 });
 
 test('stats, effects and conditions must refer to things the story defines', () => {

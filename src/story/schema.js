@@ -34,9 +34,16 @@
 //             Interrupts when all conditions hold, e.g. fullness above 70. With "scene" the story cuts to that
 //             scene; a "next" of "return" there goes back to where it was interrupted.
 //   minigame  { "id", "difficulty": 1..5, "prompt"?: text,
-//               "success"?: { "effects"?, "next"? }, "fail"?: { "effects"?, "next"? } }
+//               "success"?: { "effects"?, "next"? }, "fail"?: { "effects"?, "next"? },
+//               "relief"?: 0..100, "heard"?: { "stat", "max": n }, "lines"?: [text] }
 //             The story only names the game and how hard it is. An outcome without "next" continues with the
 //             choice's own "next" (for a trigger: back to the interrupted scene).
+//             The last three are for a visit to the toilet ("sneak_a_pee"), where it matters how well the game
+//             went, not only whether it was won. "relief" is the most fullness the visit can drain; the bladder
+//             loses that times the share the player managed (all of it for a win in any other game, none for a
+//             loss). "heard" raises a stat by "max" times how much was overheard (0 to 1), whatever the outcome:
+//             with "max": 10, every 10% heard is 1 point. "lines" is what the person outside the door says.
+//             These come before the outcome's own effects. Being caught outright is the "fail" outcome.
 //   effect    { "stat", "add": n } | { "stat", "set": n } | { "fullness": n } | { "drink": n }
 //             | { "minutes": n } | { "clock": "HH:MM" } | { "flag": id, "value"?: bool (default true) } | { "void": true }
 //             "drink" queues fluid that is absorbed as minutes pass; "void" empties the bladder; "clock" only
@@ -78,7 +85,7 @@ export const ENDING_KINDS = ['good', 'neutral', 'bad'];
 export const LIMITS = {
   fileBytes: 512 * 1024,
   characters: 40, stats: 12, chapters: 60, scenes: 500, endings: 40, scorecard: 12, tags: 20, modes: 6, choiceSets: 20, setOptions: 8,
-  storyTriggers: 12,
+  storyTriggers: 12, minigameLines: 6,
   linesPerScene: 60, choicesPerScene: 8, triggersPerScene: 8, effects: 12, conditions: 8, thresholds: 6,
   shortText: 120,    // names, labels, titles, tags
   text: 2000,        // one line of dialogue, a description, an ending

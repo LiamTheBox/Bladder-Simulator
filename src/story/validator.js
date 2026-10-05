@@ -178,10 +178,16 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   // Returns the targets this minigame can lead to. fallback = where an outcome without "next" continues.
   function minigame(m, path, fallback) {
     const out = [];
-    if (!keys(m, path, ['id', 'difficulty'], ['prompt', 'success', 'fail'])) return out;
+    if (!keys(m, path, ['id', 'difficulty'], ['prompt', 'success', 'fail', 'relief', 'heard', 'lines'])) return out;
     if (typeof m.id !== 'string' || !minigameIds.includes(m.id)) err(`${path}.id`, `"${m.id}" is not a minigame this game has (available: ${minigameIds.join(', ')})`);
     if (!Number.isInteger(m.difficulty) || m.difficulty < 1 || m.difficulty > 5) err(`${path}.difficulty`, 'must be a whole number from 1 to 5');
     if ('prompt' in m) text(m.prompt, `${path}.prompt`, LIMITS.shortText * 2);
+    if ('relief' in m) number(m.relief, `${path}.relief`, 0, 100);
+    if ('heard' in m && keys(m.heard, `${path}.heard`, ['stat', 'max'])) {
+      if (!statIds.has(m.heard.stat)) err(`${path}.heard.stat`, `"${m.heard.stat}" is not one of this story's stats`);
+      number(m.heard.max, `${path}.heard.max`, 0, 1000);
+    }
+    if ('lines' in m && list(m.lines, `${path}.lines`, LIMITS.minigameLines, { min: 1 })) m.lines.forEach((l, i) => text(l, `${path}.lines[${i}]`, LIMITS.shortText));
     for (const outcome of ['success', 'fail']) {
       const o = m[outcome], p = `${path}.${outcome}`;
       if (o !== undefined && keys(o, p, [], ['effects', 'next'])) {

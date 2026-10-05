@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createRunner } from '../src/story/runner.js';
 import { validateStory } from '../src/story/validator.js';
 
-const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'];
+const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else', 'sneak_a_pee'];
 const load = (name) => JSON.parse(readFileSync(new URL(`../stories/${name}.json`, import.meta.url), 'utf8'));
 const stat = (v, id) => v.stats.find((s) => s.id === id).value;
 // Reveals lines until something else is needed
@@ -204,6 +204,34 @@ test('overflow: a drink that pushes the bladder past full escapes as a spasm, on
   expect(r.state).toMatchObject({ fullness: 100, leaks: 0 });
   r = createRunner(story); read(r); r.choose(1);
   expect(r.state).toMatchObject({ fullness: 95, leaks: 1 });
+});
+
+test('relief and heard: a toilet visit drains by how well it went and costs by how much was overheard', () => {
+  const play = (success, detail, change = () => {}) => {
+    const story = load('placeholder');
+    story.bladder = { startFullness: 90, leakOnFail: { above: 80, amount: 1 } }; story.triggers = []; story.scenes[0].onEnter = [];
+    const minigame = { id: 'sneak_a_pee', difficulty: 2, relief: 40, heard: { stat: 'suspicion', max: 10 }, lines: ['Sam? You in there?'],
+      success: { effects: [{ stat: 'control', add: 5 }] }, fail: { effects: [{ stat: 'suspicion', add: 20 }] } };
+    story.scenes[0].choices = [{ text: 'Go.', minigame, next: 'ending_dash' }];
+    change(story, minigame);
+    const r = createRunner(story); read(r);
+    r.choose(0);
+    const asked = r.view().minigame;
+    r.minigameDone(success, detail);
+    const v = r.view();
+    return { asked, fullness: v.fullness, suspicion: stat(v, 'suspicion'), control: stat(v, 'control'), leaks: v.leaks, ending: v.ending?.id };
+  };
+  expect(play(true, { quality: 0.5, noise: 0.3 })).toEqual({
+    asked: { id: 'sneak_a_pee', difficulty: 2, relief: 40, lines: ['Sam? You in there?'] },
+    fullness: 70, suspicion: 3, control: 85, leaks: 0, ending: 'ending_dash' });
+  expect(play(false, { quality: 0.25, noise: 1 }), 'caught: what got out still counts, no spasm on the toilet')
+    .toMatchObject({ fullness: 80, suspicion: 30, control: 80, leaks: 0 });
+  // another game stood in (this one switched off), or the story was walked without playing: all or nothing
+  expect(play(true)).toMatchObject({ fullness: 50, suspicion: 0 });
+  expect(play(false)).toMatchObject({ fullness: 90, suspicion: 20 });
+  expect(play(true, { quality: 7, noise: -2 }), 'out-of-range values are clamped').toMatchObject({ fullness: 50, suspicion: 0 });
+  // what was overheard can cross a threshold like any other effect
+  expect(play(true, { quality: 1, noise: 1 }, (story, m) => { m.heard.max = 100; }).ending).toBe('ending_noticed');
 });
 
 test('the clock effect changes the time shown without time passing', () => {

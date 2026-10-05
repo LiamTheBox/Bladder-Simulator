@@ -89,9 +89,21 @@ export const TUNING = {
     wrongTapCostSec: 0.7,
     firstHeckleSec: 0.9, heckleEverySec: 1.1,
   },
+  sneakAPee: {
+    duration: 10.0,
+    relief: 40,                                               // percent of the bladder a visit can drain, unless a story says
+    fullFlowShare: 0.6,                                       // going for this share of the visit drains all of it
+    stopLagSec: 0.3,                                          // the stream keeps going this long after letting go
+    firstCallSec: 1.5,
+    callEveryByDifficulty: [3.6, 3.0, 2.5, 2.1, 1.8],         // quiet seconds between calls
+    callJitter: 0.4,                                          // those vary by this share, so calls cannot be timed
+    warnSecByDifficulty: [1.0, 0.85, 0.7, 0.6, 0.5],          // they speak; this long after, they listen
+    listenSecByDifficulty: [1.0, 1.2, 1.4, 1.6, 1.8],
+    heardPerSecByDifficulty: [0.5, 0.6, 0.75, 0.9, 1.1],      // heard meter (0..1) per second of going while they listen
+  },
   // Games on trial: registered but not in simSpikePool, and offered under "Try a new minigame" in Settings.
   // Approving one = moving its id to simSpikePool. Empty = the Settings section is hidden.
-  practiceMinigames: [],
+  practiceMinigames: ['sneak_a_pee'],
 
   // Stretch (pixels)
   stretchGrabBand: 55,           // how close to the edge a touch must land to grab it

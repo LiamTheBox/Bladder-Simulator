@@ -56,6 +56,16 @@ export function spasmLeak() {
   return true;
 }
 
+// A minigame takes over letting go (sneak_a_pee): while its rate is set, an open sphincter drains at that pace
+// and the level on screen is the game's business. The game opens and closes with setSphincter(); endFlow()
+// always closes again.
+export function beginFlow(ratePerSec) { st.flowRate = ratePerSec; }
+export function endFlow() {
+  if (st.flowRate === null) return;
+  st.flowRate = null;
+  if (!st.isClosed && !st.isVoiding && !st.failureEvent) setSphincter(true, 'minigame');
+}
+
 export function setSpeedUp(on) { st.isSpeedingUp = on; }
 
 // amount is in percent of bladder capacity
@@ -70,7 +80,7 @@ export function setStoryMode(on) { st.storyMode = on; }
 // Fullness in percent, set at once (story start) or approached smoothly (every frame in story mode)
 export function setVolume(v) { st.volume = Math.max(0, Math.min(100, v)); }
 export function easeVolumeToward(target, dt) {
-  if (st.isVoiding || !st.isClosed) return; // draining has its own pace
+  if (st.isVoiding || !st.isClosed || st.flowRate !== null) return; // draining has its own pace
   st.volume += (target - st.volume) * Math.min(1, T.storyVolumeEase * dt);
   if (Math.abs(target - st.volume) < 0.05) st.volume = target;
 }

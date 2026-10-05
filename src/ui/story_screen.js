@@ -89,11 +89,12 @@ function beginMinigame(request) {
   toy.classList.add('mg-active'); // shows the game panel in place of the choices
   const playing = runner;
   const started = startMinigame({
-    id: request.id, difficulty: request.difficulty, text: request.prompt ? { prompt: request.prompt } : {},
+    id: request.id, difficulty: request.difficulty, relief: request.relief,
+    text: { ...(request.prompt ? { prompt: request.prompt } : {}), ...(request.lines ? { lines: request.lines } : {}) },
     onResult: (result) => {
       toy.classList.remove('mg-active');
       if (result.cancelled || runner !== playing) return; // the story was left or reset mid-game
-      runner.minigameDone(result.success);
+      runner.minigameDone(result.success, { quality: result.quality, noise: result.noise });
       render();
     },
   });

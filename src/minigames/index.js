@@ -23,8 +23,9 @@ import tremorLock from './tremor_lock.js';
 import tiptoe from './tiptoe.js';
 import steadyTheSlosh from './steady_the_slosh.js';
 import thinkOfSomethingElse from './think_of_something_else.js';
+import sneakAPee from './sneak_a_pee.js';
 
-[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock, tiptoe, steadyTheSlosh, thinkOfSomethingElse].forEach(registerMinigame);
+[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock, tiptoe, steadyTheSlosh, thinkOfSomethingElse, sneakAPee].forEach(registerMinigame);
 
 let current = null;      // the game that is running (or was last started and not yet cleaned up)
 let currentInfo = null;  // { id, difficulty, onResult } of that run
@@ -58,7 +59,8 @@ function retireCurrent() {
   st.minigame.freezeBody = false;
 }
 
-// request: { id, difficulty, duration, text, onResult, practice }, all optional.
+// request: { id, difficulty, duration, text, relief, onResult, practice }, all optional.
+// relief: for a game that lets the bladder go, the most it may drain (percent of the bladder).
 // practice: a try-out from Settings. It runs whatever the bladder's state and changes no stamina. Without an id, sim mode picks at random;
 // without a difficulty, the player's Settings choice is used.
 // Returns false (and starts nothing) if the id is unknown, or if the player has switched every minigame off.
@@ -75,6 +77,7 @@ export function startMinigame(request = {}) {
     difficulty: clampDifficulty(request.difficulty ?? settings.difficulty),
     text: request.text ?? {},
   };
+  if (request.relief !== undefined) config.relief = request.relief;
   config.duration = request.duration ?? (game.duration ? game.duration(config.difficulty) : TUNING.minigameDefaultDuration);
 
   st.minigame.active = true;
@@ -89,7 +92,7 @@ export function startMinigame(request = {}) {
   current = game; currentInfo = { id, difficulty: config.difficulty, onResult: request.onResult, failStamina: game.failStamina, practice: Boolean(request.practice) };
   game.start(config, (result) => {
     // ignore reports from a game that is no longer the running one
-    if (current === game && st.minigame.active) endMinigame(result.success, false, result.quality);
+    if (current === game && st.minigame.active) endMinigame(result.success, false, result.quality, result.noise);
   });
 
   st.minigame.timer = st.minigame.duration;
@@ -106,7 +109,7 @@ export function startMinigame(request = {}) {
 }
 
 // cancelled = stopped from outside (the player voided, the hold ended, an accident): no reward and no penalty.
-export function endMinigame(success, cancelled = false, quality) {
+export function endMinigame(success, cancelled = false, quality, noise) {
   const info = currentInfo;
   st.minigame.active = false; st.minigame.practice = false; st.minigame.cooldown = TUNING.spikeCooldownMin + Math.random() * TUNING.spikeCooldownSpread;
   showMgPanel(false);
@@ -127,6 +130,7 @@ export function endMinigame(success, cancelled = false, quality) {
 
   const result = { id: info?.id ?? st.minigame.type, difficulty: info?.difficulty, success: !cancelled && Boolean(success), cancelled };
   if (!cancelled) result.quality = quality ?? (success ? 1 : 0);
+  if (!cancelled && noise !== undefined) result.noise = noise;
   emit('minigameEnded', result);
   if (info?.onResult) info.onResult(result);
 }
@@ -140,7 +144,7 @@ export function updateMinigame(dt) {
 
   if (st.minigame.active && st.minigame.timer <= 0) {
       const verdict = current?.timeUp ? current.timeUp() : { success: false };
-      endMinigame(verdict.success, false, verdict.quality);
+      endMinigame(verdict.success, false, verdict.quality, verdict.noise);
   }
 }
 

@@ -209,6 +209,58 @@ test('leaving a story (Menu, or changing the difficulty) returns to the start sc
   await context.close();
 });
 
+test('the chapter strip shows five chapters at a time and counts the rest', async ({ browser }) => {
+  const { context, pg, ev, errors } = await openStory(browser);
+  const strip = pg.locator('#story-strip .story-step');
+  // Bonnie: seven chapters, so five squares and "2"
+  await expect(strip).toHaveText(['🌙', '🥞', '🛃', '✈️', '🛂', '2']);
+  await expect(pg.locator('#story-strip .story-step.current')).toHaveText('🌙');
+  await expect(strip.nth(1)).toHaveAttribute('title', 'Chapter 2');
+  await expect(strip.last()).toHaveClass(/more/);
+  await expect(strip.last()).toHaveAttribute('title', '2 more chapters');
+
+  // a 20-chapter story, one scene per chapter; the first icon tries to be HTML
+  const long = {
+    schemaVersion: 1, meta: { title: 'Long', rating: '18+' }, characters: [{ id: 'bladder', name: 'Bladder', kind: 'bladder' }],
+    chapters: Array.from({ length: 20 }, (_, i) => ({ name: `Part ${i + 1}`, icon: i === 0 ? '<b>x</b>' : `${i + 1}` })),
+    start: 'c1',
+    scenes: Array.from({ length: 20 }, (_, i) => ({ id: `c${i + 1}`, chapter: `Part ${i + 1}`, lines: [{ speaker: 'narrator', text: `Part ${i + 1}.` }], next: i === 19 ? 'the_end' : `c${i + 2}` })),
+    endings: [{ id: 'the_end', title: 'End', text: 'Done.' }],
+  };
+  const start = (story) => pg.evaluate((text) => {
+    const r = window.parseStory(text, { file: 'long.json', minigameIds: window.minigameIds() });
+    if (r.ok) window.startStory(r.story, { slot: null });
+    return r.errors;
+  }, JSON.stringify(story));
+  expect(await start(long)).toEqual([]);
+  await expect(strip).toHaveText(['<b>x</b>', '2', '3', '4', '5', '15']);
+  expect(await pg.locator('#story-strip b').count(), 'an icon is text, never HTML').toBe(0);
+  await expect(pg.locator('#story-strip .story-step.current')).toHaveText('<b>x</b>');
+  const next = () => pg.locator('.story-continue').click();
+  await next();                                    // chapter 2: the window has not moved yet
+  await expect(strip).toHaveText(['<b>x</b>', '2', '3', '4', '5', '15']);
+  await expect(pg.locator('#story-strip .story-step.done')).toHaveText(['<b>x</b>']);
+  await next();                                    // chapter 3: it slides, keeping one finished chapter in view
+  await expect(strip).toHaveText(['2', '3', '4', '5', '6', '14']);
+  await expect(pg.locator('#story-strip .story-step.current')).toHaveText('3');
+  for (let i = 0; i < 15; i++) await next();       // chapter 18: the last five, nothing left to count
+  await expect(strip).toHaveText(['16', '17', '18', '19', '20']);
+  await expect(pg.locator('#story-strip .story-step.current')).toHaveText('18');
+  await next(); await next();
+  await expect(pg.locator('#story-strip .story-step.current')).toHaveText('20');
+  await expect(pg.locator('#story-strip .story-step.done')).toHaveCount(4);
+
+  // without a "chapters" list the squares are numbered; with a single chapter there is no strip
+  delete long.chapters;
+  expect(await start(long)).toEqual([]);
+  await expect(strip).toHaveText(['1', '2', '3', '4', '5', '15']);
+  long.scenes.forEach((s) => { s.chapter = 'Only'; });
+  expect(await start(long)).toEqual([]);
+  await expect(pg.locator('#story-strip')).toBeHidden();
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
 test('story text is shown as plain text, never as HTML', async ({ browser }) => {
   const { context, pg, errors } = await openGame(browser, 390, 844);
   await pg.mouse.click(195, 300); await pg.waitForTimeout(300);
@@ -278,7 +330,7 @@ for (const [W, H] of [[360, 640], [390, 844], [768, 1024]]) {
     await noScroll();
     const choices = await inside('.story-choice', 'choices');
     for (const c of choices) expect(c.h, 'choice is a comfortable touch target').toBeGreaterThanOrEqual(48);
-    await inside('#story-exit', 'menu button'); await inside('#story-stats', 'stat meters');
+    await inside('#story-exit', 'menu button'); await inside('#story-stats', 'stat meters'); await inside('#story-strip', 'chapter strip');
     const fit = await ev('(()=>{const g=bladderGeom(1); return {legs:g.cy+g.Rr*1.6, H:g.H, top:g.cy-g.Rr*1.2}})()');
     expect(fit.legs, 'bladder and legs fit the smaller play area').toBeLessThan(fit.H); expect(fit.top).toBeGreaterThanOrEqual(0);
 

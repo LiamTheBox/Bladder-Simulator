@@ -260,6 +260,15 @@
   .story-mode #action-zone { min-height: 150px; }
   .story-mode.mg-active #story-choices { display: none; }
 
+  /* Chapter progress: one square per chapter (at most TUNING.storyStripSize), then how many more follow */
+  #story-strip { display: flex; align-items: center; gap: 6px; flex: none; }
+  .story-step { flex: none; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 8px; font-size: 0.95rem; line-height: 1; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.14); color: #cbd5e1; font-weight: 800; }
+  .story-step.done { opacity: 0.45; }
+  .story-step.current { background: rgba(244, 114, 182, 0.25); border-color: #f472b6; box-shadow: 0 0 0 2px rgba(244, 114, 182, 0.25); }
+  .story-step.more { border-style: dashed; font-family: 'JetBrains Mono', monospace; font-size: 0.72rem; color: #fde68a; }
+  .story-link { flex: 1 1 0; min-width: 4px; height: 2px; border-radius: 2px; background: rgba(255,255,255,0.12); }
+  .story-link.done { background: rgba(244, 114, 182, 0.5); }
+
   #story-head { display: flex; align-items: center; gap: 10px; flex: none; font-size: 0.78rem; font-weight: 800; color: #f9a8d4; }
   #story-chapter { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   #story-modes { flex: none; padding: 2px 8px; border-radius: 99px; background: rgba(244, 63, 94, 0.2); color: #fda4af; border: 1px solid rgba(244, 63, 94, 0.4); }

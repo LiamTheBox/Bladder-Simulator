@@ -125,6 +125,36 @@
   "clock": {
     "start": "04:10"
   },
+  "chapters": [
+    {
+      "name": "Chapter 1",
+      "icon": "🌙"
+    },
+    {
+      "name": "Chapter 2",
+      "icon": "🥞"
+    },
+    {
+      "name": "Chapter 3",
+      "icon": "🛃"
+    },
+    {
+      "name": "Chapter 4",
+      "icon": "✈️"
+    },
+    {
+      "name": "Chapter 5",
+      "icon": "🛂"
+    },
+    {
+      "name": "Chapter 6",
+      "icon": "🏠"
+    },
+    {
+      "name": "Chapter 7",
+      "icon": "🛏️"
+    }
+  ],
   "modes": [
     {
       "flag": "hard_mode",

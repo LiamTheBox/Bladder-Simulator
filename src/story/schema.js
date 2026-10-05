@@ -10,6 +10,7 @@
 //   "bladder":    { "startFullness": 0..100, "fillPerMinute"?: n, "absorbPerMinute"?: n, "capacityMl"?: n,
 //                   "leakOnFail"?: { "above": 0..100, "amount": n, "effects"?: [effect], "bladder"?: text } },
 //   "clock":      { "start": "HH:MM" },
+//   "chapters":   [ { "name": text, "icon": emoji } ],                        // in reading order
 //   "modes":      [ { "flag", "label", "minigameDifficulty"?: -2..2, "fillMultiplier"?: 0.25..4 } ],
 //   "choiceSets": [ { "id", "options": [ { "key", "effects"?: [effect] } ] } ],
 //   "triggers":   [ trigger ],                                                // watched in every scene
@@ -41,6 +42,10 @@
 //             changes the time shown (a new time zone, a new day) without any time passing.
 //   condition { "stat", one of "lt" | "lte" | "gt" | "gte" | "eq": n } | { "flag": id, "is"?: bool (default true) }
 //   target    a scene id or an ending id (they share one namespace), or "return" inside an interruption
+//   chapters  the progress strip along the top of the story screen: one square per chapter, showing its icon.
+//             "name" is the text scenes put in "chapter"; a scene without "chapter" (an interruption) leaves the
+//             strip where it was. Without the list, chapters count in the order scenes first mention them and
+//             the squares show numbers.
 //   closing   a scene with "closing": true starts the story's closing sequence (a game-over scene, say a breakdown
 //             before the bad ending): from there on nothing interrupts and no threshold fires any more. Point a
 //             stat threshold at it instead of straight at the ending.
@@ -68,9 +73,10 @@ export const ENDING_KINDS = ['good', 'neutral', 'bad'];
 // User-made files are untrusted input: everything is bounded.
 export const LIMITS = {
   fileBytes: 512 * 1024,
-  characters: 40, stats: 12, scenes: 500, endings: 40, scorecard: 12, tags: 20, modes: 6, choiceSets: 20, setOptions: 8,
+  characters: 40, stats: 12, chapters: 60, scenes: 500, endings: 40, scorecard: 12, tags: 20, modes: 6, choiceSets: 20, setOptions: 8,
   storyTriggers: 12,
   linesPerScene: 60, choicesPerScene: 8, triggersPerScene: 8, effects: 12, conditions: 8, thresholds: 6,
   shortText: 120,    // names, labels, titles, tags
   text: 2000,        // one line of dialogue, a description, an ending
+  icon: 8,           // one emoji (some are several characters long)
 };

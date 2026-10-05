@@ -60,7 +60,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   }
 
   /* --- top level --- */
-  if (!keys(data, 'story', ['schemaVersion', 'meta', 'characters', 'start', 'scenes', 'endings'], ['stats', 'bladder', 'clock', 'scorecard', 'modes', 'choiceSets', 'triggers'])) return done();
+  if (!keys(data, 'story', ['schemaVersion', 'meta', 'characters', 'start', 'scenes', 'endings'], ['stats', 'bladder', 'clock', 'chapters', 'scorecard', 'modes', 'choiceSets', 'triggers'])) return done();
   if (data.schemaVersion !== SCHEMA_VERSION) { err('schemaVersion', `must be ${SCHEMA_VERSION} (this file says ${JSON.stringify(data.schemaVersion)})`); return done(); }
 
   if (keys(data.meta, 'meta', ['title', 'rating'], ['id', 'author', 'description', 'tags'])) {
@@ -70,6 +70,21 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     if ('author' in data.meta) text(data.meta.author, 'meta.author', LIMITS.shortText);
     if ('description' in data.meta) text(data.meta.description, 'meta.description');
     if ('tags' in data.meta && list(data.meta.tags, 'meta.tags', LIMITS.tags)) data.meta.tags.forEach((t, i) => text(t, `meta.tags[${i}]`, LIMITS.shortText));
+  }
+
+  /* --- chapters: the progress strip. With a list, every scene's "chapter" must be on it --- */
+  let chapterNames = null;
+  const chaptersUsed = new Set();
+  if ('chapters' in data && list(data.chapters, 'chapters', LIMITS.chapters, { min: 1 })) {
+    chapterNames = new Set();
+    data.chapters.forEach((c, i) => {
+      const p = `chapters[${i}]`;
+      if (!keys(c, p, ['name', 'icon'])) return;
+      text(c.icon, `${p}.icon`, LIMITS.icon);
+      if (!text(c.name, `${p}.name`, LIMITS.shortText)) return;
+      if (chapterNames.has(c.name)) err(`${p}.name`, `"${c.name}" is used more than once`);
+      chapterNames.add(c.name);
+    });
   }
 
   /* --- characters: every person declares an adult age --- */
@@ -185,7 +200,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     const p = `stats[${i}]`;
     if (!keys(s, p, ['id', 'label', 'start'], ['min', 'max', 'icon', 'hidden', 'thresholds'])) return;
     text(s.label, `${p}.label`, LIMITS.shortText);
-    if ('icon' in s) text(s.icon, `${p}.icon`, 8);
+    if ('icon' in s) text(s.icon, `${p}.icon`, LIMITS.icon);
     if ('hidden' in s && typeof s.hidden !== 'boolean') err(`${p}.hidden`, 'must be true or false');
     const min = 'min' in s ? s.min : 0, max = 'max' in s ? s.max : 100;
     if (!number(min, `${p}.min`) || !number(max, `${p}.max`)) return;
@@ -320,7 +335,10 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     if (!keys(s, p, ['id', 'lines'], ['title', 'chapter', 'onEnter', 'choices', 'next', 'triggers', 'closing'])) return;
     const out = [];
     if ('title' in s) text(s.title, at('title'), LIMITS.shortText);
-    if ('chapter' in s) text(s.chapter, at('chapter'), LIMITS.shortText);
+    if ('chapter' in s && text(s.chapter, at('chapter'), LIMITS.shortText)) {
+      chaptersUsed.add(s.chapter);
+      if (chapterNames && !chapterNames.has(s.chapter)) err(at('chapter'), `"${s.chapter}" is not in this story's "chapters" list`);
+    }
     if ('closing' in s && typeof s.closing !== 'boolean') err(at('closing'), 'must be true or false');
     if (list(s.lines, at('lines'), LIMITS.linesPerScene, { min: 1 })) s.lines.forEach((l, j) => {
       const lp = at(`lines[${j}]`);
@@ -400,6 +418,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   for (const s of usesReturn) if (ordinary.has(s)) { sceneId = s; err('', `uses "${RETURN}" but can be reached in the ordinary flow, where there is nothing to return to`); }
   sceneId = null;
   for (const e of endingIds) if (!reached.has(e)) warn(`endings`, `"${e}" can never be reached`);
+  for (const c of chapterNames || []) if (!chaptersUsed.has(c)) warn('chapters', `no scene is in "${c}"`);
   if (![...endingIds].some((e) => reached.has(e))) err('endings', 'no ending can be reached: the story never finishes');
   for (const [flag, at] of flagsRead) if (!flagsSet.has(flag)) warnings.push(`${at}: flag "${flag}" is checked but never set anywhere`);
 

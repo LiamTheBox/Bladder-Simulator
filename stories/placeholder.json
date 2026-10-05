@@ -70,6 +70,16 @@
   "clock": {
     "start": "14:00"
   },
+  "chapters": [
+    {
+      "name": "The meeting",
+      "icon": "☕"
+    },
+    {
+      "name": "The home stretch",
+      "icon": "📊"
+    }
+  ],
   "start": "slide_one",
   "scenes": [
     {
@@ -117,7 +127,7 @@
     {
       "id": "slide_twenty",
       "title": "2:40 PM — Slide 20 of 48",
-      "chapter": "The meeting",
+      "chapter": "The home stretch",
       "onEnter": [
         {
           "minutes": 40
@@ -239,7 +249,6 @@
     {
       "id": "dana_notices",
       "title": "Dana notices",
-      "chapter": "The meeting",
       "lines": [
         {
           "speaker": "dana",

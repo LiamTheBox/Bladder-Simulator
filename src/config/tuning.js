@@ -9,6 +9,7 @@ export const TUNING = {
   storyBodyCy: 0.34, storyBodyShare: 0.62,
 
   startVolume: 15,
+  storyStripSize: 5,             // story mode: chapters shown at once in the progress strip; the rest is a number
   storyVolumeEase: 3,            // story mode: how fast the bladder on screen catches up with the story's fullness
 
   // Fluid, in percent of capacity per second

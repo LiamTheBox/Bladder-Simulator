@@ -20,6 +20,11 @@ export function createRunner(story, saved = null) {
   const stats = new Map((story.stats || []).map((s) => [s.id, { min: 0, max: 100, ...s }]));
   const sets = new Map((story.choiceSets || []).map((s) => [s.id, s.options]));
   const bladder = { fillPerMinute: 0, absorbPerMinute: 1, ...story.bladder };
+  // Chapters in reading order: the story's own list or, without one, the order scenes first mention them
+  const chapters = story.chapters
+    ? story.chapters.map((c) => ({ name: c.name, icon: c.icon }))
+    : [...new Set(story.scenes.map((s) => s.chapter).filter(Boolean))].map((name) => ({ name, icon: '' }));
+  const chapterIndex = new Map(chapters.map((c, i) => [c.name, i]));
 
   const state = {
     phase: 'lines', sceneId: null, lineIndex: 0, lines: [],
@@ -30,6 +35,7 @@ export function createRunner(story, saved = null) {
     fired: new Set(),   // triggers that already went off (those with "once", the default)
     stack: [],          // scenes that were interrupted and wait for a "return"
     voided: 0,          // counts "void" effects, so the screen can tell a new one happened
+    chapter: -1,        // position in the chapter list; scenes without a chapter (interruptions) leave it alone
     leaks: 0,           // counts leaks after a lost minigame ("leakOnFail"), for the screen likewise
     closing: false,     // a "closing" scene was entered: no more interruptions, no more thresholds
     accident: false,    // the story ended in an accident (an ending with "accident")
@@ -98,6 +104,7 @@ export function createRunner(story, saved = null) {
     }
     const scene = scenes.get(target);
     state.sceneId = target; state.minigame = null;
+    if (chapterIndex.has(scene.chapter)) state.chapter = chapterIndex.get(scene.chapter);
     if (scene.closing) { state.closing = true; state.stack.length = 0; }
     const forced = apply(scene.onEnter);
     if (forced && forced !== target) { state.stack.length = 0; go(forced); return; }
@@ -178,6 +185,7 @@ export function createRunner(story, saved = null) {
         fullness: clamp(s.fullness, 0, 100), pending: Math.max(0, s.pending), minutes: story.clock ? s.minutes : null,
         elapsed: s.elapsed, voided: s.voided, ending: null, minigame: null,
         leaks: Number.isFinite(s.leaks) ? s.leaks : 0, closing: s.closing === true, // absent in older saves
+        chapter: Number.isInteger(s.chapter) && s.chapter >= -1 && s.chapter < chapters.length ? s.chapter : (chapterIndex.get(scenes.get(s.sceneId).chapter) ?? -1),
       });
       if (state.phase === 'choices' && availableChoices().length === 0) state.phase = 'stuck';
       return true;
@@ -228,7 +236,7 @@ export function createRunner(story, saved = null) {
         v: 1, phase: state.phase, sceneId: state.sceneId, lineIndex: state.lineIndex, lines: positions(state.sceneId, state.lines),
         stats: { ...state.stats }, flags: { ...state.flags }, fullness: state.fullness, pending: state.pending,
         minutes: state.minutes, elapsed: state.elapsed, voided: state.voided, fired: [...state.fired],
-        leaks: state.leaks, closing: state.closing,
+        leaks: state.leaks, closing: state.closing, chapter: state.chapter,
         stack: state.stack.map((e) => ({ sceneId: e.sceneId, lines: positions(e.sceneId, e.lines) })),
       };
     },
@@ -240,6 +248,7 @@ export function createRunner(story, saved = null) {
       return {
         phase: state.phase,
         title: scene?.title ?? '', chapter: scene?.chapter ?? '',
+        chapters: { list: chapters, current: state.chapter },
         clock: state.minutes === null ? null : `${String(Math.floor(state.minutes / 60) % 24).padStart(2, '0')}:${String(state.minutes % 60).padStart(2, '0')}`,
         lines: shown,
         moreLines: state.phase === 'lines' && state.lineIndex < state.lines.length,

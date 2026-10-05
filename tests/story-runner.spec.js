@@ -120,6 +120,24 @@ test('an accident ending empties the bladder, and the scorecard keeps how full i
   expect(v.scorecard.find((row) => row.label === 'How full').value).toBe(String(Math.round(before)));
 });
 
+test('the chapter strip: the current chapter advances, and holds through a scene without a chapter', () => {
+  const story = load('placeholder');
+  const r = createRunner(story);
+  expect(r.view().chapters).toEqual({ list: [{ name: 'The meeting', icon: '☕' }, { name: 'The home stretch', icon: '📊' }], current: 0 });
+  read(r); r.choose(1);                       // on to slide twenty
+  expect(r.view().chapters.current).toBe(1);
+  r.state.stats.suspicion = 50; read(r);      // Dana's interruption has no chapter of its own
+  expect(r.view()).toMatchObject({ title: 'Dana notices', chapter: '', chapters: { current: 1 } });
+  const snap = JSON.parse(JSON.stringify(r.snapshot()));
+  expect(createRunner(story, snap).view().chapters.current).toBe(1);
+  delete snap.chapter;                        // a save from before chapters existed: taken from its scene, if it has one
+  expect(createRunner(story, snap).view().chapters.current).toBe(-1);
+
+  // without a "chapters" list: the order scenes first mention them, and no icons
+  delete story.chapters;
+  expect(createRunner(story).view().chapters).toEqual({ list: [{ name: 'The meeting', icon: '' }, { name: 'The home stretch', icon: '' }], current: 0 });
+});
+
 test('a closing scene plays before the ending: no threshold or interruption cuts in again', () => {
   const story = load('placeholder');
   story.scenes.push({ id: 'breakdown', closing: true, lines: [{ speaker: 'narrator', text: 'One.' }, { speaker: 'narrator', text: 'Two.' }], next: 'ending_dash' });

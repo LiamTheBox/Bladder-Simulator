@@ -1,6 +1,7 @@
 // Story mode's screen: the bladder on top, the story text, stat meters and choices below it. It asks the
 // runner what to show and passes the player's taps back; the minigame runner and the sim do the rest.
 // Story text is user-made data: it is only ever put on the page with textContent, never as HTML.
+import { TUNING } from '../config/tuning.js';
 import { createRunner } from '../story/runner.js';
 import { NARRATOR } from '../story/schema.js';
 import { on } from '../sim/events.js';
@@ -16,6 +17,7 @@ import { resetGame } from './reset.js';
 const BUBBLE_SEC = 6; // how long a bladder line stays in its bubble
 
 const toy = document.getElementById('toy-container');
+const elStrip = document.getElementById('story-strip');
 const elChapter = document.getElementById('story-chapter');
 const elClock = document.getElementById('story-clock');
 const elModes = document.getElementById('story-modes');
@@ -99,6 +101,30 @@ function beginMinigame(request) {
   if (!started) { toy.classList.remove('mg-active'); runner.minigameDone(true); render(); }
 }
 
+// The chapter strip: a window of chapters around the current one, then a square counting those after the window.
+// The window starts one chapter back (a finished one, for context) and stops sliding at the last chapters.
+function renderStrip({ list, current }) {
+  elStrip.replaceChildren();
+  elStrip.style.display = list.length < 2 ? 'none' : '';
+  if (list.length < 2) return;
+  const size = TUNING.storyStripSize;
+  const start = Math.max(0, Math.min(current - 1, list.length - size));
+  const end = Math.min(list.length, start + size);
+  for (let i = start; i < end; i++) {
+    if (i > start) elStrip.append(el('span', i <= current ? 'story-link done' : 'story-link'));
+    const state = i < current ? ' done' : i === current ? ' current' : '';
+    const step = el('span', `story-step${state}`, list[i].icon || String(i + 1));
+    step.title = list[i].name; step.setAttribute('aria-label', list[i].name);
+    elStrip.append(step);
+  }
+  const hidden = list.length - end;
+  if (hidden > 0) {
+    const more = el('span', 'story-step more', String(hidden));
+    more.title = `${hidden} more ${hidden === 1 ? 'chapter' : 'chapters'}`; more.setAttribute('aria-label', more.title);
+    elStrip.append(el('span', 'story-link'), more);
+  }
+}
+
 function render() {
   const v = runner.view();
 
@@ -108,6 +134,7 @@ function render() {
     if (v.phase === 'ended') clearProgress(slot.key); else if (snapshot) saveProgress(slot.key, slot.hash, snapshot);
   }
 
+  renderStrip(v.chapters);
   elChapter.textContent = [v.chapter, v.title].filter(Boolean).join(' · ');
   elClock.textContent = v.clock ?? '';
   elModes.textContent = v.modes.join(' · ');

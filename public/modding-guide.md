@@ -87,6 +87,13 @@ The built-in stat `"fullness"` (0 to 100) can be used in conditions and on the s
 **Stats** are yours to invent, up to 12. A stat's `"thresholds"` can end the story or jump to a scene when
 it reaches a limit, from anywhere.
 
+**Chapters.** A scene's `"chapter"` is the name shown in the header. To get the progress strip along the top,
+list the chapters in reading order, each with an emoji:
+`"chapters": [ { "name": "Chapter 1", "icon": "🌙" }, { "name": "Chapter 2", "icon": "🥞" } ]`.
+The names must match what the scenes say. The strip shows five chapters at a time and counts the rest in a
+square on the right. Leave `"chapter"` off interruption scenes: the strip then stays where it was.
+Without the list, chapters are numbered in the order scenes first mention them.
+
 **Game over scenes.** Give a scene `"closing": true` and point a threshold at it instead of straight at
 the ending, to play a last scene first (a breakdown, a confession). Once a closing scene starts, nothing
 interrupts any more and no threshold fires: the story runs on to the ending you send it to.

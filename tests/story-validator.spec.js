@@ -92,6 +92,12 @@ test('ids, duplicates and misspelled fields are caught', () => {
   expectError((s) => { s.endings[0].id = 'slide_one'; }, /is both a scene and an ending/);
   expectError((s) => { s.endings[0].accident = 'yes'; }, /endings\[0\]\.accident: must be true or false/);
   expect(errorsAfter((s) => { s.endings[0].accident = true; })).toEqual([]);
+  expectError((s) => { s.chapters[0].icon = ''; }, /chapters\[0\]\.icon: must be non-empty text/);
+  expectError((s) => { delete s.chapters[1].icon; }, /chapters\[1\]\.icon: is required/);
+  expectError((s) => { s.chapters[1].name = s.chapters[0].name; }, /chapters\[1\]\.name: "The meeting" is used more than once/);
+  expectError((s) => { s.scenes[0].chapter = 'Elsewhere'; }, /my_story\.json: scene "slide_one": chapter: "Elsewhere" is not in this story's "chapters" list/);
+  expect(check((() => { const s = fresh(); s.chapters.push({ name: 'Encore', icon: '🎤' }); return s; })()).warnings.join('\n')).toMatch(/chapters: no scene is in "Encore"/);
+  expect(errorsAfter((s) => { delete s.chapters; }), 'the list is optional').toEqual([]);
   expectError((s) => { s.scenes[0].closing = 1; }, /closing: must be true or false/);
   expect(errorsAfter((s) => { s.scenes[0].closing = true; })).toEqual([]);
   expectError((s) => { s.bladder.leakOnFail = { above: 80 }; }, /bladder\.leakOnFail\.amount: is required/);

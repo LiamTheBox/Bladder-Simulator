@@ -349,6 +349,7 @@ story = {
  "bladder": {"startFullness": 86, "fillPerMinute": 0.03, "absorbPerMinute": 0.5, "capacityMl": 2400,
    "leakOnFail": {"above": 80, "amount": 1, "effects": [S("suspicion", 3)], "bladder": "That was a spasm. A little got out. I am SO sorry."}},
  "clock": {"start": "04:10"},
+ "chapters": [{"name": n, "icon": i} for n, i in zip(CH, ["🌙", "🥞", "🛃", "✈️", "🛂", "🏠", "🛏️"])],
  "modes": [{"flag": "hard_mode", "label": "Hard mode", "minigameDifficulty": 1, "fillMultiplier": 1.5}],
  "choiceSets": [
    {"id": "noise_response", "options": [

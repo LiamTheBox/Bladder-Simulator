@@ -82,6 +82,19 @@
       "thresholds": [
         {
           "atOrBelow": 0,
+          "scene": "second_wind",
+          "effects": [
+            {
+              "stat": "control",
+              "set": 100
+            },
+            {
+              "flag": "adrenaline"
+            }
+          ]
+        },
+        {
+          "atOrBelow": 0,
           "goto": "breakdown"
         }
       ]
@@ -175,8 +188,43 @@
       "label": "Hard mode",
       "minigameDifficulty": 1,
       "fillMultiplier": 1.5
+    },
+    {
+      "flag": "adrenaline",
+      "label": "Adrenaline",
+      "stats": {
+        "control": {
+          "loss": 1.5,
+          "gain": 0.5
+        }
+      }
     }
   ],
+  "thoughts": {
+    "when": [
+      {
+        "stat": "control",
+        "lt": 30
+      }
+    ],
+    "taps": 3,
+    "freeSeconds": 30,
+    "minutes": 1,
+    "lines": [
+      "I would prefer having a wee.",
+      "Or we could just GO. Right now.",
+      "Say the word. Any sentence with 'bathroom' in it.",
+      "Nobody would mind. Ask them.",
+      "You are allowed to stop, you know.",
+      "Let go. Just a little. Who would know?",
+      "There is a door RIGHT there.",
+      "Think about waterfalls.",
+      "Why are we still doing this?",
+      "One word. It starts with B.",
+      "Owh, but you ARE trying to hold it...",
+      "I cannot hold this for you much longer."
+    ]
+  },
   "choiceSets": [
     {
       "id": "noise_response",
@@ -2713,31 +2761,202 @@
       ]
     },
     {
+      "id": "second_wind",
+      "title": "Second Wind",
+      "variants": [
+        [
+          {
+            "speaker": "narrator",
+            "text": "It should be over. Instead something cold and electric pours down her spine, and every muscle she owns answers at once.",
+            "bladder": "What was THAT? I was halfway out the door!"
+          },
+          {
+            "speaker": "bonnie",
+            "text": "I don't know. I don't KNOW. Don't question it.",
+            "mood": "breathless",
+            "bladder": "I am not questioning it. I am applauding. Where have you been hiding that?"
+          },
+          {
+            "speaker": "narrator",
+            "text": "It will not last, and it will not come twice. Everything costs more from here.",
+            "bladder": "Borrowed time. Spend it well."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "Her heart slams twice, hard, and the world goes very sharp and very quiet.",
+            "bladder": "Hold on. HOLD on. You were finished. I felt you finish."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "So did I.",
+            "mood": "astonished",
+            "bladder": "And then you just... didn't? I have never been so impressed and so annoyed at the same time."
+          },
+          {
+            "speaker": "narrator",
+            "text": "Adrenaline. A loan, at terrible interest.",
+            "bladder": "I will be collecting. Soon."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "The last of her grip goes. And then, from nowhere, it comes back, all of it, like a door slammed by the wind.",
+            "bladder": "Excuse me?! That was MY moment."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "Not yet.",
+            "mood": "through her teeth",
+            "bladder": "Not yet, she says. Twenty hours in and she pulls out a spare. Unbelievable. Respect."
+          },
+          {
+            "speaker": "narrator",
+            "text": "Her hands are shaking. That is the price, and there is more to pay.",
+            "bladder": "One encore. That is all anybody gets."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "Panic does what manners could not: it clamps down on everything at once.",
+            "bladder": "Oh. OH. We are doing fight or flight now?"
+          },
+          {
+            "speaker": "bonnie",
+            "text": "Fight. Definitely fight.",
+            "mood": "wide-eyed",
+            "bladder": "I was betting on flight. Fine. I will admit that was magnificent."
+          },
+          {
+            "speaker": "narrator",
+            "text": "The rush is real, and it is already draining away.",
+            "bladder": "Enjoy it. It is the last one in the cupboard."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "For one long second she is sure it has happened. It has not. Something older than politeness has taken the wheel.",
+            "bladder": "I had my speech ready. I had STARTED the speech."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "Save it.",
+            "mood": "barely audible",
+            "bladder": "Saved. Honestly? I did not think you had that in you. Nobody did."
+          },
+          {
+            "speaker": "narrator",
+            "text": "She can feel exactly how thin this is.",
+            "bladder": "Thin is fine. Thin is still holding. For now."
+          }
+        ]
+      ],
+      "next": "return"
+    },
+    {
       "id": "breakdown",
       "title": "The Breaking Point",
-      "lines": [
-        {
-          "speaker": "narrator",
-          "text": "It stops being a decision. Bonnie goes rigid mid-breath, every muscle she owns clamped around one last, failing idea.",
-          "bladder": "I can't. I'm sorry. I held as long as I could. I really, really did."
-        },
-        {
-          "speaker": "bonnie",
-          "text": "No. No, no, no. Not now. Please. Thirty more seconds. I will do anything.",
-          "mood": "whispering",
-          "bladder": "You said that at four this morning. I have nothing left to give you."
-        },
-        {
-          "speaker": "narrator",
-          "text": "Her eyes sting. All those hours of flawless manners, and the one thing she cannot be polite to is her own body.",
-          "bladder": "It is not your fault. It is not mine either. We were both very brave and very stubborn."
-        },
-        {
-          "speaker": "bonnie",
-          "text": "...Okay. Okay. I know. I'm sorry too.",
-          "mood": "shaking",
-          "bladder": "Letting go now. Don't look at anybody."
-        }
+      "variants": [
+        [
+          {
+            "speaker": "narrator",
+            "text": "It stops being a decision. Bonnie goes rigid mid-breath, every muscle she owns clamped around one last, failing idea.",
+            "bladder": "I can't. I'm sorry. I held as long as I could. I really, really did."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "No. No, no, no. Not now. Please. Thirty more seconds. I will do anything.",
+            "mood": "whispering",
+            "bladder": "You said that at four this morning. I have nothing left to give you."
+          },
+          {
+            "speaker": "narrator",
+            "text": "Her eyes sting. All those hours of flawless manners, and the one thing she cannot be polite to is her own body.",
+            "bladder": "It is not your fault. It is not mine either. We were both very brave and very stubborn."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "...Okay. Okay. I know. I'm sorry too.",
+            "mood": "shaking",
+            "bladder": "Letting go now. Don't look at anybody."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "There is no wave this time, no warning. The strength simply runs out, like a battery.",
+            "bladder": "That is it. That is everything we had, and it was a LOT."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "I was so close.",
+            "mood": "very quietly",
+            "bladder": "You were. Closer than anyone I have ever heard of. I am not even exaggerating."
+          },
+          {
+            "speaker": "narrator",
+            "text": "She stops fighting, because there is nothing left to fight with.",
+            "bladder": "You can stop now. You already did the impossible part."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "The adrenaline goes out like a tide, and takes the last of her grip with it.",
+            "bladder": "Twice. You stopped me TWICE. Do you know how rare that is?"
+          },
+          {
+            "speaker": "bonnie",
+            "text": "It doesn't feel like winning.",
+            "mood": "with a shaky laugh",
+            "bladder": "It is not winning. It is the most impressive losing I have ever been part of."
+          },
+          {
+            "speaker": "narrator",
+            "text": "She closes her eyes.",
+            "bladder": "I have it from here. Thank you for trying so hard."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "Bonnie counts to three, the way she has all day. This time nothing answers at three.",
+            "bladder": "I am calling it. As your bladder, and frankly as your biggest fan."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "Please. One more minute.",
+            "mood": "pleading",
+            "bladder": "You have asked for one more minute forty times today. I gave you every one. I am out."
+          },
+          {
+            "speaker": "narrator",
+            "text": "She nods, once, to nobody.",
+            "bladder": "Hours past anything reasonable. Be proud of that part."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "It is a small thing that does it in the end: one breath, taken a little too deep.",
+            "bladder": "Oh no. Oh, that was the last thread. I felt it go."
+          },
+          {
+            "speaker": "bonnie",
+            "text": "After ALL that?",
+            "mood": "disbelieving",
+            "bladder": "After all that. A whole day and a whole ocean, and it was a breath. You were astonishing."
+          },
+          {
+            "speaker": "narrator",
+            "text": "There is nothing left to decide.",
+            "bladder": "Let me take it from here. Eyes forward."
+          }
+        ]
       ],
       "next": "ending_lost",
       "closing": true
@@ -2858,6 +3077,10 @@
     {
       "label": "Sneaked a visit on the plane",
       "flag": "went_once"
+    },
+    {
+      "label": "Needed the adrenaline",
+      "flag": "adrenaline"
     }
   ]
 }

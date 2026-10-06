@@ -77,6 +77,23 @@
       "bladder": "No room! Some of that just left."
     }
   },
+  "thoughts": {
+    "when": [
+      {
+        "stat": "control",
+        "lt": 40
+      }
+    ],
+    "taps": 3,
+    "freeSeconds": 30,
+    "minutes": 1,
+    "lines": [
+      "Just walk out. Now.",
+      "Nobody would even look up.",
+      "Say 'excuse me'. Two words.",
+      "Why are we still in this room?"
+    ]
+  },
   "clock": {
     "start": "14:00"
   },
@@ -317,6 +334,26 @@
           ],
           "next": "return"
         }
+      ],
+      "variants": [
+        [
+          {
+            "speaker": "narrator",
+            "text": "Eleven heads turn. The projector hums on."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "Somebody's pen stops clicking."
+          }
+        ],
+        [
+          {
+            "speaker": "narrator",
+            "text": "The room is suddenly very interested in Sam."
+          }
+        ]
       ]
     }
   ],

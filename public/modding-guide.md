@@ -107,6 +107,46 @@ drink on a full bladder a price. Whenever the bladder would go past 100 percent,
 spasm: it ends at 100 minus `"amount"`, the effects apply and the bladder says the line. Every part is
 optional. Without the block the bladder just stays at 100.
 
+**A last chance (adrenaline).** A threshold with `"scene"` instead of `"goto"` is a rescue that happens
+once. Its effects apply at once, its scene plays as an interruption, and the story then carries on with
+whatever was about to happen. Put it before the threshold it postpones, and end its scene with
+`"next": "return"`:
+
+```json
+"stats": [ { "id": "control", "label": "Control", "start": 80, "thresholds": [
+  { "atOrBelow": 0, "scene": "second_wind",
+    "effects": [ { "stat": "control", "set": 100 }, { "flag": "adrenaline" } ] },
+  { "atOrBelow": 0, "goto": "breakdown" } ] } ],
+"modes": [ { "flag": "adrenaline", "label": "Adrenaline",
+             "stats": { "control": { "loss": 1.5, "gain": 0.5 } } } ]
+```
+
+The mode is what makes it a last chance and not a second life: while its flag is set, everything that
+lowers control counts 1.5 times and everything that raises it counts half.
+
+**Several ways to tell a scene.** Give a scene `"variants"`: a list of lists of lines. Each time the
+scene is entered the game picks one list by chance and shows it after the scene's own `"lines"` (which
+you may then leave out). Good for moments a player may see on every playthrough:
+
+```json
+{ "id": "second_wind", "next": "return", "variants": [
+  [ { "speaker": "narrator", "text": "Her heart slams twice.", "bladder": "You were finished!" } ],
+  [ { "speaker": "narrator", "text": "Panic does what manners could not.", "bladder": "Oh. OH." } ] ] }
+```
+
+**Thoughts over the choices.** A top-level `"thoughts"` block lets the bladder's thoughts lie over every
+answer while its conditions hold. The player taps each thought away to get the real answer back:
+
+```json
+"thoughts": { "when": [ { "stat": "control", "lt": 30 } ],
+              "lines": [ "Just walk out. Now.", "Nobody would even look up." ],
+              "taps": 3, "freeSeconds": 30, "minutes": 1 }
+```
+
+`"taps"` is how many taps one thought takes. The player has `"freeSeconds"` at no cost; after that,
+`"minutes"` of story time pass every few seconds (and the bladder fills) until an answer is picked.
+Only `"when"` and `"lines"` are required; the numbers above are the defaults.
+
 **Endings.** Add `"accident": true` to an ending where control is lost: on arriving there the bladder gives
 out and empties by itself. A threshold can jump to an ending from anywhere, so this is the place to say it.
 The scorecard still shows how full the bladder was at that moment.

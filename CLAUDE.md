@@ -134,10 +134,16 @@ conditional lines, `void` and `clock` effects, accident endings (`"accident": tr
 `TUNING.storyStripSize` squares plus a count of the rest), closing scenes
 (`"closing": true`: a game-over scene such as a breakdown, after which nothing interrupts), `bladder.leakOnFail` (a lost
 minigame on a very full bladder leaks a little and applies effects) and `bladder.overflow` (a bladder pushed past
-100, say by a drink, spasms and applies effects). Design rule from the owner: suspicion moves only through
+100, say by a drink, spasms and applies effects), scene `variants` (several tellings, one picked by chance; the
+runner takes its randomness as `createRunner(story, saved, random)`), rescue thresholds (`"scene"` instead of
+`"goto"`: once only, applies effects, interrupts and returns; Bonnie's adrenaline last chance), mode `stats`
+multipliers (a meter falls faster / recovers slower while a flag is set) and `thoughts` (the bladder's thoughts
+cover every choice and are tapped away; after `freeSeconds` story time is charged; drawn by
+`renderChoices()` in `story_screen.js`). Design rule from the owner: suspicion moves only through
 choices and minigame results, never by itself over time. `src/story/library.js` keeps imported stories and one
 automatic save per story in `localStorage`; `src/ui/story_menu.js` is the list with import / export.
-Not built yet: minigames that act on the dialogue itself. The original sketch, for intent:
+`thoughts` is the first mechanic that acts on the dialogue itself; the backlog's dialogue minigames
+(`on_the_spot`, `volley`, ...) are not built. The original sketch, for intent:
 
 Stories are JSON files, versioned (`"schemaVersion": 1`). Sketch:
 - `meta`: title, author, rating, content tags, description.

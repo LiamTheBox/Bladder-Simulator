@@ -180,6 +180,47 @@ test('interruptions: "return" only inside a scene that interrupts, and the scene
   expect(errorsAfter((s) => { s.scenes[1].triggers.push({ when: [{ stat: 'control', lt: 20 }], scene: 'dana_notices' }); s.triggers = []; })).toEqual([]);
 });
 
+test('variants, rescue thresholds, mode multipliers and thoughts are checked', () => {
+  const line = { speaker: 'narrator', text: 'Hm.' };
+  expect(errorsAfter((s) => { s.scenes[2].variants = [[line], [line, line]]; })).toEqual([]);
+  expect(errorsAfter((s) => { delete s.scenes[2].lines; s.scenes[2].variants = [[line], [line]]; }), 'variants can stand in for lines').toEqual([]);
+  expectError((s) => { delete s.scenes[0].lines; }, /scene "slide_one": lines: is required/);
+  expectError((s) => { s.scenes[2].variants = [[line]]; }, /variants: needs at least 2 entries/);
+  expectError((s) => { s.scenes[2].variants = Array(9).fill([line]); }, /variants: has too many entries/);
+  expectError((s) => { s.scenes[2].variants = [[line], []]; }, /variants\[1\]: needs at least 1 entry/);
+  expectError((s) => { s.scenes[2].variants = [[line], [{ speaker: 'nobody', text: 'Hm.' }]]; }, /variants\[1\]\[0\]\.speaker: "nobody" is not/);
+  expectError((s) => { s.scenes[2].variants = [[line], [{ speaker: 'narrator', text: 'Hm.', html: '<b>' }]]; }, /variants\[1\]\[0\]\.html: unknown field/);
+
+  const rescue = (extra = {}) => (s) => { s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'dana_notices', ...extra }); };
+  expect(errorsAfter(rescue({ effects: [{ stat: 'control', set: 100 }, { flag: 'rush' }] }))).toEqual([]);
+  expectError(rescue({ goto: 'ending_dash' }), /thresholds\[0\]\.goto: unknown field/);
+  expectError((s) => { s.stats[0].thresholds[0].effects = []; }, /thresholds\[0\]\.effects: unknown field/);
+  expectError((s) => { s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'ending_dash' }); }, /thresholds\[0\]\.scene: points to "ending_dash", which is not a scene/);
+  expectError(rescue({ effects: [{ stat: 'nope', add: 1 }] }), /thresholds\[0\]\.effects\[0\]\.stat: "nope" is not one of this story's stats/);
+  // a scene that only a rescue leads to counts as reachable
+  expect(errorsAfter((s) => {
+    s.scenes.push({ id: 'second_wind', lines: [line], next: 'return' });
+    s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'second_wind' });
+  })).toEqual([]);
+
+  const mode = (stats) => (s) => { s.modes.push({ flag: 'double_espresso', label: 'Rush', stats }); };
+  expect(errorsAfter(mode({ control: { loss: 1.5, gain: 0.5 }, composure: { loss: 2 } }))).toEqual([]);
+  expectError(mode({ luck: { loss: 2 } }), /modes\[1\]\.stats\.luck: unknown field/);
+  expectError(mode({ control: { loss: 11 } }), /stats\.control\.loss: must be between 0 and 10/);
+  expectError(mode({ control: { speed: 2 } }), /stats\.control\.speed: unknown field/);
+
+  const thoughts = (t) => (s) => { s.thoughts = t; };
+  expect(errorsAfter(thoughts({ when: [{ stat: 'control', lt: 30 }], lines: ['Just go.'], taps: 3, freeSeconds: 30, minutes: 0.5 }))).toEqual([]);
+  expect(errorsAfter(thoughts({ when: [], lines: ['Always.'] }))).toEqual([]);
+  expectError(thoughts({ lines: ['Go.'] }), /thoughts\.when: is required/);
+  expectError(thoughts({ when: [], lines: [] }), /thoughts\.lines: needs at least 1 entry/);
+  expectError(thoughts({ when: [{ stat: 'nope', lt: 3 }], lines: ['Go.'] }), /thoughts\.when\[0\]/);
+  expectError(thoughts({ when: [], lines: ['Go.'], taps: 0 }), /thoughts\.taps: must be a whole number from 1 to 10/);
+  expectError(thoughts({ when: [], lines: ['Go.'], freeSeconds: -1 }), /thoughts\.freeSeconds: must be between 0 and 600/);
+  expectError(thoughts({ when: [], lines: ['Go.'], minutes: 90 }), /thoughts\.minutes: must be between 0 and 60/);
+  expectError(thoughts({ when: [], lines: ['x'.repeat(200)] }), /thoughts\.lines\[0\]: is too long/);
+});
+
 test('modes, conditional lines and the void effect are checked', () => {
   expectError((s) => { s.modes[0].minigameDifficulty = 3; }, /modes\[0\]\.minigameDifficulty: must be a whole number from -2 to 2/);
   expectError((s) => { s.modes[0].fillMultiplier = 10; }, /modes\[0\]\.fillMultiplier: must be between 0.25 and 4/);

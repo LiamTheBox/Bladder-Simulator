@@ -10,6 +10,8 @@ export const TUNING = {
 
   startVolume: 15,
   storyStripSize: 5,             // story mode: chapters shown at once in the progress strip; the rest is a number
+  thoughtsTypeCharsPerSec: 22,   // story mode: how fast a thought over a choice writes itself out
+  thoughtsOvertimeEverySec: 5,   // ...and, once the free time is used up, how often story time is charged
   storyVolumeEase: 3,            // story mode: how fast the bladder on screen catches up with the story's fullness
 
   // Fluid, in percent of capacity per second

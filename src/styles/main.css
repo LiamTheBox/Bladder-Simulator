@@ -312,6 +312,19 @@
     background: rgba(255,255,255,0.06); border: 1px solid rgba(253, 230, 138, 0.35); color: #f8fafc; font-weight: 700; font-size: 0.92rem; line-height: 1.3;
   }
   .story-choice:active { background: rgba(255,255,255,0.15); }
+  /* A thought of the bladder's lying over a choice: tap it away. --left is the share of taps still needed. */
+  .story-choice.thought {
+    --left: 1; background: rgba(248, 250, 252, calc(0.35 + 0.6 * var(--left))); color: #0f172a; border-color: #f8fafc;
+    font-weight: 500; font-size: 1.05rem; user-select: none; -webkit-user-select: none;
+  }
+  .story-choice.thought.cracked { border-style: dashed; }
+  .story-choice.thought:active { background: #e2e8f0; }
+  /* The free time with the thoughts, draining; red once story time is being charged */
+  #story-thought-bar { display: none; flex: none; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.5); overflow: hidden; }
+  #story-thought-bar.on { display: block; }
+  #story-thought-fill { height: 100%; width: 100%; background: #fef08a; }
+  #story-thought-bar.late #story-thought-fill { width: 100% !important; background: #f43f5e; }
+  .story-mode.mg-active #story-thought-bar { display: none; }
   .story-choice.story-continue { text-align: center; border-color: rgba(255,255,255,0.2); color: #e2e8f0; }
 
   /* ---------- AGE GATE AND SETTINGS ---------- */

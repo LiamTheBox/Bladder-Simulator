@@ -57,6 +57,9 @@ test('drinks are absorbed as minutes pass, the clock advances, and a trigger int
   expect(stat(v, 'suspicion'), '5 from the overflow, 20 from the lost game').toBe(25);
   // suspicion 20 sets off the story-wide interruption; afterwards the story returns to the interrupted scene
   expect(v.title).toBe('Dana notices');
+  expect(v.lines.length).toBe(1);
+  v = read(r); // one more line: whichever variant of the scene was picked
+  expect(v.lines.length).toBe(2);
   expect(v.choices).toEqual(['"Could I... get some water, actually?"', '"All good! Carry on."', 'Laugh it off, far too loudly.']);
   r.choose(1); v = r.view();
   expect(v.title).toBe('2:40 PM — Slide 20 of 48');
@@ -236,6 +239,169 @@ test('relief and heard: a toilet visit drains by how well it went and costs by h
   expect(play(true, { quality: 1, noise: 1 }, (story, m) => { m.heard.max = 100; }).ending).toBe('ending_noticed');
 });
 
+// A small story for the features below: two scenes, one meter, and room for a rescue scene
+function mini(change = () => {}) {
+  const story = {
+    schemaVersion: 1, meta: { title: 'Mini', rating: '18+' },
+    characters: [{ id: 'sam', name: 'Sam', age: 30 }, { id: 'bladder', name: 'B', kind: 'bladder' }],
+    stats: [{ id: 'control', label: 'Control', start: 50, thresholds: [{ atOrBelow: 0, goto: 'lost' }] }],
+    bladder: { startFullness: 50, fillPerMinute: 1 }, clock: { start: '10:00' },
+    start: 'one',
+    scenes: [
+      { id: 'one', lines: [{ speaker: 'narrator', text: 'One.' }], choices: [
+        { text: 'Lose a lot.', effects: [{ stat: 'control', add: -60 }], next: 'two' },
+        { text: 'Lose a little.', effects: [{ stat: 'control', add: -10 }], next: 'two' },
+        { text: 'Play.', minigame: { id: 'mash', difficulty: 1, fail: { effects: [{ stat: 'control', add: -60 }] } }, next: 'two' }] },
+      { id: 'two', lines: [{ speaker: 'narrator', text: 'Two, first.' }, { speaker: 'narrator', text: 'Two, second.' }], choices: [
+        { text: 'Lose again.', effects: [{ stat: 'control', add: -40 }], next: 'two' },
+        { text: 'Gain.', effects: [{ stat: 'control', add: 20 }], next: 'two' },
+        { text: 'Stop.', next: 'fine' }] },
+      { id: 'rush', lines: [{ speaker: 'narrator', text: 'A rush.' }], next: 'return' }],
+    endings: [{ id: 'fine', title: 'Fine', text: 'Fine.' }, { id: 'lost', title: 'Lost', text: 'Lost.' }],
+  };
+  change(story);
+  const v = validateStory(story, { file: 'mini.json', minigameIds: MINIGAMES });
+  expect(v.errors).toEqual([]);
+  return story;
+}
+const texts = (v) => v.lines.map((l) => l.text);
+const withRescue = (s) => {
+  s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'rush', effects: [{ stat: 'control', set: 100 }, { flag: 'adrenaline' }] });
+  s.modes = [{ flag: 'adrenaline', label: 'Adrenaline', stats: { control: { loss: 1.5, gain: 0.5 } } }];
+};
+
+test('variants: one way of telling a scene is picked by chance on entering, and a save keeps the pick', () => {
+  const story = mini((s) => {
+    s.scenes[1].variants = [[{ speaker: 'narrator', text: 'Version A.' }], [{ speaker: 'narrator', text: 'Version B.' }, { speaker: 'narrator', text: 'B goes on.' }], [{ speaker: 'narrator', text: 'Version C.' }]];
+    s.scenes[2] = { id: 'rush', variants: [[{ speaker: 'narrator', text: 'Rush A.' }], [{ speaker: 'narrator', text: 'Rush B.' }]], next: 'return' };
+    s.triggers = [{ when: [{ stat: 'control', lt: 45 }], scene: 'rush' }];
+  });
+  const seen = new Set();
+  for (const [roll, last] of [[0, 'Version A.'], [0.34, 'B goes on.'], [0.99, 'Version C.'], [1, 'Version C.']]) {
+    const r = createRunner(story, null, () => roll); read(r); r.choose(1);
+    const v = read(r);
+    expect(texts(v).slice(0, 2), 'the scene\'s own lines come first').toEqual(['Two, first.', 'Two, second.']);
+    expect(texts(v).at(-1)).toBe(last);
+    seen.add(last);
+  }
+  expect(seen.size).toBe(3);
+
+  // a save in the middle of a variant, with another variant waiting underneath an interruption
+  const a = createRunner(story, null, () => 0.5); read(a); a.choose(1);
+  a.next(); a.next(); // "Version B." is showing, "B goes on." is still to come
+  expect(texts(a.view())).toEqual(['Two, first.', 'Two, second.', 'Version B.']);
+  let b = createRunner(story, JSON.parse(JSON.stringify(a.snapshot())), () => 0);
+  expect(b.view()).toEqual(a.view());
+  for (const r of [a, b]) { r.next(); r.next(); } // the last line, then the trigger cuts to "rush"
+  expect(texts(a.view())).toEqual(['Rush B.']);
+  expect(texts(b.view()), 'a new visit rolls again').toEqual(['Rush A.']);
+  b = createRunner(story, JSON.parse(JSON.stringify(a.snapshot())), () => 0);
+  expect(b.view()).toEqual(a.view());
+  for (const r of [a, b]) r.next(); // "return": back in scene two, the same variant still on screen
+  expect(texts(b.view())).toEqual(['Two, first.', 'Two, second.', 'Version B.', 'B goes on.']);
+  expect(b.view()).toEqual(a.view());
+  // a pick that does not exist in this story is not accepted
+  const snap = a.snapshot();
+  expect(createRunner(story, { ...snap, variant: 7 }).view().lines, 'starts over').toEqual(createRunner(story).view().lines);
+});
+
+test('a threshold with "scene" is a one-time rescue: its effects apply, the scene interrupts, and the story carries on', () => {
+  const story = mini(withRescue);
+  // from a choice: the rescue plays before the scene the choice leads to, which then starts from its first line
+  let r = createRunner(story); read(r); r.choose(0);
+  let v = r.view();
+  expect(texts(v)).toEqual(['A rush.']);
+  expect(stat(v, 'control'), 'the effects applied at once').toBe(100);
+  expect(v.modes).toEqual(['Adrenaline']);
+  const again = createRunner(story, JSON.parse(JSON.stringify(r.snapshot())));
+  expect(again.view(), 'a save inside the rescue scene restores').toEqual(v);
+  for (const run of [r, again]) {
+    run.next(); v = run.view();
+    expect(texts(v), 'the interrupted scene starts at its first line').toEqual(['Two, first.']);
+    expect(v.phase).toBe('lines');
+    v = read(run);
+    expect(v.choices).toEqual(['Lose again.', 'Gain.', 'Stop.']);
+    // while the mode is on, control falls 1.5 times as fast and recovers half as fast
+    run.choose(0); v = read(run); expect(stat(v, 'control')).toBe(40);
+    run.choose(1); v = read(run); expect(stat(v, 'control')).toBe(50);
+    // the second time there is no rescue: the next threshold takes over
+    run.choose(0); read(run).choices; run.choose(0);
+    expect(run.view().ending.id).toBe('lost');
+  }
+
+  // from a lost minigame: the same
+  r = createRunner(story); read(r); r.choose(2); r.minigameDone(false);
+  expect(texts(r.view())).toEqual(['A rush.']);
+  r.next(); expect(texts(r.view())).toEqual(['Two, first.']);
+
+  // from a scene's "onEnter"
+  r = createRunner(mini((s) => { withRescue(s); s.scenes[1].onEnter = [{ stat: 'control', add: -45 }]; })); read(r); r.choose(1);
+  expect(texts(r.view())).toEqual(['A rush.']);
+  r.next(); expect(texts(r.view())).toEqual(['Two, first.']);
+  expect(stat(r.view(), 'control')).toBe(100);
+
+  // inside another interruption it waits until that one is over
+  r = createRunner(mini((s) => {
+    withRescue(s);
+    s.scenes.push({ id: 'aside', lines: [{ speaker: 'narrator', text: 'An aside.' }], choices: [{ text: 'Ouch.', effects: [{ stat: 'control', add: -80 }], next: 'return' }] });
+    s.scenes[0].triggers = [{ when: [{ stat: 'control', gte: 0 }], scene: 'aside' }];
+  }));
+  r.next(); expect(texts(r.view())).toEqual(['An aside.']);
+  r.choose(0);
+  expect(texts(r.view()), 'back in the first scene, then the rescue cuts in').toEqual(['A rush.']);
+  r.next();
+  expect(r.view()).toMatchObject({ phase: 'choices', choices: ['Lose a lot.', 'Lose a little.', 'Play.'] });
+
+  // a rescue whose effects do not lift the meter does not hold off the next threshold
+  r = createRunner(mini((s) => { s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'rush' }); })); read(r); r.choose(0);
+  expect(r.view().ending.id).toBe('lost');
+});
+
+test('thoughts cover every choice while their condition holds; overtime costs story time', () => {
+  const story = mini((s) => { s.scenes.splice(2, 1); s.thoughts = { when: [{ stat: 'control', lt: 45 }], lines: ['Just go.', 'Why not now?'], minutes: 2 }; });
+  let r = createRunner(story); let v = read(r);
+  expect(v.thoughts, 'control is 50: no thoughts yet').toBeNull();
+  r.thoughtsOvertime(); expect(r.view().clock, 'nothing to be late for').toBe('10:00');
+  r.choose(1); v = read(r);
+  expect(v.thoughts).toEqual({ taps: 3, freeSeconds: 30, lines: ['Just go.', 'Why not now?'], covered: [true, true, true] });
+  r.choose(2);
+  expect(r.view().phase, 'a covered choice cannot be picked').toBe('choices');
+  r.clearThought(2); r.clearThought(2); r.clearThought(9); r.clearThought(-1);
+  expect(r.view().thoughts.covered).toEqual([true, true, false]);
+  // a save keeps what was tapped away
+  const b = createRunner(story, JSON.parse(JSON.stringify(r.snapshot())));
+  expect(b.view()).toEqual(r.view());
+  expect(createRunner(story, { ...r.snapshot(), cleared: [2, 2, 'x', 40] }).view().thoughts.covered).toEqual([true, true, false]);
+  // too slow: two story minutes pass each time, and the bladder fills meanwhile
+  r.thoughtsOvertime(); r.thoughtsOvertime();
+  expect(r.view()).toMatchObject({ clock: '10:04', fullness: 54 });
+  expect(r.view().thoughts.covered).toEqual([true, true, false]);
+  r.clearThought(1); r.choose(1); v = read(r); // control back to 60
+  expect(v.thoughts, 'the condition no longer holds').toBeNull();
+  r.choose(2);
+  expect(r.view().ending.id).toBe('fine');
+
+  // overtime can push the story over a threshold; the closing scene has no thoughts
+  const harsh = mini((s) => {
+    s.scenes.splice(2, 1);
+    s.thoughts = { when: [], lines: ['Go.'], taps: 1, freeSeconds: 5, minutes: 30 };
+    s.stats.push({ id: 'patience', label: 'Patience', start: 100 });
+    s.bladder.overflow = { effects: [{ stat: 'control', add: -100 }] };
+    s.stats[0].thresholds = [{ atOrBelow: 0, goto: 'end_scene' }];
+    s.scenes.push({ id: 'end_scene', closing: true, lines: [{ speaker: 'narrator', text: 'That was that.' }], choices: [{ text: 'Sigh.', next: 'lost' }] });
+  });
+  r = createRunner(harsh); v = read(r);
+  expect(v.thoughts).toMatchObject({ taps: 1, freeSeconds: 5, covered: [true, true, true] });
+  r.thoughtsOvertime();
+  expect(r.view().thoughts, 'not yet full').not.toBeNull();
+  r.thoughtsOvertime(); // 50 + 60: over the top, control gone
+  v = r.view();
+  expect(texts(v)).toEqual(['That was that.']);
+  expect(v.thoughts, 'nothing covers the choices of a closing scene').toBeNull();
+  r.choose(0);
+  expect(r.view().ending.id).toBe('lost');
+});
+
 test('the clock effect changes the time shown without time passing', () => {
   const story = load('placeholder');
   story.scenes[0].choices = [{ text: 'Land.', effects: [{ clock: '20:30' }], next: 'slide_twenty' }];
@@ -271,7 +437,7 @@ test('every bundled story is valid, and a random walk through it always reaches 
         const v = r.view();
         if (v.phase === 'stuck') throw new Error(`${name}: run ${run} got stuck in scene "${r.state.sceneId}"`);
         if (v.phase === 'lines') r.next();
-        else if (v.phase === 'choices') r.choose(Math.floor(Math.random() * v.choices.length));
+        else if (v.phase === 'choices') { const pick = Math.floor(Math.random() * v.choices.length); r.clearThought(pick); r.choose(pick); }
         else if (v.phase === 'minigame') r.minigameDone(Math.random() < 0.5);
       }
       if (r.view().phase !== 'ended') throw new Error(`${name}: run ${run} did not finish`);

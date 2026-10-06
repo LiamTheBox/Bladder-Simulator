@@ -24,6 +24,8 @@ const elModes = document.getElementById('story-modes');
 const elStats = document.getElementById('story-stats');
 const elLog = document.getElementById('story-log');
 const elChoices = document.getElementById('story-choices');
+const elThoughtBar = document.getElementById('story-thought-bar');
+const elThoughtFill = document.getElementById('story-thought-fill');
 
 let story = null, runner = null, names = {};
 let spokenKey = '';     // the last line whose bladder reply was voiced, so re-drawing does not repeat it
@@ -33,6 +35,8 @@ let leaksSeen = 0;
 let resetting = false;  // true while this file itself resets the game
 let onExit = () => {};
 let slot = null;        // { key, hash }: where this story's progress is saved automatically (null = not saved)
+// The bladder's thoughts over the current choices (null = none): { key, texts, taps, buttons, elapsed, charge }
+let thoughts = null;
 
 // Small helper: an element with a class and plain text
 function el(tag, className, text) {
@@ -59,6 +63,7 @@ export function startStory(validStory, options = {}) {
   story = validStory; runner = createRunner(story, options.saved ?? null);
   names = Object.fromEntries(story.characters.map((c) => [c.id, c.name]));
   const first = runner.view();
+  thoughts = null;
   spokenKey = ''; voidsSeen = first.voided; accidentSeen = false; leaksSeen = first.leaks; // a void that happened before the save is not replayed
   setStoryMode(true);
   setVolume(first.fullness);
@@ -70,7 +75,7 @@ export function startStory(validStory, options = {}) {
 
 export function exitStory() {
   if (!runner) return;
-  runner = null; story = null;
+  runner = null; story = null; thoughts = null; elThoughtBar.classList.remove('on');
   resetting = true; resetGame(); resetting = false;
   toy.classList.remove('story-mode', 'mg-active');
   setVolumeLabel(null);
@@ -80,9 +85,66 @@ export function exitStory() {
 // Anything else that resets the game (changing the difficulty in Settings) ends the story too
 on('gameReset', () => { if (runner && !resetting) exitStory(); });
 
-// Every frame: the bladder on screen follows the story's fullness
+// Every frame: the bladder on screen follows the story's fullness, and thoughts over the choices write themselves
+// out while the player's free time runs. (No frames while a menu is open, so that time is not counted.)
 export function updateStory(dt) {
-  if (runner) easeVolumeToward(runner.view().fullness, dt);
+  if (!runner) return;
+  easeVolumeToward(runner.view().fullness, dt);
+  if (!thoughts) return;
+  thoughts.elapsed += dt;
+  typeThoughts();
+  const late = thoughts.elapsed - thoughts.free;
+  elThoughtFill.style.width = `${Math.max(0, -late / thoughts.free) * 100}%`;
+  elThoughtBar.classList.toggle('late', late >= 0);
+  if (late < 0) return;
+  // Out of free time: story time passes for as long as the player keeps hesitating
+  thoughts.charge += dt;
+  if (thoughts.charge >= TUNING.thoughtsOvertimeEverySec) {
+    thoughts.charge -= TUNING.thoughtsOvertimeEverySec;
+    runner.thoughtsOvertime();
+    render();
+  }
+}
+
+// In a random order, so no thought repeats before all have been used
+function shuffled(list) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
+function typeThoughts() {
+  const chars = Math.floor(thoughts.elapsed * TUNING.thoughtsTypeCharsPerSec);
+  thoughts.buttons.forEach((b, i) => { if (b) { const part = thoughts.texts[i].slice(0, Math.max(1, chars)); if (b.textContent !== part) b.textContent = part; } });
+}
+// The choices, each under a thought until it has been tapped away the required number of times
+function renderChoices(v) {
+  const key = `${runner.state.sceneId}:${v.lines.length}:${v.choices.length}`;
+  if (!v.thoughts) thoughts = null;
+  else if (!thoughts || thoughts.key !== key) {
+    const pool = shuffled(v.thoughts.lines);
+    thoughts = { key, texts: v.choices.map((c, i) => pool[i % pool.length]), taps: v.choices.map(() => 0), buttons: [], elapsed: 0, charge: 0 };
+  }
+  if (thoughts) thoughts.free = Math.max(0.001, v.thoughts.freeSeconds);
+  elThoughtBar.classList.toggle('on', Boolean(thoughts));
+  v.choices.forEach((text, i) => {
+    if (!thoughts || !v.thoughts.covered[i]) {
+      if (thoughts) thoughts.buttons[i] = null;
+      elChoices.append(button('story-choice', text, () => { thoughts = null; runner.choose(i); render(); }));
+      return;
+    }
+    const b = button('story-choice thought', '', () => {
+      thoughts.taps[i]++;
+      if (thoughts.taps[i] >= v.thoughts.taps) { runner.clearThought(i); render(); return; }
+      b.style.setProperty('--left', String(1 - thoughts.taps[i] / v.thoughts.taps));
+      b.classList.add('cracked');
+      if (b.animate) b.animate([{ transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'none' }], { duration: 160 });
+    });
+    b.style.setProperty('--left', String(1 - thoughts.taps[i] / v.thoughts.taps));
+    b.classList.toggle('cracked', thoughts.taps[i] > 0);
+    thoughts.buttons[i] = b;
+    elChoices.append(b);
+  });
+  if (thoughts) typeThoughts();
 }
 
 function beginMinigame(request) {
@@ -171,10 +233,12 @@ function render() {
   }
   elChoices.replaceChildren();
   if (v.phase === 'lines') elChoices.append(button('story-choice story-continue', 'Continue ▸', () => { runner.next(); render(); }));
-  else if (v.phase === 'choices') v.choices.forEach((text, i) => elChoices.append(button('story-choice', text, () => { runner.choose(i); render(); })));
+  else if (v.phase === 'choices') renderChoices(v);
   else if (v.phase === 'ended' || v.phase === 'stuck') {
     elChoices.append(button('story-choice', 'Play again', () => startStory(story, { saved: null })), button('story-choice story-continue', 'Back to menu', exitStory));
   }
+
+  if (v.phase !== 'choices') { thoughts = null; elThoughtBar.classList.remove('on'); }
 
   // Keep the newest line in view (after the choices are in place: they change how tall the text area is)
   elLog.scrollTop = v.phase === 'ended' ? 0 : elLog.scrollHeight;

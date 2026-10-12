@@ -17,6 +17,20 @@ export function stepSim(dt, pointerCount) {
     if (st.squeeze.wheelTimer <= 0 && pointerCount < 2) { st.squeeze.active = false; st.squeeze.spoke = false; }
   }
   if (!st.squeeze.active && st.squeeze.tension > 0) st.squeeze.tension = Math.max(0, st.squeeze.tension - T.squeezeReleasePerSec * dt);
+  // Letting go of a real squeeze: the waist is flung outward and wobbles to rest (st.squeeze.wobble is added to
+  // the tension when the shape is drawn, and goes negative on the rebound), and the liquid sloshes
+  if (st.squeeze.active) st.squeeze.peak = Math.max(st.squeeze.peak, st.squeeze.tension);
+  else if (st.squeeze.peak > 0) {
+    if (st.squeeze.peak >= T.squeezeSnapFrom) {
+      st.squeeze.wobbleVel -= st.squeeze.peak * T.squeezeWobbleKick;
+      st.slosh.vel += (Math.random() > 0.5 ? 1 : -1) * st.squeeze.peak * T.squeezeReleaseSlosh;
+      emit('interaction', { type: 'squeezeRelease', force: st.squeeze.peak });
+    }
+    st.squeeze.peak = 0;
+  }
+  st.squeeze.wobbleVel += (-T.squeezeWobbleSpring * st.squeeze.wobble - T.squeezeWobbleDamping * st.squeeze.wobbleVel) * dt;
+  st.squeeze.wobble += st.squeeze.wobbleVel * dt;
+  if (Math.abs(st.squeeze.wobble) < 0.01 && Math.abs(st.squeeze.wobbleVel) < 0.1) { st.squeeze.wobble = 0; st.squeeze.wobbleVel = 0; }
   // Stretch eases toward the finger while dragging, springs back to rest on release
   const dragTarget = st.drag.active ? st.drag.targetDist : 0;
   st.drag.dist += (dragTarget - st.drag.dist) * Math.min(1, T.stretchFollowRate * dt);
@@ -63,19 +77,30 @@ export function stepSim(dt, pointerCount) {
     emit('fillFlow', false);
   }
 
+  // Squeeze: a hard one forces liquid out although the sphincter is shut, and holding against it costs control.
+  // (In story mode the story decides the fullness; a minigame that lets go sets its own pace with flowRate.)
+  const squeezing = st.storyMode || st.failureEvent ? 0 : st.squeeze.tension;
+  const squeezeHard = Math.max(0, squeezing - T.squeezeLeakFrom) / (T.squeezeMax - T.squeezeLeakFrom); // 0..1
+  st.squeeze.forcing = squeezeHard > 0 && st.isClosed && st.volume > 0;
+  if (st.squeeze.forcing) {
+    st.volume = Math.max(0, st.volume - T.squeezeLeakPerSec * squeezeHard * dt);
+    st.stamina = Math.max(0, st.stamina - T.squeezeStaminaPerSec * squeezeHard * dt);
+    st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 0.4;
+    if (Math.random() < 0.3 + 0.5 * squeezeHard) spawnDrop();
+    st.squeeze.squirtTimer -= dt;
+    if (st.squeeze.squirtTimer <= 0) { st.squeeze.squirtTimer = T.squeezeSquirtEvery; emit('interaction', { type: 'squirt' }); }
+    if (st.stamina <= 0) triggerAccident(); // below half full nothing else would notice
+  } else st.squeeze.squirtTimer = 0; // the next hard squeeze squirts at once
+
   // Voiding
   emit('drainFlow', !st.isClosed && st.volume > 0);
   if (!st.isClosed && st.volume > 0) {
-    st.volume = Math.max(0, st.volume - (st.isVoiding ? T.voidPerSec : st.flowRate ?? T.leakPerSec) * dt);
+    // an open bladder that is squeezed empties faster, however lightly
+    const squeezeBoost = st.flowRate === null ? 1 + (squeezing / T.squeezeMax) * T.squeezeDrainBoost : 1;
+    st.volume = Math.max(0, st.volume - (st.isVoiding ? T.voidPerSec : st.flowRate ?? T.leakPerSec) * squeezeBoost * dt);
     st.slosh.vel += (Math.random() - 0.5) * T.drainSloshKick;
     if (st.isVoiding && Math.random() < 0.3) emit('haptic', 15);
-    if (Math.random() < 0.6) {
-      const g = bladderGeom(); // stream leaves from the sphincter, wherever the body is right now
-      st.particles.push({
-        x: g.cx + (Math.random() - 0.5) * 15, y: g.cy + g.Rr + 8,
-        vx: (Math.random() - 0.5) * 20, vy: 200 + Math.random() * 200, life: 1.0, size: Math.random() * 4 + 3
-      });
-    }
+    if (Math.random() < 0.6) spawnDrop();
   }
 
   if (!st.isClosed && st.volume <= 0) {
@@ -116,7 +141,7 @@ export function stepSim(dt, pointerCount) {
 
     } else {
         if (st.minigame.active && !st.minigame.practice) emit('spikeCancelled'); // bladder dropped below 50% or was opened: no unfair failure
-        st.stamina = Math.min(100, st.stamina + T.staminaRegenPerSec * dt);
+        if (!st.squeeze.forcing) st.stamina = Math.min(100, st.stamina + T.staminaRegenPerSec * dt); // no recovering while liquid is squeezed out
         st.staminaDraining = false;
     }
   } else st.staminaDraining = false;
@@ -124,6 +149,15 @@ export function stepSim(dt, pointerCount) {
   announceThresholds('volume', st.prevVolume, st.volume, T.volumeThresholds);
   announceThresholds('stamina', st.prevStamina, st.stamina, T.staminaThresholds);
   st.prevVolume = st.volume; st.prevStamina = st.stamina;
+}
+
+// One drop of the stream. It leaves from the sphincter, wherever the body is right now.
+function spawnDrop() {
+  const g = bladderGeom();
+  st.particles.push({
+    x: g.cx + (Math.random() - 0.5) * 15, y: g.cy + g.Rr + 8,
+    vx: (Math.random() - 0.5) * 20, vy: 200 + Math.random() * 200, life: 1.0, size: Math.random() * 4 + 3
+  });
 }
 
 // Compares against the value at the end of the previous frame, so changes made between frames

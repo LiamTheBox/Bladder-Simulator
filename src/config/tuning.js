@@ -121,7 +121,16 @@ export const TUNING = {
   snapbackMinStretch: 20, snapbackRefStretch: 120, snapbackSlosh: 10.0,
 
   // Squeeze
-  squeezeMax: 60, squeezeSpeakAt: 20, squeezeReleasePerSec: 90,
+  squeezeMax: 60, squeezeSpeakAt: 20, squeezeReleasePerSec: 240,
+  // A hard squeeze (tension above squeezeLeakFrom) forces liquid out, past a locked sphincter too. The rates are
+  // per second at the hardest squeeze and scale down to nothing at squeezeLeakFrom. Not in story mode.
+  squeezeLeakFrom: 40, squeezeLeakPerSec: 12, squeezeStaminaPerSec: 25,
+  squeezeSquirtEvery: 0.22,      // seconds between "squirt" cues (sound, vibration) while liquid is forced out
+  squeezeDrainBoost: 1.5,        // unlocked: the hardest squeeze drains this much faster (1.5 = two and a half times)
+  // Letting go: the waist springs back past its rest shape and wobbles, like a rubber band
+  squeezeSnapFrom: 15,           // a squeeze at least this strong snaps back when released
+  squeezeWobbleKick: 7, squeezeWobbleSpring: 420, squeezeWobbleDamping: 7, squeezeReleaseSlosh: 0.12,
+  squeezeCreakStep: 6,           // the band creaks each time the squeeze tightens by this much
   wheelHoldSec: 0.5, wheelToTension: 0.1, wheelToSlosh: -0.01,
 
   // Soothe and poke

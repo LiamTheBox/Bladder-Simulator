@@ -26,7 +26,7 @@ import { pickDanceMove, updateDance } from './sim/dance.js';
 import { updateParticles } from './sim/particles.js';
 import { canvasContainer } from './render/canvas.js';
 import { renderCanvas } from './render/scene.js';
-import { waterState, playWater, stopWater, stopAllWater, updateBubbles, updateSlosh, updateCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playDanceSlosh, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
+import { waterState, playWater, stopWater, stopAllWater, updateBubbles, updateSlosh, updateCreak, updateSqueezeCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playDanceSlosh, playSquirt, playTwang, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
 import { startMinigame, endMinigame, updateMinigame } from './minigames/index.js';
@@ -68,6 +68,8 @@ on('interaction', ({ type, force }) => {
   if (type === 'poke') { playPoke(); playSqueak(); vibe(20); speak('poke'); }
   else if (type === 'stretchStart') { playStretch(20); vibe(15); speak('stretch'); }
   else if (type === 'snapback') { playSnapback(force); vibe([20, 30, 40]); }
+  else if (type === 'squirt') { playSquirt(); vibe(15); }
+  else if (type === 'squeezeRelease') { playTwang(force); vibe([10, 20, 30]); }
   else if (type === 'soothe' || type === 'squeeze') speak(type);
 });
 
@@ -99,6 +101,7 @@ function gameLoop(now) {
   updateBubbles(dt);
   updateSlosh(dt, st.slosh.val, st.slosh.vel, st.volume / 100);
   updateCreak(st.drag.active, st.drag.dist);
+  updateSqueezeCreak(st.squeeze.tension);
   updateGurgle(dt, st.pendingFluid > 0);
   updateDance(now / 1000, dt, st.volume / 100);
   updateParticles(dt);

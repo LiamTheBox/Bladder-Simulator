@@ -3,7 +3,7 @@ import { TUNING } from '../config/tuning.js';
 import { st } from '../sim/state.js';
 import { bladderGeom } from '../sim/geometry.js';
 import { canvasContainer, canvas, ctx } from './canvas.js';
-import { drawSmoothPath, getPearPoints } from './bladder.js';
+import { drawSmoothPath, getPearPoints, squeezeAmount } from './bladder.js';
 import { drawCuteFace } from './face.js';
 import { drawPottyDanceLegs } from './legs.js';
 import { drawMinigame } from '../minigames/index.js';
@@ -65,6 +65,19 @@ export function renderCanvas(t, fillPerc) {
   ctx.lineWidth = Math.max(3, baseR * 0.025); ctx.strokeStyle = 'rgba(244, 114, 182, 0.5)'; ctx.stroke();
 
   drawCuteFace(ctx, cx, cy, baseR, t, fillPerc, st.isClosed, st.gravity.x);
+
+  // The rubber band that does the squeezing: the front half of a loop around the waist, from the outline's
+  // rightmost point (pearPoints[0]) to its leftmost (pearPoints[32]). It fades in as the squeeze takes hold.
+  const sq = squeezeAmount();
+  if (sq > 0.02) {
+    const right = pearPoints[0], left = pearPoints[32];
+    const bandX = (left.x + right.x) / 2, bandY = (left.y + right.y) / 2, half = (right.x - left.x) / 2 + baseR * 0.02;
+    ctx.save(); ctx.globalAlpha = Math.min(1, sq * 4); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.ellipse(bandX, bandY, half, baseR * 0.07, 0, 0, Math.PI);
+    ctx.lineWidth = Math.max(4, baseR * 0.05); ctx.strokeStyle = '#b45309'; ctx.stroke();
+    ctx.lineWidth = Math.max(1.5, baseR * 0.015); ctx.strokeStyle = 'rgba(254, 215, 170, 0.8)'; ctx.stroke();
+    ctx.restore();
+  }
   
   ctx.fillStyle = 'rgba(186, 230, 253, 0.8)'; 
   st.sweatDrops.forEach(s => {

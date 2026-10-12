@@ -85,7 +85,8 @@ test('the liquid glugs when it sloshes, and stays quiet when it barely moves or 
   await kick(pg, 0.5); // a heartbeat's nudge
   expect(await pg.evaluate('window.__audio'), 'a tiny ripple is silent').toEqual([]);
 
-  await pg.evaluate('st.volume=95');
+  // (above half full it dances: hold a move whose own slosh is neither a glug nor a splash)
+  await pg.evaluate("st.volume=95; st.stamina=100; st.dance.id='tap'; st.dance.timer=30");
   await kick(pg, 3);
   log = await pg.evaluate('window.__audio');
   expect(count(log, 'glug'), 'nearly full: tight glugs').toBeGreaterThanOrEqual(1);

@@ -1,5 +1,6 @@
 // The bladder's outline: a pear that bulges with fill, squeeze, stretch, tilt, slosh and pokes.
 import { st } from '../sim/state.js';
+import { TUNING } from '../config/tuning.js';
 
 export function drawSmoothPath(ctx, points) {
   ctx.beginPath();
@@ -12,6 +13,9 @@ export function drawSmoothPath(ctx, points) {
   }
   ctx.closePath();
 }
+
+// How squeezed the waist is: 0 at rest, 1 at the hardest squeeze, below zero while it rebounds
+export function squeezeAmount() { return Math.max(-0.6, Math.min(1, (st.squeeze.tension + st.squeeze.wobble) / TUNING.squeezeMax)); }
 
 export function getPearPoints(cx, cy, baseR, t, fillPerc) {
   const points = [];
@@ -28,8 +32,11 @@ export function getPearPoints(cx, cy, baseR, t, fillPerc) {
        if (ey > 0) r += ey * baseR * 0.1 * lobe;
     }
 
-    r -= baseR * (st.squeeze.tension * 0.007) * Math.abs(ex);
-    r += baseR * (st.squeeze.tension * 0.007) * Math.abs(ey) * 0.6;
+    // Squeeze: a rubber band around the waist. The sides are pulled in at mid height, and the top and bottom
+    // bulge to make room. On release the wobble swings the same shape the other way (sq below zero).
+    const sq = squeezeAmount();
+    r -= baseR * 0.4 * sq * Math.exp(-(ey * ey) / 0.16);
+    r += baseR * 0.2 * sq * ey * ey;
 
     const stretch = Math.max(st.drag.dist, st.viscoelasticCreep * 3);
     if (stretch > 0.1) {

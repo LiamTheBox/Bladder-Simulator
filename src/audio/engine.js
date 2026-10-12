@@ -15,6 +15,8 @@ let jingleSynth, wompSynth;
 let squeakSynth, creakSynth, boingSynth, gurgleSynth, sighSynth, sighFilter, babbleSynth;
 let creakAt = 0, gurgleTimer = 0;
 let gulpSynth, slurpSynth, slurpFilter, fizzSynth;
+let squirtSynth, squirtFilter, twangSynth;
+let squeezeCreakAt = 0;
 
 // Tags a synth with the name of its sound, so the test mock can log which one played (Tone ignores the tag)
 function named(label, synth) { synth.label = label; return synth; }
@@ -103,6 +105,11 @@ function initAudio() {
   slurpFilter = new Tone.Filter({ frequency: 700, type: "bandpass", Q: 3 }).toDestination(); slurpSynth.connect(slurpFilter); slurpSynth.volume.value = -6;
   fizzSynth = named('fizz', new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.05, decay: 0.9, sustain: 0, release: 0.1 } }));
   fizzSynth.connect(new Tone.Filter({ frequency: 4500, type: "highpass" }).toDestination()); fizzSynth.volume.value = -22;
+
+  // Squeeze: a squirt each time liquid is forced out, a twang when the band is let go (the creak is creakSynth)
+  squirtSynth = named('squirt', new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.005, decay: 0.09, sustain: 0, release: 0.03 } }));
+  squirtFilter = new Tone.Filter({ frequency: 2200, type: "bandpass", Q: 2.5 }).toDestination(); squirtSynth.connect(squirtFilter); squirtSynth.volume.value = -4;
+  twangSynth = named('twang', new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.003, decay: 0.35, sustain: 0, release: 0.1 } })).toDestination(); twangSynth.volume.value = -10;
 
   audioCtxReady = true;
   setSoundVolume(settings.sound);
@@ -206,6 +213,26 @@ export function updateCreak(stretching, dist) {
   if (Math.abs(dist - creakAt) < TUNING.creakStepPx) return;
   if (audioCtxReady && dist > creakAt) creakSynth.triggerAttackRelease(110 + dist * 1.5, 0.04, startTime(creakSynth));
   creakAt = dist;
+}
+// Squeeze: the band creaks each time it tightens by another step (tension = st.squeeze.tension); easing off is silent
+export function updateSqueezeCreak(tension) {
+  if (Math.abs(tension - squeezeCreakAt) < TUNING.squeezeCreakStep) return;
+  if (audioCtxReady && tension > squeezeCreakAt) creakSynth.triggerAttackRelease(nextPitch('squeezeCreak', 150, 280), 0.04, startTime(creakSynth));
+  squeezeCreakAt = tension;
+}
+// Liquid forced out by a hard squeeze: a short hiss, higher or lower each time
+export function playSquirt() {
+  if (!audioCtxReady) return;
+  const t = startTime(squirtSynth);
+  squirtFilter.frequency.setValueAtTime(nextPitch('squirt', 1500, 3200), t);
+  squirtSynth.triggerAttackRelease(0.1, t);
+}
+// The band let go: a plucked note that sags. force = how hard the squeeze was (st.squeeze tension, up to squeezeMax)
+export function playTwang(force) {
+  if (!audioCtxReady) return;
+  const t = startTime(twangSynth), note = nextPitch('twang', 190, 330);
+  twangSynth.triggerAttackRelease(note, 0.3, t, Math.min(1, 0.4 + force / TUNING.squeezeMax * 0.6));
+  twangSynth.frequency.rampTo(note * 0.6, 0.28, t);
 }
 // Hop landing: a springy upward slide (a potty-dance sound, so it shares their loudness)
 export function playBoing() {

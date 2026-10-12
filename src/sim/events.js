@@ -21,7 +21,9 @@
 //     minigameEnded    { id, difficulty, success, cancelled, quality?, noise? }
 //
 //   Touching the bladder (sim/interactions.js)
-//     interaction      { type: 'poke'|'stretchStart'|'snapback'|'soothe'|'squeeze', force? }
+//     interaction      { type: 'poke'|'stretchStart'|'snapback'|'soothe'|'squeeze'|'squirt'|'squeezeRelease', force? }
+//                         'squeeze': a squeeze became firm (once per squeeze); 'squirt': liquid is being forced out
+//                         by a hard squeeze (repeats while it lasts); 'squeezeRelease': a firm squeeze was let go
 //
 //   Presentation cues (sim/step.js, sim/dance.js): the sim asks, audio/haptics answer
 //     voiceCue (category)                a good moment for a voice line; a listener returns true if it was spoken

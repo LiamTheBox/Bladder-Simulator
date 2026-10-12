@@ -27,7 +27,8 @@ Goal: easy to **deploy as a static website** and easy to **mod with user-made st
   - Stretch relaxes back to normal in ~0.9 s after release (`TUNING.creepRelaxRate`).
   - 12 potty-dance leg moves (hop, tap, curl, squeeze, shiver, ...) chosen by fullness; whole-body hops.
   - 3 minigames: mash ("clench"), leaks (tap cracks), breathe (hold/release ring). Controls appear in a
-    bottom panel; the bladder "speaks" the instruction in a speech bubble; the bladder stays unobstructed.
+    bottom panel; the bladder "speaks" the instruction in a speech bubble at the foot of the play area; the
+    bladder stays unobstructed.
   - Voice-line categories (casual, filling, desperate, begging, poke, stretch, soothe, squeeze,
     success_hold, voiding, accident) editable in Settings; every spoken line also shows as a subtitle bubble.
   - Pause when menus are open, on the start screen, or when the tab is hidden.
@@ -200,6 +201,26 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 - A switched-off minigame never appears: free play skips it, a story gets another enabled game, and with
   every game off a story treats its minigames as passed.
 - Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
+
+## "New touch" rework (owner-approved list; first batch built, **not yet playtested**)
+The owner approved a review of 15 layout items and 9 rules. Built so far:
+- The sphincter lock is a 64 px round button (`#btn-clench` inside `#clench-row`) with its label beside it; only
+  the circle reacts. It stays in the control panel and stays visible during a minigame.
+- Free-play speech floats above the bladder's head and follows it (`ui/bubble.js`, class `overhead`). A minigame
+  prompt, and every bubble in story mode, stays at the foot of the play area.
+- Upright tablets (600 to 899 px wide) use their width instead of a 550 px column.
+- Urge waves: `st.urge` (0..1) rises over the last `TUNING.urgeBuildSec` seconds before a spike, is 1 during a
+  minigame, then passes. The countdown `st.minigame.cooldown` (still "0 = spike now") runs up to twice as fast in
+  a fuller bladder. A rising wave raises the stamina drain and the heart rate, makes the bladder throb, and fills
+  the ring in the fullness pill. `tests/urge-wave.spec.js`.
+- The stream: `st.flow` (0..1) builds up when the bladder opens, is strongest while full and weakens to a trickle
+  (`TUNING.stream…`); `voidPerSec` / `leakPerSec` are now the speed of a *full* stream, so a full void takes about
+  5 s. Drops and the drain sound follow it. A minigame's own `flowRate` is unaffected. `tests/stream.spec.js`.
+- `tests/new-touch.spec.js` covers the lock, the bubble and the tablet width.
+Still to do, in this order: (1) HUD: bigger "Control" bar, drink button with the controls, icon start screen;
+(2) story layout: one place for the bladder's line, pinned choices; (3) desktop free play uses its left column;
+(4) developer panel: tabs, live drawer, story tools; (5) rules: drinks with their own speed and after-effect,
+a digestion curve, a bladder that grows taut, richer liquid, stretch that buys room, recovery tied to soothing.
 
 ## Squeeze (reworked at the owner's request; **not yet playtested**)
 A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.squeezeMax`). Rules in `sim/step.js`:

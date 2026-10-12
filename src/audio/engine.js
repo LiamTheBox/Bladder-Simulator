@@ -139,6 +139,12 @@ export function stopWater(filling) {
   (filling ? fillSynth : waterSynth).triggerRelease();
 }
 export function stopAllWater() { stopWater(true); stopWater(false); }
+// The drain sound follows the stream (st.flow, 0..1): a loud rush when it is strong, a soft thin trickle at the end
+export function setDrainStrength(flow) {
+  if (!audioCtxReady || !waterState.drain) return;
+  waterSynth.volume.value = lerp(-20, 0, Math.sqrt(flow));
+  waterLfo.max = lerp(450, 800, flow);
+}
 // Bubbles are driven from the game loop (replaces Tone.Loop, whose start(0) could throw on restart)
 export function updateBubbles(dt) {
   if (!audioCtxReady || !(waterState.fill || waterState.drain)) return;

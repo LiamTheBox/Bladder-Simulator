@@ -30,6 +30,11 @@ export const TUNING = {
   digestFastPerSec: 25.0,        // while SPEED UP is held
   leakPerSec: 20,                // sphincter open
   voidPerSec: 40,                // VOID pressed, or an accident
+  // Both are the speed of a full stream. The real speed follows st.flow (0..1): it builds up when the bladder
+  // opens, is strongest while the bladder is full, and weakens to a trickle as it empties.
+  streamBuildRate: 5,            // how fast the stream gets going (per second, exponential)
+  streamTrickle: 0.15,           // the share of full speed that is left when the bladder is nearly empty
+  streamCurve: 0.6,              // how the push falls with fullness (1 = in step with it, lower = stays strong longer)
   spasmDrops: 14,                // a spasm (a story's leak after a lost minigame): drops that escape at once
   spasmFaceSec: 1.5,             // how long the shocked face stays
   spasmHaptic: [60, 40, 120],

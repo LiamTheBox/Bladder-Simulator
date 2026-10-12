@@ -26,7 +26,7 @@ import { pickDanceMove, updateDance } from './sim/dance.js';
 import { updateParticles } from './sim/particles.js';
 import { canvasContainer } from './render/canvas.js';
 import { renderCanvas } from './render/scene.js';
-import { waterState, playWater, stopWater, stopAllWater, updateBubbles, updateSlosh, updateCreak, updateSqueezeCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playDanceSlosh, playSquirt, playTwang, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
+import { waterState, playWater, stopWater, stopAllWater, updateBubbles, setDrainStrength, updateSlosh, updateCreak, updateSqueezeCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playDanceSlosh, playSquirt, playTwang, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
 import { startMinigame, endMinigame, updateMinigame } from './minigames/index.js';
@@ -99,6 +99,7 @@ function gameLoop(now) {
   updateBackground(stepHeartbeat(dt));
 
   updateBubbles(dt);
+  setDrainStrength(st.flow);
   updateSlosh(dt, st.slosh.val, st.slosh.vel, st.volume / 100);
   updateCreak(st.drag.active, st.drag.dist);
   updateSqueezeCreak(st.squeeze.tension);

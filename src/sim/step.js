@@ -98,17 +98,21 @@ export function stepSim(dt, pointerCount) {
   // Voiding
   emit('drainFlow', !st.isClosed && st.volume > 0);
   if (!st.isClosed && st.volume > 0) {
-    // an open bladder that is squeezed empties faster, however lightly
-    const squeezeBoost = st.flowRate === null ? 1 + (squeezing / T.squeezeMax) * T.squeezeDrainBoost : 1;
-    st.volume = Math.max(0, st.volume - (st.isVoiding ? T.voidPerSec : st.flowRate ?? T.leakPerSec) * squeezeBoost * dt);
+    // The stream: the fuller the bladder, the harder it pushes. It takes a moment to get going, then weakens
+    // to a trickle as the bladder empties (never to nothing, so it always finishes).
+    const push = T.streamTrickle + (1 - T.streamTrickle) * Math.pow(st.volume / 100, T.streamCurve);
+    st.flow += (push - st.flow) * Math.min(1, T.streamBuildRate * dt);
+    // a minigame that lets go (flowRate) sets its own pace; an open bladder that is squeezed empties faster
+    const pace = st.flowRate === null ? st.flow * (1 + (squeezing / T.squeezeMax) * T.squeezeDrainBoost) : 1;
+    st.volume = Math.max(0, st.volume - (st.isVoiding ? T.voidPerSec : st.flowRate ?? T.leakPerSec) * pace * dt);
     st.slosh.vel += (Math.random() - 0.5) * T.drainSloshKick;
     if (st.isVoiding && Math.random() < 0.3) emit('haptic', 15);
-    if (Math.random() < 0.6) spawnDrop();
-  }
+    if (Math.random() < 0.1 + 0.6 * st.flow) spawnDrop(0.45 + 0.55 * st.flow);
+  } else st.flow = 0;
 
   if (!st.isClosed && st.volume <= 0) {
     const accident = st.failureEvent;
-    st.volume = 0; st.isVoiding = false; st.failureEvent = false;
+    st.volume = 0; st.isVoiding = false; st.failureEvent = false; st.flow = 0;
     setSphincter(true, 'empty');
     emit('voidEnded', { accident });
   }
@@ -167,11 +171,12 @@ export function stepSim(dt, pointerCount) {
 function fullnessAboveSpikeMin() { return Math.max(0, Math.min(1, (st.volume - T.spikeMinVolume) / (100 - T.spikeMinVolume))); }
 
 // One drop of the stream. It leaves from the sphincter, wherever the body is right now.
-function spawnDrop() {
+// force: how hard it is pushed out (1 = a full stream; a trickle falls slower and in smaller drops)
+function spawnDrop(force = 1) {
   const g = bladderGeom();
   st.particles.push({
     x: g.cx + (Math.random() - 0.5) * 15, y: g.cy + g.Rr + 8,
-    vx: (Math.random() - 0.5) * 20, vy: 200 + Math.random() * 200, life: 1.0, size: Math.random() * 4 + 3
+    vx: (Math.random() - 0.5) * 20, vy: (200 + Math.random() * 200) * force, life: 1.0, size: (Math.random() * 4 + 3) * (0.6 + 0.4 * force)
   });
 }
 

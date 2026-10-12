@@ -82,7 +82,7 @@ test('v11 regression (38 checks)', async ({ browser }) => {
   const vl = await ev('voiceLines.voiding');
   check('repeat VOID taps ignored (one voiding line)', sp.filter((x) => vl.includes(x)).length === 1, String(sp));
   check('VOID button disabled while voiding', (await ev("document.getElementById('btn-void').disabled")) === true);
-  await wait(2200);
+  await wait(4500); // was 2200: a void now weakens to a trickle, so 60% takes about 3.5 s instead of 1.5 s
   const voidDisabled = "document.getElementById('btn-void').disabled";
   check('VOID finishes and button re-enables',
     ((await ev('st.volume')) === 0 && (await ev(voidDisabled)) === true) || (await ev(voidDisabled)) === false);

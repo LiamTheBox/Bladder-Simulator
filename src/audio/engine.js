@@ -121,14 +121,14 @@ export function updateSlosh(dt, val, vel, fill) {
     splashSynth.triggerAttackRelease(0.18, undefined, loud * (1 - fill / T.sloshSoundTightFrom * 0.6));
   }
 }
-// Plays a short tune on the shared jingle synth. notes: [pitch, seconds after now, length in seconds]
-function jingle(label, notes) {
+// Plays a short tune on the shared jingle synth. notes: [pitch, seconds after now, length in seconds]; loud: 0..1
+function jingle(label, notes, loud = 1) {
   if (!audioCtxReady) return;
   jingleSynth.label = label; // for the test mock, as in named()
   const t = Tone.now();
-  for (const [pitch, at, len] of notes) jingleSynth.triggerAttackRelease(pitch, len, t + at);
+  for (const [pitch, at, len] of notes) jingleSynth.triggerAttackRelease(pitch, len, t + at, loud);
 }
-export function playSpikeAlarm() { jingle('alarm', [["E5", 0, 0.06], ["E5", 0.11, 0.06], ["A5", 0.22, 0.12]]); }
+export function playSpikeAlarm() { jingle('alarm', [["E5", 0, 0.06], ["E5", 0.11, 0.06], ["A5", 0.22, 0.12]], TUNING.spikeAlarmLoudness); }
 export function playTick() { jingle('tick', [["C6", 0, 0.03]]); }
 export function playWin() { jingle('win', [["C5", 0, 0.09], ["E5", 0.09, 0.09], ["G5", 0.18, 0.09], ["C6", 0.27, 0.25]]); }
 // "Womp-womp": two sagging notes, the second lower and longer

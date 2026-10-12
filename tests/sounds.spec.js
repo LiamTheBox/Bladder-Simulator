@@ -119,10 +119,12 @@ test('a minigame has an alarm, ticks for its last seconds, and a win or lose tun
 
   await begin(30);
   expect(await heard('alarm'), 'the alarm is three notes').toBe(3);
+  expect(await pg.evaluate("window.__notes.filter((n) => n.sound === 'alarm').map((n) => n.loud)"), 'and a quiet one').toEqual([0.1, 0.1, 0.1]);
   await pg.waitForTimeout(600);
   expect(await heard('tick'), 'no ticking with plenty of time left').toBe(0);
   await pg.evaluate('endMinigame(true)');
   expect(await heard('win')).toBe(4);
+  expect(await pg.evaluate("window.__notes.filter((n) => n.sound === 'win').every((n) => n.loud === 1)"), 'the other tunes stay at full loudness').toBe(true);
   expect(await heard('lose')).toBe(0);
 
   await begin(30);

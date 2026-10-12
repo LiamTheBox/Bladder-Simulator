@@ -1,6 +1,7 @@
 // Recording stand-in for Tone.js, aliased in for `vite --mode test` (see vite.config.js).
 // Same behavior as MOCK_TONE in tests_reference/v11_regression.py: every trigger is logged to window.__audio.
 window.__audio = [];
+window.__notes = []; // { sound, pitch, loud } of every triggerAttackRelease, for tests about pitch and loudness
 const log = (...a) => window.__audio.push(a.join(':'));
 
 function mk(name) {
@@ -8,7 +9,7 @@ function mk(name) {
     constructor() { this.name = name; this.volume = { value: 0 }; this.frequency = { value: 0, rampTo() {}, setValueAtTime() {} }; this.state = 'stopped'; }
     connect() { return this; } toDestination() { return this; } start() { return this; } stop() { return this; } set() { return this; }
     triggerAttack() { log(this.label ?? name, 'attack'); } triggerRelease() { log(this.label ?? name, 'release'); }
-    triggerAttackRelease() { log(this.label ?? name, 'ar'); }
+    triggerAttackRelease(pitch, length, time, loud = 1) { log(this.label ?? name, 'ar'); window.__notes.push({ sound: this.label ?? name, pitch, loud }); }
   };
 }
 
@@ -18,7 +19,7 @@ export const Transport = { start() {} };
 const Destination = window.__toneOut = { volume: { value: 0 }, mute: false };
 export const getDestination = () => Destination;
 export const gainToDb = (gain) => 20 * Math.log10(gain);
-export const now = () => 0;
+export const now = () => performance.now() / 1000;
 export const Filter = mk('Filter');
 export const LFO = mk('LFO');
 export const Synth = mk('Synth');
@@ -34,6 +35,6 @@ export class NoiseSynth extends mk('Noise') {
     this.id = ['drain', 'fill'][noiseCount++] ?? 'Noise';
     this.triggerAttack = () => log(this.label ?? this.id, 'attack');
     this.triggerRelease = () => log(this.label ?? this.id, 'release');
-    this.triggerAttackRelease = () => log(this.label ?? this.id, 'ar');
+    this.triggerAttackRelease = (length, time, loud = 1) => { log(this.label ?? this.id, 'ar'); window.__notes.push({ sound: this.label ?? this.id, loud }); };
   }
 }

@@ -15,6 +15,10 @@ export const TUNING = {
   // sized from this share of the height, so the bubble does not cover its legs
   storyBodyCy: 0.34, storyBodyShare: 0.62,
 
+  // HUD (display only): the fullness ring turns red from this fullness and pulses once an urge wave is this high;
+  // the Control bar pulses when it is under this while holding
+  hudRingRedFrom: 85, hudSurgeFrom: 0.5, hudLowControl: 25,
+
   // The speech bubble above the head (ui/bubble.js), in pixels of the play area unless noted
   bubbleHeadTop: 1.2,            // the top of the head, in bladder radii above its centre
   bubbleTail: 12, bubbleBelowHud: 66, bubbleEdgeMargin: 8,

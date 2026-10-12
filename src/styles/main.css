@@ -32,7 +32,7 @@
   @media (min-width: 600px) and (max-width: 899px) {
     #toy-container { max-width: 760px; max-height: 1100px; }
     .action-btn { font-size: 1.15rem; padding: 18px; }
-    #stamina-row .stm-track { height: 10px; }
+    #stamina-row .stm-track { height: 16px; }
   }
 
   #canvas-wrapper { flex: 1; position: relative; overflow: hidden; touch-action: none; }
@@ -56,9 +56,13 @@
   }
 
   .status-dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
-  /* --urge: 0..1, how far round the ring is drawn */
-  #urge-ring { --urge: 0; display: flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; flex: none;
-    background: radial-gradient(closest-side, #1b1220 62%, transparent 66%), conic-gradient(#fb7185 calc(var(--urge) * 360deg), rgba(255,255,255,0.14) 0); }
+  /* The fullness ring: --fill (0..1) is how far round it is drawn, --ring its colour; --urge (0..1) makes it glow
+     and pulse as an urge wave rises (all set in ui/hud.js) */
+  #urge-ring { --fill: 0; --urge: 0; --ring: #38bdf8; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; flex: none;
+    background: radial-gradient(closest-side, #1b1220 60%, transparent 64%), conic-gradient(var(--ring) calc(var(--fill) * 360deg), rgba(255,255,255,0.14) 0);
+    box-shadow: 0 0 calc(var(--urge) * 16px) rgba(251, 113, 133, calc(var(--urge))); }
+  #urge-ring.surging { animation: urge-pulse 0.5s ease-in-out infinite; }
+  @keyframes urge-pulse { 50% { transform: scale(1.18); } }
 
   /* CONTROLS STYLING */
   #controls { 
@@ -88,6 +92,8 @@
   #btn-speedup { background: linear-gradient(180deg, #0ea5e9, #0284c7); box-shadow: 0 6px 0 #0369a1; }
   #btn-speedup.holding { transform: translateY(6px); box-shadow: 0 0 0 #0369a1; filter: brightness(1.2); }
   
+  #btn-shop { background: linear-gradient(180deg, #a78bfa, #7c3aed); box-shadow: 0 6px 0 #6d28d9; }
+  #btn-shop:active { transform: translateY(6px); box-shadow: 0 0 0 transparent; }
   .btn-empty { background: linear-gradient(180deg, #10b981, #059669); box-shadow: 0 6px 0 #047857; }
   
   #clench-row { display: flex; align-items: center; justify-content: center; gap: 14px; padding-bottom: 6px; }
@@ -116,6 +122,12 @@
     padding: 20px 40px; border-radius: 99px; font-size: 1.5rem; font-weight: 800;
     box-shadow: 0 10px 30px rgba(56, 189, 248, 0.4); animation: float 3s ease-in-out infinite;
   }
+  #how-to { margin-top: 28px; width: min(86%, 380px); display: flex; flex-direction: column; gap: 12px; color: #cbd5e1; font-size: 0.92rem; line-height: 1.35; }
+  .how-row { display: flex; align-items: center; gap: 14px; }
+  .how-row[hidden] { display: none; }
+  .how-icon { flex: none; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); }
+  .how-row b { color: #f8fafc; }
+  #how-note { margin-top: 6px; text-align: center; font-size: 0.78rem; color: #94a3b8; }
   @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
   
   /* Modal Boxes */
@@ -138,11 +150,14 @@
   .drink-amt { font-size: 0.75rem; color: var(--accent); font-weight: 700; margin-top: 4px; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 99px; }
 
   /* STAMINA: lives at the top of the control panel so it never covers the bladder */
+  /* Control (stamina): what decides the game, so big and labelled; it pulses red when low (.low, set in ui/hud.js) */
   #stamina-row { display: flex; align-items: center; gap: 10px; opacity: 0.35; transition: opacity 0.3s; }
-  #stamina-row .stm-lbl { font-size: 0.65rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; }
-  #stamina-row .stm-track { flex: 1; height: 8px; background: rgba(0,0,0,0.6); border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+  #stamina-row .stm-lbl { font-size: 0.8rem; font-weight: 900; color: #e2e8f0; letter-spacing: 1px; }
+  #stamina-row .stm-track { flex: 1; height: 14px; background: rgba(0,0,0,0.6); border-radius: 7px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+  #stamina-row.low .stm-track { animation: control-low 0.8s ease-in-out infinite; }
+  @keyframes control-low { 0%, 100% { box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 0 0 rgba(244, 63, 94, 0); } 50% { box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 0 14px rgba(244, 63, 94, 0.9); } }
   #stamina-bar { height: 100%; width: 100%; background: var(--success); transition: width 0.2s, background-color 0.3s; }
-  #stamina-text { font-size: 0.75rem; font-weight: 900; color: white; width: 38px; text-align: right; }
+  #stamina-text { font-size: 0.9rem; font-weight: 900; color: white; width: 44px; text-align: right; }
 
   /* BLADDER SPEECH BUBBLE: minigame prompts and subtitles. Sits at the bottom of the play area, except for
      free-play chatter (.overhead, below). */
@@ -255,10 +270,12 @@
   #tremor-label { min-width: 130px; font-weight: 900; font-size: 1.05rem; letter-spacing: 0.5px; color: white; pointer-events: none; }
 
   /* ---------- STORY MODE ---------- */
+  /* As big as the free-play button: the two ways to play weigh the same */
   #btn-story-mode {
-    position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
-    padding: 12px 22px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.08); color: #f8fafc; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px; cursor: pointer;
+    position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); white-space: nowrap;
+    padding: 18px 36px; border-radius: 99px; border: 0;
+    background: linear-gradient(135deg, #f472b6, #c084fc); box-shadow: 0 10px 30px rgba(244, 114, 182, 0.35);
+    color: #fff; font-weight: 800; font-size: 1.3rem; letter-spacing: 0.5px; cursor: pointer;
   }
   .story-card { margin-bottom: 12px; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #f8fafc; }
   .story-card.broken { opacity: 0.7; }
@@ -283,7 +300,7 @@
   }
   /* The bladder keeps the top third; the sim's own controls only appear while a minigame runs */
   .story-mode #canvas-wrapper { flex: 0 0 34%; }
-  .story-mode #btn-shop, .story-mode #pending-lbl, .story-mode #stamina-row, .story-mode #clench-row, .story-mode #btn-row { display: none !important; }
+  .story-mode #btn-shop, .story-mode #stamina-row, .story-mode #clench-row, .story-mode #btn-row { display: none !important; }
   .story-mode #controls { display: none; }
   .story-mode.mg-active #controls { display: flex; border-radius: 0; }
   .story-mode.mg-active #story-panel { border-radius: 0; }

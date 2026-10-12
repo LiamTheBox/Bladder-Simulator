@@ -48,8 +48,9 @@ for (const [w, h] of [[360, 640], [390, 844], [768, 1024], [1366, 768]]) {
       expect(r.top, `${fill}%: under the top buttons`).toBeGreaterThanOrEqual(r.hudBottom);
       expect(Math.min(r.left, r.right), `${fill}%: inside the play area`).toBeGreaterThanOrEqual(0);
       expect(Math.abs(r.mid - r.cx), `${fill}%: centred on the bladder`).toBeLessThan(40);
-      if (fill === 20) {
-        // a short line is one row high, and that fits between the buttons and the head even on the smallest phone
+      if (fill === 20 && h > 640) {
+        // a short line is one row high, and that fits between the buttons and the head (on the smallest phone there
+        // is no room above the head at all: there it overlaps the dome, checked above to stay clear of the eyes)
         await ev("prioritySpeechUntil=0; speakDirect('Getting fuller.')"); await wait(200);
         const b = await rect(ev, 'bladder-bubble'), c = await rect(ev, 'canvas-wrapper');
         expect(b.bottom - c.top, 'with room it sits wholly above the head').toBeLessThanOrEqual(r.headTop);
@@ -84,4 +85,53 @@ test('an upright tablet uses its width: a wide frame and a bladder much bigger t
   expect(sizes.tablet.share, 'nearly the whole width, not a 550 px column').toBeGreaterThan(0.95);
   expect(sizes.tablet.radius).toBeGreaterThan(sizes.phone.radius * 1.4);
   expect([sizes.tablet.fits, sizes.tablet.scroll], 'a full bladder and its legs still fit, nothing scrolls').toEqual([true, true]);
+});
+
+test('the HUD: a labelled Control bar that pulses when low, a fullness ring, and the drink button with the controls', async ({ browser }) => {
+  const { context, pg, errors, ev, wait } = await started(browser, 390, 844);
+  await expect(pg.locator('#stamina-row .stm-lbl')).toHaveText('CONTROL');
+  expect((await rect(ev, 'stamina-bar')).height, 'a bar you can read at a glance').toBeGreaterThanOrEqual(14);
+
+  await ev('st.volume=80; st.isClosed=true; st.stamina=60'); await wait(200);
+  await expect(pg.locator('#stamina-row')).not.toHaveClass(/low/);
+  await ev('st.stamina=15'); await wait(200);
+  await expect(pg.locator('#stamina-row'), 'low while holding: it pulses').toHaveClass(/low/);
+  await ev('st.volume=30; st.stamina=15'); await wait(100);
+  await expect(pg.locator('#stamina-row'), 'not while it is recovering').not.toHaveClass(/low/);
+
+  const ring = (p) => ev(`document.getElementById('urge-ring').style.getPropertyValue('${p}')`);
+  await ev('st.volume=40'); await wait(150);
+  expect([Number(await ring('--fill')), await ring('--ring')]).toEqual([0.4, '#38bdf8']);
+  await ev('st.volume=90; st.stamina=100'); await wait(150);
+  expect([Number(await ring('--fill')), await ring('--ring')], 'red near full').toEqual([0.9, '#f43f5e']);
+  await expect(pg.locator('#vol-lbl'), 'the number stays as it was').toHaveText('90%');
+
+  // the drink button sits with SPEED UP and VOID, and carries what is still digesting
+  const [drink, speed, voidB] = [await rect(ev, 'btn-shop'), await rect(ev, 'btn-speedup'), await rect(ev, 'btn-void')];
+  expect(Math.abs(drink.top - speed.top) < 2 && Math.abs(speed.top - voidB.top) < 2, 'one row').toBe(true);
+  expect(drink.right).toBeLessThanOrEqual(speed.left);
+  await expect(pg.locator('#drink-sub')).toHaveText('Pick one');
+  await pg.locator('#btn-shop').dispatchEvent('pointerdown');
+  await pg.locator('.drink-btn', { has: pg.getByText('Beer', { exact: true }) }).dispatchEvent('pointerdown');
+  await expect(pg.locator('#drink-sub')).toHaveText(/^\+3[45]% digesting$/);
+  expect(await ev("document.querySelectorAll('.hud-overlay #btn-shop').length"), 'no longer in the top row').toBe(0);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('the start screen shows how to play as icon rows, and both ways to play as equal buttons', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await expect(pg.locator('#how-to .how-row:not([hidden])')).toHaveCount(5); // four rows, plus the developer one while that mode is on
+  const main = await pg.locator('#start-label').boundingBox(), story = await pg.locator('#btn-story-mode').boundingBox();
+  expect(story.height / main.height, 'the story button is as weighty as the main one').toBeGreaterThan(0.8);
+  const rows = await pg.locator('#how-to').boundingBox();
+  expect(rows.y + rows.height, 'nothing runs into the story button').toBeLessThan(story.y);
+  for (const [w, h] of [[360, 640], [768, 1024], [1366, 768]]) {
+    await pg.setViewportSize({ width: w, height: h }); await pg.waitForTimeout(200);
+    const r = await pg.locator('#how-to').boundingBox(), s = await pg.locator('#btn-story-mode').boundingBox();
+    expect(r.y + r.height, `${w}x${h}: rows clear of the story button`).toBeLessThan(s.y);
+    expect(r.y, `${w}x${h}`).toBeGreaterThan(0);
+  }
+  expect(errors).toEqual([]);
+  await context.close();
 });

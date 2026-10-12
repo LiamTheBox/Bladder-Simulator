@@ -216,9 +216,12 @@ The owner approved a review of 15 layout items and 9 rules. Built so far:
 - The stream: `st.flow` (0..1) builds up when the bladder opens, is strongest while full and weakens to a trickle
   (`TUNING.stream…`); `voidPerSec` / `leakPerSec` are now the speed of a *full* stream, so a full void takes about
   5 s. Drops and the drain sound follow it. A minigame's own `flowRate` is unaffected. `tests/stream.spec.js`.
-- `tests/new-touch.spec.js` covers the lock, the bubble and the tablet width.
-Still to do, in this order: (1) HUD: bigger "Control" bar, drink button with the controls, icon start screen;
-(2) story layout: one place for the bladder's line, pinned choices; (3) desktop free play uses its left column;
+- HUD: the stamina bar is a bigger "CONTROL" bar that pulses when low; the fullness pill has a ring that fills
+  with the bladder (blue, yellow, red) and glows and pulses with an urge wave (`#urge-ring`, `--fill`/`--urge`);
+  the drink button (`#btn-shop`) sits with SPEED UP and VOID and shows what is still digesting; the start screen
+  explains the game in icon rows, and Story Mode is as big a button as the main one.
+- `tests/new-touch.spec.js` covers the lock, the bubble, the tablet width, the HUD and the start screen.
+Still to do, in this order: (2) story layout: one place for the bladder's line, pinned choices; (3) desktop free play uses its left column;
 (4) developer panel: tabs, live drawer, story tools; (5) rules: drinks with their own speed and after-effect,
 a digestion curve, a bladder that grows taut, richer liquid, stretch that buys room, recovery tied to soothing.
 

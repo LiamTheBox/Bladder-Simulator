@@ -26,16 +26,14 @@
   
   <div id="start-overlay">
     <div class="start-btn-visual" id="start-label">TAP TO START</div>
-    <div style="color: #94a3b8; margin-top: 24px; font-size: 0.9rem; text-align: center; max-width: 80%; line-height: 1.5;">
-      <b style="color:#f8fafc;font-size:1rem;">How to play</b><br><br>
-      Pick a drink 🍹 and let it digest into the bladder.<br>
-      Above 50% your stamina drains. Hold the lock closed, win the urge-spike minigames, or VOID.<br><br>
-      <b style="color:#f8fafc;">Touch the bladder</b><br>
-      Tap to poke &bull; rub to soothe &bull; pull the edge to stretch<br>
-      Two-finger pinch (or scroll wheel) to squeeze<br>
-      Tilt your phone to slosh the fluid<br><br>
-      <span id="dev-hint" hidden><b style="color:#f8fafc;">Developer mode</b><br>The 🛠️ button at the top opens the testing tools: any minigame, dance or sound.<br><br></span>
-      <span style="opacity:.7;">The game pauses while menus are open or the tab is hidden.</span>
+    <!-- How to play, at a glance: one row per thing the player does -->
+    <div id="how-to">
+      <div class="how-row"><span class="how-icon">🍹</span><span><b>Drink</b> and let it fill the bladder</span></div>
+      <div class="how-row"><span class="how-icon">🔒</span><span><b>Hold it locked</b> while the urge comes in waves</span></div>
+      <div class="how-row"><span class="how-icon">⚡</span><span><b>Win the minigame</b> when a wave peaks, or VOID</span></div>
+      <div class="how-row"><span class="how-icon">👆</span><span><b>Touch it</b>: tap to poke, rub to soothe, pull the edge to stretch, pinch or scroll to squeeze</span></div>
+      <div class="how-row" id="dev-hint" hidden><span class="how-icon">🛠️</span><span><b>Developer mode</b>: the 🛠️ button opens the testing tools</span></div>
+      <div id="how-note">Tap anywhere to start. The game pauses while a menu is open.</div>
     </div>
     <button id="btn-story-mode">📖 STORY MODE</button>
   </div>
@@ -143,18 +141,14 @@
         
         <div style="display: flex; flex-direction: column; gap: 4px;">
           <div class="glass-pill" id="vol-lbl" style="font-size: 1.25rem; padding: 10px 18px;">
-            <!-- the ring around the dot fills as an urge wave rises (ui/hud.js) -->
+            <!-- the ring fills with the bladder, and glows and pulses as an urge wave rises (ui/hud.js) -->
             <span id="urge-ring"><span class="status-dot" style="color: var(--accent);"></span></span>
             <span style="color: #bae6fd;">0%</span>
-          </div>
-          <div id="pending-lbl" style="display: none; background: rgba(0,0,0,0.6); padding: 4px 12px; border-radius: 99px; font-size: 0.75rem; color: #a78bfa; width: fit-content; font-weight: 800; letter-spacing: 0.5px; border: 1px solid rgba(167, 139, 250, 0.3);">
-            +0% DIGESTING
           </div>
         </div>
 
         <div style="display: flex; gap: 8px;">
           <div class="glass-pill" id="btn-dev" style="display: none; cursor: pointer; background: rgba(250, 204, 21, 0.15); border-color: #facc15; pointer-events: auto; padding: 10px 14px;">🛠️</div>
-          <div class="glass-pill" id="btn-shop" style="cursor: pointer; background: rgba(56, 189, 248, 0.15); border-color: var(--accent); pointer-events: auto; padding: 10px 14px;">🍹</div>
           <div class="glass-pill" id="btn-settings" style="cursor: pointer; background: rgba(255, 255, 255, 0.1); pointer-events: auto; padding: 10px 14px;">⚙️</div>
         </div>
       </div>
@@ -181,13 +175,17 @@
 
   <div id="controls">
     <div id="stamina-row">
-      <span class="stm-lbl">STAMINA</span>
+      <span class="stm-lbl">CONTROL</span>
       <div class="stm-track"><div id="stamina-bar"></div></div>
       <span id="stamina-text">100%</span>
     </div>
 
     <div id="action-zone">
     <div class="btn-row" id="btn-row">
+      <button class="action-btn" id="btn-shop">
+        <span>🍹 DRINK</span>
+        <span class="sub-text" id="drink-sub">Pick one</span>
+      </button>
       <button class="action-btn" id="btn-speedup">
         <span>SPEED UP</span>
         <span class="sub-text">Digest faster</span>

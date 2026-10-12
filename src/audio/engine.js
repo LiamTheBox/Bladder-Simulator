@@ -196,7 +196,8 @@ export function playLose() {
 export function playSqueak() {
   if (!audioCtxReady) return;
   const t = startTime(squeakSynth);
-  squeakSynth.triggerAttackRelease(700, 0.08, t); squeakSynth.frequency.rampTo(1300, 0.07, t);
+  const note = nextPitch('squeak', 560, 900);
+  squeakSynth.triggerAttackRelease(note, 0.08, t); squeakSynth.frequency.rampTo(note * 1.85, 0.07, t);
 }
 // Stretch: a rubbery creak each time the pull grows by another step (dist = st.drag.dist, in pixels).
 // Easing back is silent; it only moves the mark the next creak is measured from.
@@ -237,7 +238,8 @@ export function playBabble(text) {
   for (let i = 0; i < blips; i++) babbleSynth.triggerAttackRelease(380 + Math.random() * 260, 0.045, t + i * 0.075);
 }
 export function playSnap(closing) { if (!audioCtxReady) return; snapSynth.triggerAttackRelease(closing ? ["C3", "E3"] : ["E2", "G2"], "16n"); }
-export function playPoke() { if (audioCtxReady) pokeSynth.triggerAttackRelease("G2", "8n"); }
+// The thump of a poke, on a different note each time (the prototype's was always G2, 98 Hz)
+export function playPoke() { if (audioCtxReady) pokeSynth.triggerAttackRelease(nextPitch('poke', 78, 130), "8n", startTime(pokeSynth)); }
 export function playStretch(amt) { if (audioCtxReady) stretchSynth.triggerAttackRelease(150 + Math.min(600, amt * 6), "16n"); }
 export function playSnapback(int) { if (audioCtxReady) snapbackSynth.triggerAttackRelease(Math.min(400, 80 + int * 4), "8n"); }
 export function playHeartbeat() { if (audioCtxReady) heartBeat.triggerAttackRelease("C1", "8n", undefined, TUNING.heartbeatLoudness); }

@@ -287,3 +287,20 @@ test('drinks sound different: more gulps for a bigger drink, a fizz, a slurp or 
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test('every poke sounds a little different: thump and squeak never on the same note twice running', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  await pg.evaluate('st.volume=40; st.isClosed=true; window.__notes.length=0');
+  const g = await pg.evaluate(GEOM);
+  for (let i = 0; i < 7; i++) { await pg.mouse.click(g.x, g.y); await pg.waitForTimeout(120); }
+  const notes = await pg.evaluate('window.__notes');
+  for (const sound of ['Membrane', 'squeak']) {
+    const pitches = notes.filter((n) => n.sound === sound).map((n) => Math.round(n.pitch));
+    expect(pitches.length, sound).toBe(7);
+    for (let i = 1; i < 7; i++) expect(pitches[i], `${sound} ${i}`).not.toBe(pitches[i - 1]);
+    expect(new Set(pitches.slice(0, 6)).size, `${sound}: six different notes before any returns`).toBe(6);
+  }
+  expect(errors).toEqual([]);
+  await context.close();
+});

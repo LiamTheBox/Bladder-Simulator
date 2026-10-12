@@ -28,6 +28,12 @@
   @media (min-width: 600px) { 
     #toy-container { height: 90vh; border-radius: 32px; border: 1px solid var(--panel-border); } 
   }
+  /* An upright tablet: the stacked phone layout, but using the width it has instead of a phone-sized column */
+  @media (min-width: 600px) and (max-width: 899px) {
+    #toy-container { max-width: 760px; max-height: 1100px; }
+    .action-btn { font-size: 1.15rem; padding: 18px; }
+    #stamina-row .stm-track { height: 10px; }
+  }
 
   #canvas-wrapper { flex: 1; position: relative; overflow: hidden; touch-action: none; }
   #fluid-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -135,7 +141,8 @@
   #stamina-bar { height: 100%; width: 100%; background: var(--success); transition: width 0.2s, background-color 0.3s; }
   #stamina-text { font-size: 0.75rem; font-weight: 900; color: white; width: 38px; text-align: right; }
 
-  /* BLADDER SPEECH BUBBLE: minigame prompts and subtitles. Sits at the bottom of the play area. */
+  /* BLADDER SPEECH BUBBLE: minigame prompts and subtitles. Sits at the bottom of the play area, except for
+     free-play chatter (.overhead, below). */
   #bladder-bubble {
     position: absolute; left: 50%; bottom: 14px; transform: translate(-50%, 8px);
     max-width: 86%; padding: 10px 16px; border-radius: 18px; text-align: center;
@@ -150,6 +157,11 @@
     border: 8px solid transparent; border-top: 0; border-bottom-color: rgba(255,255,255,0.94);
   }
   #bladder-bubble.alarm::after { border-bottom-color: #fee2e2; }
+  /* Above the head (free-play chatter): placed by ui/bubble.js, with the tail pointing down at the bladder */
+  #bladder-bubble.overhead { bottom: auto; }
+  /* a phone has little room between the top buttons and the head: one compact line fits where two would not */
+  @media (max-width: 599px) { #bladder-bubble.overhead { max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; } }
+  #bladder-bubble.overhead::after { top: auto; bottom: -8px; border: 8px solid transparent; border-bottom: 0; border-top-color: rgba(255,255,255,0.94); }
 
   /* MINIGAME PANEL: takes the place of the SPEED UP / VOID row during an urge spike */
   #action-zone { position: relative; }

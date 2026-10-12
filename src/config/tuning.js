@@ -15,6 +15,10 @@ export const TUNING = {
   // sized from this share of the height, so the bubble does not cover its legs
   storyBodyCy: 0.34, storyBodyShare: 0.62,
 
+  // The speech bubble above the head (ui/bubble.js), in pixels of the play area unless noted
+  bubbleHeadTop: 1.2,            // the top of the head, in bladder radii above its centre
+  bubbleTail: 12, bubbleBelowHud: 66, bubbleEdgeMargin: 8,
+
   startVolume: 15,
   storyStripSize: 5,             // story mode: chapters shown at once in the progress strip; the rest is a number
   thoughtsTypeCharsPerSec: 22,   // story mode: how fast a thought over a choice writes itself out

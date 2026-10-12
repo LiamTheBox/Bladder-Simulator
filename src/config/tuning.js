@@ -36,9 +36,9 @@ export const TUNING = {
   // digestTau), so the tail does not drag on for ever: a drink is in after about five digestTau.
   digestTau: 15, digestTailRate: 0.15,
   diureticShare: 0.3, diureticDelay: 3,     // coffee, tea...: an extra 30% of the drink, on a curve three times as slow
-  relaxedSec: 60, relaxedDrainBoost: 0.3,
+  relaxedSec: 60, relaxedDrainBoost: 0.3,  // beer: for a minute, holding costs 30% more stamina
   fizzSec: 25,                   // a fizzy drink (feel "fizzy") sends bubbles up through the liquid this long
-  sprayFromVel: 1.5,             // drawing: the liquid sprays up the wall when it sloshes faster than this  // beer: for a minute, holding costs 30% more stamina
+  sprayFromVel: 1.5,             // drawing: the liquid sprays up the wall when it sloshes faster than this
   digestFastPerSec: 25.0,        // while SPEED UP is held
   leakPerSec: 20,                // sphincter open
   voidPerSec: 40,                // VOID pressed, or an accident

@@ -1,4 +1,4 @@
-// The comfort and content part of Settings: the age gate, voice and vibration, switching off individual
+// The comfort and content part of Settings: the age gate, sound volume, voice and vibration, switching off individual
 // minigames, hiding stories by tag, and the way back to the start screen.
 import { settings, saveSettings, toggleInList } from '../config/settings.js';
 import { minigameNames } from '../config/content.js';
@@ -6,6 +6,7 @@ import { minigameIds } from '../minigames/registry.js';
 import { TUNING } from '../config/tuning.js';
 import { startMinigame } from '../minigames/index.js';
 import { resetGame } from './reset.js';
+import { setSoundVolume, playPoke } from '../audio/engine.js';
 
 /* --- 18+ gate: shown until confirmed, and again whenever the answer could not be remembered --- */
 const gate = document.getElementById('age-gate');
@@ -29,7 +30,22 @@ function checkbox(labelText, checked, onChange) {
   return label;
 }
 
+function slider(labelText, id, value, onInput, onRelease) {
+  const label = document.createElement('label'); label.className = 'setting-slider';
+  const span = document.createElement('span'); span.textContent = labelText;
+  const range = document.createElement('input'); range.type = 'range'; range.id = id;
+  range.min = 0; range.max = 100; range.step = 5; range.value = value;
+  range.addEventListener('input', () => onInput(Number(range.value)));
+  range.addEventListener('change', () => onRelease());
+  label.append(span, range);
+  return label;
+}
+
 document.getElementById('settings-comfort').append(
+  // letting go of the slider plays one sound, so the new loudness can be heard right away
+  slider('Sound effects volume', 'sound-volume', settings.sound, (v) => {
+    settings.sound = v; saveSettings(); setSoundVolume(v);
+  }, playPoke),
   checkbox('Speak the bladder\'s lines aloud', settings.voice, (on) => {
     settings.voice = on; saveSettings();
     if (!on && window.speechSynthesis) window.speechSynthesis.cancel();

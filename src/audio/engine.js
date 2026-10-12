@@ -1,5 +1,6 @@
 // Sound effects (Tone.js). Every play function is a no-op until initAudio() has run on the first tap.
 import * as Tone from 'tone';
+import { settings } from '../config/settings.js';
 
 let audioCtxReady = false;
 let waterSynth, waterFilter, waterLfo, fillSynth, fillFilter, fillLfo;
@@ -35,6 +36,16 @@ function initAudio() {
   snapbackSynth = new Tone.MembraneSynth({ pitchDecay: 0.2, octaves: 4, envelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination(); snapbackSynth.volume.value = -4;
 
   audioCtxReady = true;
+  setSoundVolume(settings.sound);
+}
+
+// Master volume for every sound effect, in percent: 0 mutes, 100 is full loudness.
+// Squared, because the ear hears loudness in ratios: a plain percentage would do nearly nothing above 50.
+export function setSoundVolume(percent) {
+  if (!audioCtxReady) return; // applied by initAudio() once the first tap has unlocked audio
+  const out = Tone.getDestination();
+  out.mute = percent <= 0;
+  if (percent > 0) out.volume.value = Tone.gainToDb((percent / 100) ** 2);
 }
 
 export function playWater(filling) {

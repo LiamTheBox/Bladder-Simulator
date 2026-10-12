@@ -334,6 +334,8 @@
   .setting-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; color: #94a3b8; font-size: 0.85rem; }
   .setting-check { display: flex; align-items: center; gap: 10px; min-height: 40px; color: #e2e8f0; font-size: 0.95rem; cursor: pointer; }
   .setting-check input { width: 20px; height: 20px; flex: none; accent-color: #38bdf8; }
+  .setting-slider { display: flex; flex-direction: column; gap: 4px; min-height: 40px; margin-bottom: 6px; color: #e2e8f0; font-size: 0.95rem; }
+  .setting-slider input { width: 100%; height: 28px; accent-color: #38bdf8; }
   /* In a story the play area is short: a more compact bubble leaves the bladder's legs visible */
   .story-mode #bladder-bubble { bottom: 8px; max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; }
   #story-guide-link { color: #7dd3fc; font-size: 0.85rem; padding: 6px 0; }

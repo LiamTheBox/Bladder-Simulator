@@ -13,9 +13,10 @@ async function openStory(browser, title = /Bonnie/, size = [390, 844]) {
   return { ...game, ev: (js) => pg.evaluate(js), wait: (ms) => pg.waitForTimeout(ms) };
 }
 const choice = (pg, text) => pg.locator('.story-choice', { hasText: text });
-// Taps Continue until choices (or something else) appear
+// Taps Continue until choices (or something else) appear, and taps away any thoughts lying over the choices
 async function readOn(pg) {
   for (let i = 0; i < 30 && await pg.locator('.story-continue', { hasText: 'Continue' }).count(); i++) await pg.locator('.story-continue').click();
+  for (let i = 0; i < 60 && await pg.locator('.story-choice.thought').count(); i++) await pg.locator('.story-choice.thought').first().click();
 }
 
 // Like readOn, but also wins any minigame an interruption starts on the way
@@ -53,9 +54,13 @@ test('reading: lines one at a time, the bladder answers in its bubble, stats and
 
   await pg.locator('.story-continue').click();
   const reply = 'I filed a complaint at midnight. Nobody answered.';
-  await expect(pg.locator('.bladder-voice')).toHaveText(`“${reply}”`);
   await expect(pg.locator('#bladder-bubble')).toHaveText(reply);
   await expect(pg.locator('#bladder-bubble')).toHaveClass(/show/);
+  // while the bubble says it, it is not repeated in the text; it joins the text when the bubble goes
+  await expect(pg.locator('.bladder-voice')).toHaveText(`“${reply}”`);
+  await expect(pg.locator('.bladder-voice')).toBeHidden();
+  await ev('hideBubble()');
+  await expect(pg.locator('.bladder-voice')).toBeVisible();
   expect(await ev('window.__spoken')).toContain(reply);
 
   await pg.locator('.story-continue').click(); // the last line brings the choices with it
@@ -115,7 +120,12 @@ test('losing all control: a breakdown scene, then an accident empties the bladde
   const { context, pg, ev, errors } = await openStory(browser);
   // the same story, started with almost no control left: the first lost wave crosses its "control at 0" threshold
   const bonnie = JSON.parse(readFileSync(new URL('../stories/bonnies_journey.json', import.meta.url), 'utf8'));
-  bonnie.stats.find((s) => s.id === 'control').start = 15; // 15 - 4 for listening, then - 15 for the lost wave
+  const control = bonnie.stats.find((s) => s.id === 'control');
+  control.start = 15; // 15 - 4 for listening, then - 15 for the lost wave
+  control.thresholds = control.thresholds.filter((t) => 'goto' in t); // no adrenaline rescue here (it has its own test)
+  bonnie.scenes = bonnie.scenes.filter((s) => s.id !== 'second_wind');
+  const breakdown = bonnie.scenes.find((s) => s.id === 'breakdown');
+  breakdown.variants = [breakdown.variants[0], breakdown.variants[0]]; // always the same telling
   await pg.evaluate((text) => {
     const r = window.parseStory(text, { file: 'bonnie.json', minigameIds: window.minigameIds() });
     window.startStory(r.story, { slot: null });
@@ -146,6 +156,133 @@ test('losing all control: a breakdown scene, then an accident empties the bladde
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test('adrenaline: the first time control runs out a rescue scene plays, control is back, and the breakdown waits for the second time', async ({ browser }) => {
+  const { context, pg, ev, errors } = await openStory(browser);
+  const bonnie = JSON.parse(readFileSync(new URL('../stories/bonnies_journey.json', import.meta.url), 'utf8'));
+  bonnie.stats.find((s) => s.id === 'control').start = 15;
+  await pg.evaluate((text) => {
+    const r = window.parseStory(text, { file: 'bonnie.json', minigameIds: window.minigameIds() });
+    window.startStory(r.story, { slot: null });
+  }, JSON.stringify(bonnie));
+  await readOn(pg); await choice(pg, 'Lie still one more minute').click();
+  await readOn(pg); await choice(pg, 'Slip back to my room').click();
+  await readOn(pg); await choice(pg, 'Face it').click();
+  await ev('endMinigame(false)');
+  await expect(pg.locator('#story-chapter')).toHaveText('Second Wind');
+  await expect(pg.locator('.story-stat-head').nth(0)).toHaveText(/Control\s*100/);
+  await expect(pg.locator('#story-modes')).toHaveText('Hard mode · Adrenaline');
+  await expect(pg.locator('.story-line').first(), 'one of the five tellings').toHaveText(/It should be over|Her heart slams twice|The last of her grip goes|Panic does what manners|For one long second/);
+  expect(await ev('st.failureEvent'), 'nothing has let go').toBe(false);
+  // afterwards the story carries on where the lost wave was leading: second thoughts, from its first line
+  for (let i = 0; i < 3; i++) await pg.locator('.story-continue').click();
+  await expect(pg.locator('#story-chapter')).toHaveText('Chapter 1 · 4:38 AM — Second Thoughts');
+  await expect(pg.locator('.story-line:not(.bladder-voice)')).toHaveCount(1);
+  // from now on control falls one and a half times as fast: the slow stairs cost 9, now 13.5
+  await advance(pg);
+  await choice(pg, 'One stair at a time').click();
+  await expect(pg.locator('.story-stat-head').nth(0)).toHaveText(/Control\s*87/); // 86.5, shown rounded
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+// A tiny story whose choices are always under thoughts
+const THOUGHTS = {
+  schemaVersion: 1, meta: { title: 'Thoughts', rating: '18+' },
+  characters: [{ id: 'sam', name: 'Sam', age: 30 }, { id: 'bladder', name: 'B', kind: 'bladder' }],
+  stats: [{ id: 'control', label: 'Control', start: 20 }],
+  bladder: { startFullness: 60, fillPerMinute: 1 }, clock: { start: '10:00' },
+  thoughts: { when: [{ stat: 'control', lt: 30 }], lines: ['<b>Just go.</b>', '<i>Why not now?</i>'], freeSeconds: 2, minutes: 3 },
+  start: 'one',
+  scenes: [
+    { id: 'one', lines: [{ speaker: 'narrator', text: 'A question.' }], choices: [
+      { text: 'Answer calmly.', effects: [{ stat: 'control', add: 30 }], next: 'two' }, { text: 'Answer quickly.', next: 'two' }, { text: 'Say nothing.', next: 'two' }] },
+    { id: 'two', lines: [{ speaker: 'narrator', text: 'Another.' }], choices: [{ text: 'Fine.', next: 'end' }] }],
+  endings: [{ id: 'end', title: 'Done', text: 'Done.' }],
+};
+async function startThoughts(pg, change = (s) => s) {
+  await pg.mouse.click(195, 300); await pg.waitForTimeout(300); // past the start screen
+  const errors = await pg.evaluate((text) => {
+    const r = window.parseStory(text, { file: 'thoughts.json', minigameIds: window.minigameIds() });
+    if (r.ok) window.startStory(r.story);
+    return r.errors;
+  }, JSON.stringify(change(JSON.parse(JSON.stringify(THOUGHTS)))));
+  expect(errors).toEqual([]);
+}
+
+test('thoughts lie over every choice, write themselves out, and take three taps each to clear', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await startThoughts(pg, (s) => { s.thoughts.freeSeconds = 600; return s; });
+  const covers = pg.locator('.story-choice.thought');
+  await expect(covers).toHaveCount(3);
+  await expect(pg.locator('.story-choice')).toHaveCount(3);
+  await expect(pg.locator('#story-thought-bar')).toBeVisible();
+  // each shows one of the thoughts, as plain text, appearing letter by letter
+  await expect(covers.first()).toHaveText(/^(<b>Just go\.<\/b>|<i>Why not now\?<\/i>)$/);
+  expect(await pg.evaluate("document.querySelectorAll('#story-choices b, #story-choices i').length"), 'story text is never HTML').toBe(0);
+  expect(await pg.locator('.story-choice', { hasText: 'Answer' }).count(), 'the real answers are not on the page yet').toBe(0);
+  // two taps crack it, the third reveals the answer underneath
+  await covers.nth(1).click(); await covers.nth(1).click();
+  await expect(covers).toHaveCount(3);
+  await expect(covers.nth(1)).toHaveClass(/cracked/);
+  await covers.nth(1).click();
+  await expect(covers).toHaveCount(2);
+  await expect(pg.locator('.story-choice').nth(1)).toHaveText('Answer quickly.');
+  expect((await pg.evaluate('storyView()')).thoughts.covered).toEqual([true, false, true]);
+  expect((await pg.evaluate('storyView()')).clock, 'inside the free time nothing is charged').toBe('10:00');
+  // clearing the first and picking it: control rises, so the next choices are free
+  for (let i = 0; i < 3; i++) await covers.first().click();
+  await choice(pg, 'Answer calmly.').click();
+  await expect(pg.locator('.story-choice')).toHaveText(['Fine.']);
+  await expect(covers).toHaveCount(0);
+  await expect(pg.locator('#story-thought-bar')).toBeHidden();
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('thoughts: the free time drains, then story time is charged until an answer is picked; a menu stops the clock', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await startThoughts(pg);
+  await pg.evaluate('TUNING.thoughtsOvertimeEverySec = 0.5');
+  const view = () => pg.evaluate('storyView()');
+  await expect(pg.locator('#story-thought-bar')).not.toHaveClass(/late/);
+  expect((await view()).clock).toBe('10:00');
+  await expect(pg.locator('#story-thought-bar')).toHaveClass(/late/, { timeout: 4000 });
+  await expect.poll(async () => (await view()).clock, { timeout: 4000 }).not.toBe('10:00');
+  const v = await view();
+  expect(v.fullness, 'the bladder fills with the minutes that pass').toBeGreaterThan(60);
+  expect(v.thoughts.covered, 'the thoughts are still there').toEqual([true, true, true]);
+  // with Settings open the game is paused: no more time is charged
+  await pg.locator('#btn-settings').dispatchEvent('pointerdown');
+  const paused = (await view()).clock;
+  await pg.waitForTimeout(1500);
+  expect((await view()).clock).toBe(paused);
+  await pg.locator('.close-modal[data-target=settings-overlay]').dispatchEvent('pointerdown');
+  await expect.poll(async () => (await view()).clock, { timeout: 4000 }).not.toBe(paused);
+  // picking an answer ends it
+  for (let i = 0; i < 3; i++) await pg.locator('.story-choice.thought').nth(1).click();
+  await choice(pg, 'Answer quickly.').click();
+  await expect(pg.locator('.story-line').last()).toHaveText('Another.');
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+for (const [w, h] of [[360, 640], [1280, 800]]) {
+  test(`thoughts over the choices fit at ${w}x${h}`, async ({ browser }) => {
+    const { context, pg, errors } = await openGame(browser, w, h);
+    await startThoughts(pg, (s) => { s.thoughts.lines = ['I would prefer having a wee, and I would prefer it right now, thank you.']; return s; });
+    await pg.waitForTimeout(600);
+    const boxes = await pg.locator('.story-choice.thought').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); return { l: r.left, r: r.right, t: r.top, b: r.bottom }; }));
+    expect(boxes.length).toBe(3);
+    for (const b of boxes) {
+      expect(b.l).toBeGreaterThanOrEqual(0); expect(b.r).toBeLessThanOrEqual(w);
+      expect(b.b).toBeLessThanOrEqual(h); expect(b.b - b.t, 'tall enough for a thumb').toBeGreaterThanOrEqual(44);
+    }
+    expect(await pg.evaluate('document.documentElement.scrollWidth <= window.innerWidth')).toBe(true);
+    expect(errors).toEqual([]);
+    await context.close();
+  });
+}
 
 test('hard mode raises minigame difficulty; the void effect drains the bladder; chapter 1 runs on into chapter 2', async ({ browser }) => {
   const { context, pg, ev, errors } = await openStory(browser);

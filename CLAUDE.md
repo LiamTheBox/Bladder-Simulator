@@ -27,7 +27,8 @@ Goal: easy to **deploy as a static website** and easy to **mod with user-made st
   - Stretch relaxes back to normal in ~0.9 s after release (`TUNING.creepRelaxRate`).
   - 12 potty-dance leg moves (hop, tap, curl, squeeze, shiver, ...) chosen by fullness; whole-body hops.
   - 3 minigames: mash ("clench"), leaks (tap cracks), breathe (hold/release ring). Controls appear in a
-    bottom panel; the bladder "speaks" the instruction in a speech bubble; the bladder stays unobstructed.
+    bottom panel; the bladder "speaks" the instruction in a speech bubble at the foot of the play area; the
+    bladder stays unobstructed.
   - Voice-line categories (casual, filling, desperate, begging, poke, stretch, soothe, squeeze,
     success_hold, voiding, accident) editable in Settings; every spoken line also shows as a subtitle bubble.
   - Pause when menus are open, on the start screen, or when the tab is hidden.
@@ -84,6 +85,11 @@ To add a game: one file in `src/minigames/`, its controls in `index.html` inside
 Existing: `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`, `tiptoe` (drag slowly,
 a speed limit), `steady_the_slosh` (keep a drifting wave centred), `think_of_something_else` (tap numbers in
 order while the bladder calls wrong ones). All nine are in `TUNING.simSpikePool`.
+On trial (in `TUNING.practiceMinigames`, **not yet playtested**): `sneak_a_pee`, a hurried toilet visit: hold to
+go, stop while someone outside listens. It is the one game that drains the bladder (`beginFlow` / `endFlow` in
+`sim/actions.js`) and reports `noise` (how much was overheard) next to `quality` (the share drained). It is
+meant for stories, which give it `relief`, `heard` and `lines`; it does not belong in the random pool, because
+free play cancels a spike when the bladder is opened.
 Trying a new game before approving it: register it, list its id in `TUNING.practiceMinigames` instead of the
 pool, and it appears under "Try a new minigame" at the bottom of Settings (hidden while the list is empty). It
 runs as `startMinigame({ id, practice: true })`: no stamina at stake, not cancelled by the spike rules. In sim mode the
@@ -127,10 +133,18 @@ choice sets (one kind of decision, reworded per scene), interruptions (`"scene"`
 story-wide triggers, modes (a flag that makes minigames harder and filling faster, e.g. hard mode),
 conditional lines, `void` and `clock` effects, accident endings (`"accident": true`: the bladder empties by itself on arrival), a `chapters` list (name + emoji, drawn as a progress strip of
 `TUNING.storyStripSize` squares plus a count of the rest), closing scenes
-(`"closing": true`: a game-over scene such as a breakdown, after which nothing interrupts) and `bladder.leakOnFail` (a lost
-minigame on a very full bladder leaks a little and applies effects). `src/story/library.js` keeps imported stories and one
+(`"closing": true`: a game-over scene such as a breakdown, after which nothing interrupts), `bladder.leakOnFail` (a lost
+minigame on a very full bladder leaks a little and applies effects) and `bladder.overflow` (a bladder pushed past
+100, say by a drink, spasms and applies effects), scene `variants` (several tellings, one picked by chance; the
+runner takes its randomness as `createRunner(story, saved, random)`), rescue thresholds (`"scene"` instead of
+`"goto"`: once only, applies effects, interrupts and returns; Bonnie's adrenaline last chance), mode `stats`
+multipliers (a meter falls faster / recovers slower while a flag is set) and `thoughts` (the bladder's thoughts
+cover every choice and are tapped away; after `freeSeconds` story time is charged; drawn by
+`renderChoices()` in `story_screen.js`). Design rule from the owner: suspicion moves only through
+choices and minigame results, never by itself over time. `src/story/library.js` keeps imported stories and one
 automatic save per story in `localStorage`; `src/ui/story_menu.js` is the list with import / export.
-Not built yet: minigames that act on the dialogue itself. The original sketch, for intent:
+`thoughts` is the first mechanic that acts on the dialogue itself; the backlog's dialogue minigames
+(`on_the_spot`, `volley`, ...) are not built. The original sketch, for intent:
 
 Stories are JSON files, versioned (`"schemaVersion": 1`). Sketch:
 - `meta`: title, author, rating, content tags, description.
@@ -182,11 +196,108 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 
 ## Player controls (step 7, built)
 - 18+ gate on a first visit (`src/ui/settings_panel.js`); asked again whenever storage could not remember it.
-- Settings (`src/config/settings.js`, all in `localStorage`, guarded): difficulty, speak lines aloud,
-  vibration, a switch per minigame, hide stories by tag, back to the start screen.
+- Settings (`src/config/settings.js`, all in `localStorage`, guarded): difficulty, sound effects volume, speak
+  lines aloud, vibration, a switch per minigame, hide stories by tag, back to the start screen.
 - A switched-off minigame never appears: free play skips it, a story gets another enabled game, and with
   every game off a story treats its minigames as passed.
 - Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
+
+## "New touch" rework (owner-approved list; first batch built, **not yet playtested**)
+The owner approved a review of 15 layout items and 9 rules. Built so far:
+- The sphincter lock is a 64 px round button (`#btn-clench` inside `#clench-row`) with its label beside it; only
+  the circle reacts. It stays in the control panel and stays visible during a minigame.
+- Speech floats above the bladder's head and follows it (`ui/bubble.js`, class `overhead`). A minigame prompt,
+  and every bubble in a story on a phone (the bladder is in a short strip there), stays at the foot.
+- Upright tablets (600 to 899 px wide) use their width instead of a 550 px column.
+- Urge waves: `st.urge` (0..1) rises over the last `TUNING.urgeBuildSec` seconds before a spike, is 1 during a
+  minigame, then passes. The countdown `st.minigame.cooldown` (still "0 = spike now") runs up to twice as fast in
+  a fuller bladder. A rising wave raises the stamina drain and the heart rate, makes the bladder throb, and fills
+  the ring in the fullness pill. `tests/urge-wave.spec.js`.
+- The stream: `st.flow` (0..1) builds up when the bladder opens, is strongest while full and weakens to a trickle
+  (`TUNING.stream…`); `voidPerSec` / `leakPerSec` are now the speed of a *full* stream, so a full void takes about
+  5 s. Drops and the drain sound follow it. A minigame's own `flowRate` is unaffected. `tests/stream.spec.js`.
+- HUD: the stamina bar is a bigger "CONTROL" bar that pulses when low; the fullness pill has a ring that fills
+  with the bladder (blue, yellow, red) and glows and pulses with an urge wave (`#urge-ring`, `--fill`/`--urge`);
+  the drink button (`#btn-shop`) sits with SPEED UP and VOID and shows what is still digesting; the start screen
+  explains the game in icon rows, and Story Mode is as big a button as the main one.
+- Story layout: the newest bladder reply is only in its bubble while the bubble shows it, then joins the text
+  (class `in-bubble`, `revealBubbleLine()` in `story_screen.js`); the text's top edge fades when scrolled; the last
+  choice keeps clear of the screen edge; on a wide screen the story bubble floats above the head too.
+- Desktop free play keeps the drinks open at the top of the left column (`#desk-drinks`, built by `drinkButton()`
+  in `ui/menus.js`, which the pop-up shop shares) and hides the drink button; the frame may grow to 1400 x 1100.
+- `tests/new-touch.spec.js` covers the lock, the bubble, the tablet width, the HUD and the start screen.
+- Digestion: each drink is its own entry in `st.drinks` and arrives on a curve (slow, fastest after
+  `TUNING.digestTau` / its speed, tailing off, never slower than `digestTailRate` after the peak); SPEED UP still
+  rushes everything in at `digestFastPerSec`. Drinks carry `speed`, `effect` ("diuretic": an extra 30% arrives
+  later; "relaxing": holding costs 30% more for a minute) and a `hint` for the menu (`config/content.js`).
+  Fluid set straight into `st.pendingFluid` with no drink behind it trickles in at the old flat `digestPerSec`.
+  `tests/drinks.spec.js`.
+- Feel: `tautness()` (`sim/geometry.js`) is 0 up to 60% and 1 when full; a taut bladder sloshes in smaller quicker
+  swings, wobbles less, stretches and squeezes less, and its skin is drawn paler. Holding costs less while
+  stretched out (`stretchRelief`) or soothed (`sootheDrainCut`); a full bladder's snapback costs stamina; recovery
+  is faster while soothed and slower after a long hold (`st.strain`). `tests/feel.spec.js`.
+- Liquid: two waves on the surface, bubbles for a while after a fizzy drink (`st.fizz`), spray up the wall on a
+  hard slosh (`render/scene.js`).
+- The heartbeat already speeds up with an urge wave and calms as it passes (the review's last rule).
+The approved list is done. Everything above is tested headless only, **not yet playtested**.
+
+## Squeeze (reworked at the owner's request; **not yet playtested**)
+A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.squeezeMax`). Rules in `sim/step.js`:
+- Under `TUNING.squeezeLeakFrom` it only complains. Above it the bladder strains but holds for
+  `TUNING.squeezeHoldSec` (2 s; easing off starts the count again); after that liquid is forced out **although the sphincter is
+  locked** (`squeezeLeakPerSec`), stamina falls (`squeezeStaminaPerSec`) and does not recover meanwhile, drops
+  fly, and the `interaction` event repeats with type `squirt`. Stamina at zero is the normal accident.
+- An unlocked bladder drains faster while squeezed (`squeezeDrainBoost`).
+- Not in story mode: there a squeeze changes the shape and sound only, because the story decides the fullness.
+- Look: a pinched waist with bulging ends and a rubber band drawn around it (`render/bladder.js`,
+  `render/scene.js`). Letting go of a firm squeeze raises `interaction` type `squeezeRelease` and the waist
+  wobbles back like a spring (`st.squeeze.wobble`). A squeeze leaves less room, so the liquid is drawn higher
+  (`fluidLevel()` in `render/scene.js`), and the sphincter is drawn forced open while liquid is squeezed out.
+  `tests/squeeze.spec.js` covers all of it.
+- The liquid's surface is measured between the outline's lowest and highest point. The prototype measured from
+  below the outline, which hid the first 15% or so: a bladder at the starting volume looked empty.
+
+## Developer mode (`TUNING.developerMode`, **on: switch it off before publishing**)
+While it is `true` the start button reads DEVELOPER MODE and a 🛠️ button (free play and stories) opens the
+tools panel (`src/ui/dev_panel.js`) in tabs: Bladder (fullness and stamina sliders, "stamina never drains" / "no
+random spikes" switches in `st.dev`, "urge wave now"), Minigames (every game at any difficulty, as a practice
+run), Dances & touch, Sounds (a sound board), and Story (on a running story: skip to the next choice, jump to a
+chapter or an ending, set its meters, through `storyDevTools()` in `story_screen.js` and the runner's `dev…`
+methods). On a phone the panel covers and pauses the game; on a wide screen it is a drawer that leaves the game
+running (over the left column in free play, over the bladder's side in a story). The panel only calls
+`sim/actions.js` (`setStamina`, `setDevSwitch`, `forceDance`, `holdSqueeze`, `hurrySpike`) and
+`sim/interactions.js` (`poke`). Set the flag to `false` to get TAP TO START back and hide
+the tools. `tests/dev-mode.spec.js` covers it. When a new feature needs testing by hand, add a button there.
+
+## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance and drink sounds)
+Every sound is made by Tone.js synths in `src/audio/engine.js`; there are no audio files. They are placeholders:
+a recorded clip can replace any one of them inside its `play…` / `update…` function without touching callers.
+- Slosh: `updateSlosh()` runs every frame from `src/main.js` and plays a "glug" (plus a splash while there is
+  room) each time the wave in `st.slosh` turns around. Louder for a bigger wave, lower and more muffled for a
+  fuller bladder, silent when nearly empty or for ripples under `TUNING.sloshSoundMinPeak`.
+- Slosh per potty dance: `sim/dance.js` raises `danceBeat { move }` on every beat of the current move, and
+  `playDanceSlosh()` plays that move's row from `src/config/dance.js` (`beat` = its rhythm, `slosh` = layers of
+  kind, pitch range, loudness). Four kinds: glug, splash, plip, swish. Edit that table to change a dance's sound;
+  `TUNING.danceSloshLoudness` (0.2) turns all dance sounds, boing included, up or down together.
+- The prototype's heartbeat (above 50% full) was the loudest sound in the game; it now plays at
+  `TUNING.heartbeatLoudness` (0.1). Its vibration and the red pulse are unchanged.
+- Varied pitch never repeats back to back: `nextPitch()` deals `TUNING.pitchSteps` notes like a shuffled deck
+  (all used before any returns). Used by the wave slosh, the dance sloshes and the gulps.
+- Drinks: `playGulp(drink)` plays more gulps for a bigger `amt`, and the drink's `feel` in `config/content.js`
+  ("plain", "fizzy", "thick", "hot") adds a fizz, lower slower gulps, or a slurp first.
+- Each synth has one voice and real Tone.js throws if a note starts at or before one already queued on it, so
+  every new sound takes its start from `startTime(synth)`, which queues it just behind.
+- Minigames: quiet alarm (`TUNING.spikeAlarmLoudness`) on `minigameStarted`, win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
+  and a tick for each of the last `TUNING.minigameTickLastSec` seconds (from the runner, which owns the countdown).
+- Squeeze: a creak as the band tightens, a squirt per `squirt` cue, a twang on `squeezeRelease`.
+- Character: squeak on a poke (thump and squeak on a different note each time), creak as a stretch is pulled further, boing on each hop landing, gurgle while a drink digests, sigh after a void that was not an accident, and
+  babble blips in place of the spoken voice when it is switched off.
+- Settings has a sound effects volume slider (`settings.sound`, 0 to 100, 0 mutes) that sets Tone's master output.
+- Not built yet: story-mode sounds (text, choices, meters, chapters), one signature sound per minigame, music,
+  and a developer mode for trying sounds (the owner's idea, to be asked for later).
+- `tests/sounds.spec.js` checks *when* each sound plays, through the recording mock. The mock accepts calls the
+  real Tone.js rejects (two triggers of one synth at the same instant throw), so after changing `engine.js` also
+  play the sounds once in `npm run dev`.
 
 ## Desktop and phone layouts
 One page, two layouts, chosen by window size alone (the media query at the end of `src/styles/main.css`, no
@@ -199,7 +310,8 @@ area is a short strip (`H < W`), so it needs no knowledge of the layout. `tests/
 `npm run build` writes a self-contained static site to `dist/` (relative paths, no server, no CDN): upload
 that folder to any static host. Netlify / Cloudflare Pages: build command `npm run build`, output `dist`.
 GitHub Pages: `.github/workflows/deploy-pages.yml`, which only runs when started by hand.
-Publishing is the owner's decision; do not deploy without being asked.
+Publishing is the owner's decision; do not deploy without being asked. Before publishing, set
+`TUNING.developerMode` to `false` (see Developer mode).
 
 ## Testing
 - `tests_reference/v11_regression.py` (38 checks) and `tests_reference/v12_suite.py` (128 checks) are
@@ -213,9 +325,10 @@ Publishing is the owner's decision; do not deploy without being asked.
 - `tests/layout.spec.js` covers the mobile viewports (360x640, 390x844, 768x1024); `tests/build.spec.js`
   smoke-tests the real production build and fails on any request to another host.
 - `tests/minigames.spec.js` covers the registry and each game's win / lose / cancel paths, difficulty and text
-  overrides; `tests/rules.spec.js` covers rule fixes made after the refactor.
+  overrides (`tests/new-minigames.spec.js` and `tests/sneak-a-pee.spec.js` do the same for the later games);
+  `tests/rules.spec.js` covers rule fixes made after the refactor.
 - `tests/events.spec.js` has a test per event (payload and order); `tests/settings.spec.js` covers the
-  difficulty setting and blocked storage.
+  difficulty setting and blocked storage; `tests/sounds.spec.js` covers the volume slider and when each sound plays.
 - `tests/story-validator.spec.js` and `tests/story-runner.spec.js` cover the validator, loader and runner (they
   run in Node, no browser); the runner test also random-walks every bundled story to check it can always finish.
   `tests/story-mode.spec.js` covers the story screen in the browser, including that story text is never HTML.
@@ -230,6 +343,8 @@ Publishing is the owner's decision; do not deploy without being asked.
 - Prefer boring, readable code over clever code; comment *why*, not *what*.
 - Don't add dependencies without saying why.
 - When unsure about product or content direction, ask instead of guessing.
+- **Always phrase questions to the owner for a beginner developer:** plain words, any technical term
+  explained in a few words, and concrete options that say what each one changes in the game.
 
 ## Roadmap (do in order)
 1. Git init, tag baseline, scaffold Vite, split modules from the legacy file with identical behavior.

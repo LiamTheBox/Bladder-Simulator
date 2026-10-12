@@ -1,4 +1,4 @@
-// Start screen, drink shop and settings. The game is paused while any of them is open.
+// Start screen, drink shop, settings and the developer panel. The game is paused while any of them is open.
 import { drinks, voiceLines } from '../config/content.js';
 import { queueDrink } from '../sim/actions.js';
 import { startAudio, stopAllWater, playGulp } from '../audio/engine.js';
@@ -10,6 +10,7 @@ import { resetGame } from './reset.js';
 import { startStory } from './story_screen.js';
 import { openStoryMenu, closeStoryMenu } from './story_menu.js';
 import { isAgeGateOpen, onBackToStart } from './settings_panel.js';
+import { devPanelPauses } from './dev_panel.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
 const shopOverlayEl = document.getElementById('shop-overlay');
@@ -20,7 +21,8 @@ export function isPaused() {
   return document.hidden || isAgeGateOpen() ||
     startOverlayEl.style.display !== 'none' ||
     shopOverlayEl.style.display === 'flex' ||
-    settingsOverlayEl.style.display === 'flex';
+    settingsOverlayEl.style.display === 'flex' ||
+    devPanelPauses();
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { stopAllWater(); clearPointers(); if (window.speechSynthesis) window.speechSynthesis.cancel(); }
@@ -47,18 +49,20 @@ document.getElementById('tts-add').addEventListener('click', () => {
   }
 });
 
-// Drink shop. innerHTML is fine here: the drink list is our own config, never user or story data.
-const grid = document.getElementById('drink-grid');
-drinks.forEach(d => {
+// Drinks: the pop-up shop, and on a wide screen the same list kept open in the left column (#desk-drinks).
+// innerHTML is fine here: the drink list is our own config, never user or story data.
+function drinkButton(d) {
   const btn = document.createElement('div'); btn.className = 'drink-btn';
-  btn.innerHTML = `<div class="drink-icon">${d.icon}</div><div class="drink-name">${d.name}</div><div class="drink-amt">+${d.amt}%</div>`;
+  btn.innerHTML = `<div class="drink-icon">${d.icon}</div><div class="drink-name">${d.name}</div><div class="drink-amt">+${d.amt}%</div><div class="drink-hint">${d.hint ?? ''}</div>`;
   btn.addEventListener('pointerdown', (e) => {
-    e.stopPropagation(); queueDrink(d.amt, d.name); speakDirect(d.reaction);
+    e.stopPropagation(); queueDrink(d.amt, d.name, d); speakDirect(d.reaction);
     shopOverlayEl.style.display = 'none'; vibe(20);
-    playGulp();
+    playGulp(d);
   });
-  grid.appendChild(btn);
-});
+  return btn;
+}
+document.getElementById('desk-drink-grid').append(...drinks.map(drinkButton));
+document.getElementById('drink-grid').append(...drinks.map(drinkButton));
 
 document.getElementById('btn-shop').addEventListener('pointerdown', () => shopOverlayEl.style.display = 'flex');
 document.getElementById('btn-settings').addEventListener('pointerdown', () => settingsOverlayEl.style.display = 'flex');

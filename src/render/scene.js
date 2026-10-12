@@ -1,12 +1,16 @@
 // Draws one frame from the current state. Reads state only; all motion is advanced in sim/.
 import { TUNING } from '../config/tuning.js';
 import { st } from '../sim/state.js';
-import { bladderGeom } from '../sim/geometry.js';
+import { bladderGeom, tautness } from '../sim/geometry.js';
 import { canvasContainer, canvas, ctx } from './canvas.js';
-import { drawSmoothPath, getPearPoints } from './bladder.js';
+import { drawSmoothPath, getPearPoints, squeezeAmount } from './bladder.js';
 import { drawCuteFace } from './face.js';
 import { drawPottyDanceLegs } from './legs.js';
 import { drawMinigame } from '../minigames/index.js';
+
+// How high the liquid stands in the outline, 0 (empty) to 1 (to the top), for a fill of 0..1 and a squeeze
+// (squeezeAmount(): 1 = hardest, below zero on the rebound)
+export function fluidLevel(fillPerc, sq) { return Math.max(0, Math.min(1, fillPerc * (1 + TUNING.squeezeLevelRise * sq))); }
 
 export function renderCanvas(t, fillPerc) {
   if(!canvasContainer) return;
@@ -29,19 +33,28 @@ export function renderCanvas(t, fillPerc) {
   ctx.save();
   drawSmoothPath(ctx, pearPoints);
   const bgGrad = ctx.createRadialGradient(cx, cy - baseR*0.5, baseR*0.1, cx, cy, baseR*1.5);
-  bgGrad.addColorStop(0, '#fbcfe8'); bgGrad.addColorStop(1, '#be185d');
+  // the skin thins as it grows taut: paler and more see-through
+  const taut = tautness(fillPerc * 100);
+  bgGrad.addColorStop(0, `rgba(251, 207, 232, ${1 - taut * 0.35})`); bgGrad.addColorStop(1, `rgba(190, 24, 93, ${1 - taut * 0.45})`);
   ctx.fillStyle = bgGrad; ctx.fill();
 
   ctx.clip(); 
 
-  const topY = cy - baseR * 1.3, botY = cy + baseR * 1.3, fluidY = botY - (botY - topY) * fillPerc;
+  // The surface sits between the lowest and highest point of the outline, so the little a nearly empty bladder
+  // holds is still seen at the bottom. (It used to be measured from below the outline, which hid the first 15%.)
+  // A squeeze leaves less room, so the same liquid stands higher.
+  const sq = squeezeAmount();
+  const { topY, botY } = pearPoints.reduce((b, p) => ({ topY: Math.min(b.topY, p.y), botY: Math.max(b.botY, p.y) }), { topY: Infinity, botY: -Infinity });
+  const fluidY = botY - (botY - topY) * fluidLevel(fillPerc, sq);
   const sloshTilt = st.gravity.x * 0.5 + Math.sin(t * 2.5) * 0.05 + (st.slosh.val * 0.015);
   const waveAmp = 4 + Math.abs(st.slosh.val * 4);
 
   if (fillPerc > 0) {
     const drawWave = (lv, tilt, wAmp) => {
       const L = cx - maxR * 1.5, Rt = cx + maxR * 1.5; ctx.beginPath(); ctx.moveTo(L, lv + (L - cx) * tilt);
-      for (let x = L; x <= Rt; x += 15) ctx.lineTo(x, lv + (x - cx) * tilt + Math.sin((x - cx) * 0.04 + t * 3) * wAmp);
+      // two waves on top of each other, the second shorter and running the other way, so the surface never looks
+      // like one rigid ripple
+      for (let x = L; x <= Rt; x += 12) ctx.lineTo(x, lv + (x - cx) * tilt + Math.sin((x - cx) * 0.04 + t * 3) * wAmp + Math.sin((x - cx) * 0.09 - t * 4.3) * wAmp * 0.4);
       ctx.lineTo(Rt, botY); ctx.lineTo(L, botY); ctx.closePath();
     };
 
@@ -53,6 +66,27 @@ export function renderCanvas(t, fillPerc) {
     const gF = ctx.createLinearGradient(cx, fluidY, cx, botY); gF.addColorStop(0, 'rgba(253, 224, 71, 0.9)'); gF.addColorStop(0.3, 'rgba(234, 179, 8, 0.95)'); gF.addColorStop(1, 'rgba(161, 98, 7, 1.0)');
     ctx.fillStyle = gF; ctx.fill();
     ctx.strokeStyle = 'rgba(254, 240, 138, 0.9)'; ctx.lineWidth = 5; ctx.stroke();
+
+    // Bubbles after a fizzy drink: rising from the bottom, fewer as the fizz wears off
+    if (st.fizz > 0) {
+      ctx.fillStyle = 'rgba(255, 251, 235, 0.55)';
+      const count = Math.ceil(14 * Math.min(1, st.fizz / TUNING.fizzSec));
+      for (let i = 0; i < count; i++) {
+        const lane = (i * 0.618) % 1, rise = (t * (0.25 + lane * 0.2) + lane) % 1; // each bubble its own lane and pace
+        const by = botY - (botY - fluidY) * rise, bx = cx + (lane - 0.5) * baseR * 1.4 + Math.sin(t * 3 + i) * 3;
+        ctx.beginPath(); ctx.arc(bx, by, 1.5 + lane * 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // A hard slosh throws spray up the wall on the side the liquid is running to
+    const spray = Math.abs(st.slosh.vel) - TUNING.sprayFromVel;
+    if (spray > 0) {
+      const side = Math.sign(st.slosh.vel) || 1, wallX = cx + side * baseR * 0.8;
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.8)';
+      for (let i = 0; i < Math.min(10, Math.ceil(spray * 3)); i++) {
+        const k = (i * 0.37 + t * 2.1) % 1;
+        ctx.beginPath(); ctx.arc(wallX - side * k * baseR * 0.25, fluidY - k * (1 - k) * baseR * 0.5 * Math.min(1.5, spray / 3), 2 + (1 - k) * 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
   }
 
   const innerShadowGrad = ctx.createRadialGradient(cx, cy, baseR * 0.5, cx, cy, baseR * 1.1);
@@ -62,9 +96,21 @@ export function renderCanvas(t, fillPerc) {
 
   // Outline
   drawSmoothPath(ctx, pearPoints);
-  ctx.lineWidth = Math.max(3, baseR * 0.025); ctx.strokeStyle = 'rgba(244, 114, 182, 0.5)'; ctx.stroke();
+  ctx.lineWidth = Math.max(2, baseR * 0.025 * (1 - taut * 0.4)); ctx.strokeStyle = `rgba(244, 114, 182, ${0.5 + taut * 0.3})`; ctx.stroke();
 
   drawCuteFace(ctx, cx, cy, baseR, t, fillPerc, st.isClosed, st.gravity.x);
+
+  // The rubber band that does the squeezing: the front half of a loop around the waist, from the outline's
+  // rightmost point (pearPoints[0]) to its leftmost (pearPoints[32]). It fades in as the squeeze takes hold.
+  if (sq > 0.02) {
+    const right = pearPoints[0], left = pearPoints[32];
+    const bandX = (left.x + right.x) / 2, bandY = (left.y + right.y) / 2, half = (right.x - left.x) / 2 + baseR * 0.02;
+    ctx.save(); ctx.globalAlpha = Math.min(1, sq * 4); ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.ellipse(bandX, bandY, half, baseR * 0.07, 0, 0, Math.PI);
+    ctx.lineWidth = Math.max(4, baseR * 0.05); ctx.strokeStyle = '#b45309'; ctx.stroke();
+    ctx.lineWidth = Math.max(1.5, baseR * 0.015); ctx.strokeStyle = 'rgba(254, 215, 170, 0.8)'; ctx.stroke();
+    ctx.restore();
+  }
   
   ctx.fillStyle = 'rgba(186, 230, 253, 0.8)'; 
   st.sweatDrops.forEach(s => {

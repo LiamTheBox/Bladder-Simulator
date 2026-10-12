@@ -89,10 +89,11 @@ for (const [W, H] of [[1024, 600], [1280, 800], [1920, 1080]]) {
     for (const c of choices) { expect(c.in, 'choice inside the story panel').toBeGreaterThanOrEqual(0); expect(c.h).toBeGreaterThanOrEqual(48); }
 
     // the bladder's reply bubble stays inside its own side
-    await ev("bubbleEl.textContent = 'A fairly long thing for the bladder to say about all of this.'; bubbleEl.classList.add('show'); st.bubbleTimer = 5"); await pg.waitForTimeout(300);
+    await ev("prioritySpeechUntil=0; speakDirect('A fairly long thing for the bladder to say about all of this.')"); await pg.waitForTimeout(300);
     const b = await ev(RECTS);
     expect(Math.min(b.bubble.left - b.canvas.left, b.canvas.right - b.bubble.right, b.canvas.bottom - b.bubble.bottom), 'bubble inside the play area').toBeGreaterThanOrEqual(0);
-    expect(b.bubble.top, 'bubble below the legs at the story\'s fullness').toBeGreaterThan(b.canvas.top + (await ev('(()=>{const g=bladderGeom(); return g.cy+g.Rr*1.6})()')) - 1);
+    // the side is tall, so the bubble floats above the head, clear of the face and the legs
+    expect(b.bubble.bottom, 'bubble above the eyes').toBeLessThan(b.canvas.top + (await ev('(()=>{const g=bladderGeom(); return g.cy-g.Rr*0.35})()')));
 
     // a minigame opens under the text, in the same column, and everything still fits
     for (const [id, control] of [['mash', '#mg-btn-mash'], ['swipe_away', '#swipe-card'], ['tremor_lock', '#mg-tremor-area'], ['distraction_popups', '.mg-popup']]) {
@@ -147,3 +148,33 @@ test('the layout follows the window: resizing switches between desktop and phone
   expect(errors, 'no page errors').toEqual([]);
   await context.close();
 });
+
+for (const [W, H] of [[1024, 600], [1366, 768], [1920, 1080]]) {
+  test(`desktop free play at ${W}x${H}: the drinks stay open in the left column`, async ({ browser }) => {
+    const { context, pg, errors } = await openGame(browser, W, H);
+    const ev = (js) => pg.evaluate(js);
+    await pg.mouse.click(W / 2, H * 0.3); await pg.waitForTimeout(300);
+    await ev('st.pendingFluid=0; st.minigame.cooldown=999');
+    await expect(pg.locator('#desk-drinks')).toBeVisible();
+    await expect(pg.locator('#btn-shop'), 'no pop-up button needed').toBeHidden();
+    const tiles = pg.locator('#desk-drink-grid .drink-btn');
+    await expect(tiles).toHaveCount(await ev('12'));
+    const controls = await pg.locator('#controls').boundingBox();
+    for (const sel of ['#desk-drink-grid .drink-btn >> nth=11', '#btn-void', '#btn-clench']) {
+      const b = await pg.locator(sel).boundingBox();
+      expect(b.y >= controls.y - 1 && b.y + b.height <= controls.y + controls.height + 1, `${sel} inside the column`).toBe(true);
+    }
+    await tiles.filter({ hasText: 'Beer' }).dispatchEvent('pointerdown');
+    expect(await ev('st.pendingFluid'), 'the beer is on its way in').toBeGreaterThan(34);
+    await expect(pg.locator('#desk-pending')).toHaveText(/^\+3[45]% digesting$/);
+    await expect(pg.locator('#shop-overlay'), 'nothing to close').toBeHidden();
+    if (W >= 1366) expect((await pg.locator('#toy-container').boundingBox()).width, 'a bigger frame than the old 1100 px').toBeGreaterThan(1100);
+    await noScroll(pg);
+    // story mode and phones keep the drink button
+    await pg.setViewportSize({ width: 390, height: 844 }); await pg.waitForTimeout(200);
+    await expect(pg.locator('#desk-drinks')).toBeHidden();
+    await expect(pg.locator('#btn-shop')).toBeVisible();
+    expect(errors).toEqual([]);
+    await context.close();
+  });
+}

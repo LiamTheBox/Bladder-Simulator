@@ -1,18 +1,23 @@
 // All spoken text and drink data. Edit freely: nothing here affects the simulation rules.
 
+// feel: how the drink sounds going down (audio/engine.js): "plain", "fizzy" (a fizz after the gulps),
+// "thick" (lower, slower gulps) or "hot" (a slurp first). A bigger amt means more gulps.
+// speed: how fast it reaches the bladder (1 = water, higher = sooner; sim/actions.js queueDrink). effect: "diuretic"
+// (an extra share arrives over the following minute) or "relaxing" (holding costs more stamina for a while).
+// hint: the few words the drink menu shows about it.
 export const drinks = [
-  { name: "Water", icon: "💧", amt: 15, reaction: "Refreshing and clear." },
-  { name: "Coffee", icon: "☕", amt: 20, reaction: "Whoa, caffeine makes me process so fast!" },
-  { name: "Soda", icon: "🥤", amt: 25, reaction: "Fizzy! I feel bubbly inside." },
-  { name: "Beer", icon: "🍺", amt: 35, reaction: "Oh no, alcohol goes straight through!" },
-  { name: "Tea", icon: "🍵", amt: 15, reaction: "Warm and herbal. Very relaxing." },
-  { name: "Energy Drink", icon: "⚡", amt: 25, reaction: "So much sugar and energy! It's intense!" },
-  { name: "Milk", icon: "🥛", amt: 20, reaction: "Coating and smooth, a bit heavy." },
-  { name: "Lemonade", icon: "🍋", amt: 20, reaction: "Sour! Makes me pucker up!" },
-  { name: "Sports Drink", icon: "🧪", amt: 30, reaction: "Electrolytes! So salty and sweet." },
-  { name: "Boba Tea", icon: "🧋", amt: 25, reaction: "Wait, are those tapioca pearls? Feels weird." },
-  { name: "Hot Cocoa", icon: "🍫", amt: 20, reaction: "Warm, thick, and chocolatey. Cozy." },
-  { name: "Apple Juice", icon: "🧃", amt: 15, reaction: "Sweet and tart, very refreshing." }
+  { name: "Water", icon: "💧", amt: 15, feel: "plain", speed: 1, hint: "Steady", reaction: "Refreshing and clear." },
+  { name: "Coffee", icon: "☕", amt: 20, feel: "hot", speed: 1.4, effect: "diuretic", hint: "Fast, keeps coming", reaction: "Whoa, caffeine makes me process so fast!" },
+  { name: "Soda", icon: "🥤", amt: 25, feel: "fizzy", speed: 1.1, hint: "Fizzy", reaction: "Fizzy! I feel bubbly inside." },
+  { name: "Beer", icon: "🍺", amt: 35, feel: "fizzy", speed: 1.3, effect: "relaxing", hint: "Harder to hold", reaction: "Oh no, alcohol goes straight through!" },
+  { name: "Tea", icon: "🍵", amt: 15, feel: "hot", speed: 1.2, effect: "diuretic", hint: "Keeps coming", reaction: "Warm and herbal. Very relaxing." },
+  { name: "Energy Drink", icon: "⚡", amt: 25, feel: "fizzy", speed: 1.4, effect: "diuretic", hint: "Fast, keeps coming", reaction: "So much sugar and energy! It's intense!" },
+  { name: "Milk", icon: "🥛", amt: 20, feel: "thick", speed: 0.6, hint: "Slow", reaction: "Coating and smooth, a bit heavy." },
+  { name: "Lemonade", icon: "🍋", amt: 20, feel: "plain", speed: 1, hint: "Steady", reaction: "Sour! Makes me pucker up!" },
+  { name: "Sports Drink", icon: "🧪", amt: 30, feel: "plain", speed: 0.8, hint: "Slow, steady", reaction: "Electrolytes! So salty and sweet." },
+  { name: "Boba Tea", icon: "🧋", amt: 25, feel: "thick", speed: 0.6, hint: "Slow", reaction: "Wait, are those tapioca pearls? Feels weird." },
+  { name: "Hot Cocoa", icon: "🍫", amt: 20, feel: "thick", speed: 0.7, hint: "Slow", reaction: "Warm, thick, and chocolatey. Cozy." },
+  { name: "Apple Juice", icon: "🧃", amt: 15, feel: "plain", speed: 1, hint: "Steady", reaction: "Sweet and tart, very refreshing." }
 ];
 
 export const voiceLines = {
@@ -40,7 +45,8 @@ export const minigameLines = {
   tremor_lock: ["I'm shaking! Tap with my heartbeat to steady me!", "Steady... tap on the beat!"],
   tiptoe: ["Slowly! Every bump sloshes me!", "Tiptoe... don't you dare rush."],
   steady_the_slosh: ["I'm sloshing! Keep me level!", "It's running to one side! Pull it back!"],
-  think_of_something_else: ["Think of anything else! Count: one, two...", "Distract yourself! Tap the numbers in order."]
+  think_of_something_else: ["Think of anything else! Count: one, two...", "Distract yourself! Tap the numbers in order."],
+  sneak_a_pee: ["Quick, while nobody is listening! Hold to go!", "Now! Go! But stop when they call!"]
 };
 
 // Names shown in Settings, where each minigame can be switched off
@@ -49,8 +55,11 @@ export const minigameNames = {
   swipe_away: 'Swipe away (flick the card)', distraction_popups: 'Distractions (tap the popups)', tremor_lock: 'Steady (tap on the beat)',
   tiptoe: 'Tiptoe (drag slowly)', steady_the_slosh: 'Steady the slosh (keep the wave centred)',
   think_of_something_else: 'Think of something else (tap the numbers in order)',
+  sneak_a_pee: 'Sneak a pee (hold to go, stop when they listen)',
 };
 
+// What someone outside the door says during sneak_a_pee, unless a story gives its own lines
+export const outsideLines = ["Hello? Anyone in there?", "Everything all right in there?", "Are you nearly done?"];
 // Placeholder wording for the UI-intrusion minigames
 export const swipeCardTexts = ["JUST LET GO", "Nobody would know", "Open up, it's fine", "Give in already"];
 export const popupWords = ["Spasm!", "Ache!", "Twinge!", "Cramp!", "Throb!"];

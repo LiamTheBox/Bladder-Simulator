@@ -1,4 +1,6 @@
-// Read-only displays: volume pill, digesting label, stamina bar, and the background that reddens with urgency.
+// Read-only displays: volume pill with the fullness ring (which glows with an urge wave), the digesting amount
+// on the drink button, the control (stamina) bar, and the background that reddens with urgency.
+import { TUNING } from '../config/tuning.js';
 import { st } from '../sim/state.js';
 
 const elVol = document.getElementById('vol-lbl');
@@ -6,7 +8,9 @@ const toyContainer = document.getElementById('toy-container');
 const stmContainer = document.getElementById('stamina-row');
 const stmText = document.getElementById('stamina-text');
 const stmBar = document.getElementById('stamina-bar');
-const elPending = document.getElementById('pending-lbl');
+const drinkSub = document.getElementById('drink-sub');
+const deskPending = document.getElementById('desk-pending');
+const urgeRing = document.getElementById('urge-ring');
 
 // Story mode can show fullness its own way (e.g. in ml); null goes back to percent
 let volumeLabel = null;
@@ -26,8 +30,17 @@ export function updateHud() {
   if (st.volume >= 50) { volSpan.style.color = "#fde047"; elVol.querySelector('.status-dot').style.color = "#fbbf24"; }
   else { volSpan.style.color = "#bae6fd"; elVol.querySelector('.status-dot').style.color = "var(--accent)"; }
 
-  elPending.textContent = `+${Math.floor(st.pendingFluid)}% DIGESTING`;
-  elPending.style.display = st.pendingFluid > 0 ? 'flex' : 'none';
+  // the ring fills with the bladder (blue, then yellow past half, red near full) and glows with an urge wave
+  urgeRing.style.setProperty('--fill', (st.volume / 100).toFixed(3));
+  urgeRing.style.setProperty('--ring', st.volume >= TUNING.hudRingRedFrom ? '#f43f5e' : st.volume >= 50 ? '#facc15' : '#38bdf8');
+  urgeRing.style.setProperty('--urge', st.urge.toFixed(3));
+  urgeRing.classList.toggle('surging', st.urge > TUNING.hudSurgeFrom);
+
+  stmContainer.classList.toggle('low', st.staminaDraining && st.stamina < TUNING.hudLowControl);
+
+  // what is still on its way in shows on the drink button itself
+  drinkSub.textContent = st.pendingFluid > 0 ? `+${Math.floor(st.pendingFluid)}% digesting` : 'Pick one';
+  deskPending.textContent = st.pendingFluid > 0 ? `+${Math.floor(st.pendingFluid)}% digesting` : '';
 }
 
 // currentPulseRate: the heartbeat period from sim (stepHeartbeat); the background flashes at the start of each beat

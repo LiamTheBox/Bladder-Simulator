@@ -2,7 +2,10 @@
 // Picks a move by urgency and eases the legs and body toward its pose. Pure state: drawing is in render/legs.js.
 import { DANCE_MOVES, LIVELY_MOVES } from '../config/dance.js';
 import { st } from './state.js';
+import { emit } from './events.js';
 import { bladderGeom } from './geometry.js';
+
+const BEAT = Object.fromEntries(DANCE_MOVES.map((m) => [m.id, m.beat]));
 
 export function pickDanceMove(u, last) {
   const pool = DANCE_MOVES.filter(m => m.min <= u && m.id !== last);
@@ -25,6 +28,7 @@ export function updateDance(t, dt, fill) {
     st.dance.timer -= dt;
     if (st.dance.timer <= 0) {
       st.dance.id = pickDanceMove(u, st.dance.id);
+      st.dance.beat = null;
       st.dance.timer = LIVELY_MOVES.includes(st.dance.id) ? 1.5 + Math.random() : 2.0 + Math.random() * 2.0;
     }
     const amp = 0.5 + 0.5 * u;
@@ -111,6 +115,12 @@ export function updateDance(t, dt, fill) {
         bx = Math.sin(t * 6.5) * 0.012 * R;
         break; }
     }
+
+    // A cue for sound on each beat of the move. The beat counts half waves of the move's own sine, so it lands
+    // where the sine is zero: for a hop, the moment it touches the floor. A move's first frame only takes note.
+    const beat = Math.floor(t * BEAT[st.dance.id] / PI);
+    if (st.dance.beat !== null && beat !== st.dance.beat) emit('danceBeat', { move: st.dance.id });
+    st.dance.beat = beat;
   }
 
   // Keep the body still while a minigame played on the bladder is running (e.g. tapping cracks)

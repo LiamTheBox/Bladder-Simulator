@@ -32,12 +32,20 @@ def G(id, difficulty, prompt, win=None, lose=None, win_next=None, lose_next=None
     if s: g["success"] = s
     if f: g["fail"] = f
     return g
+# A hurried toilet visit (the sneak_a_pee game): relief = the most it can drain, lines = what is said outside the
+# door. Every 10% overheard is 1 point of suspicion.
+def VISIT(difficulty, prompt, relief, lines, win=None, lose=None):
+    g = G("sneak_a_pee", difficulty, prompt, win=win, lose=lose)
+    g.update({"relief": relief, "heard": {"stat": "suspicion", "max": 10}, "lines": lines})
+    return g
 def OFFER(refuse, hover, busy, next):
     return {"set": "bathroom_offer", "texts": {"refuse": refuse, "hover": hover, "busy": busy}, "next": next}
-def scene(id, title, chapter, lines, choices=None, next=None, enter=None, triggers=None, closing=False):
+# variants: several ways of telling the scene (lists of lines); the game picks one by chance each time
+def scene(id, title, chapter, lines, choices=None, next=None, enter=None, triggers=None, closing=False, variants=None):
     d = {"id": id, "title": title, "chapter": chapter}
     if enter: d["onEnter"] = enter
-    d["lines"] = lines
+    if lines: d["lines"] = lines
+    if variants: d["variants"] = variants
     if triggers: d["triggers"] = triggers
     if choices: d["choices"] = choices
     if next: d["next"] = next
@@ -96,8 +104,9 @@ scenes = [
    L(N, "The pipes in this house carry sound like a telephone.", "I do not care about the pipes. I have never cared less about anything.")],
   choices=[
    C("Now. Speed over silence. Not one more breath.", [{"void": True}, S("suspicion", 25), SET("control", 100), M(2)], "flush"),
-   C("Ease down and let go as slowly, as silently, as humanly possible.", [M(1)], "flush",
-     minigame=G("breathe", 2, "Slowly. Breathe. Slow-ly.", win=[{"void": True}, SET("control", 100), S("halo", 5), M(4)], lose=[{"void": True}, SET("control", 100), S("suspicion", 20), M(2)]))]),
+   C("Ease down and go quietly, stopping dead whenever the house stirs.", [M(1)], "flush",
+     minigame=VISIT(2, "Quietly! And STOP if anyone calls!", 100, ["Bonnie? Is that you, sweetheart?", "Bonnie... are you up?", "Is somebody downstairs?"],
+       win=[SET("control", 100), S("halo", 5), M(4)], lose=[SET("control", 100), S("suspicion", 20), M(2)]))]),
  scene("flush", "The Flush", CH[0], [
    L(N, "Relief. Complete, ridiculous, hard-earned relief. Bonnie leans on the sink and grins at nobody.", "Thank you. I take back most of what I said."),
    L(N, "One problem left: the cistern in this house fills like a jet engine.")],
@@ -178,7 +187,7 @@ scenes = [
    C("\"Tea, please.\" Warm, modest... and a deceptively large pot.", [D(10), S("halo", 3)], "turbulence"),
    C("\"Coffee.\" Small cup. Sharp price: it goes straight through.", [D(7), {"fullness": 3}], "turbulence"),
    C("\"Juice, thank you.\" Sweet, heavy, and somehow 400 ml.", [D(12)], "turbulence"),
-   C("\"Just the water.\" The LARGE water. The only size they carry.", [D(14), S("halo", 5)], "turbulence")]),
+   C("\"Just the water.\" The LARGE water. The only size they carry.", [D(14), S("halo", 5), S("suspicion", -8)], "turbulence")]),
  scene("turbulence", "6:00 PM — Turbulence", CH[3], [
    L(N, "Hour five. The seatbelt sign chimes and the cabin drops a foot. The belt sits exactly where she wishes it did not.", "WHO APPROVED THIS? Who is flying this thing?")],
   enter=[M(180)],
@@ -189,7 +198,10 @@ scenes = [
  scene("aisle_opens", "9:00 PM — The Aisle Opens", CH[3], [
    L(N, "The businessman wakes, stretches, and shuffles off toward the lavatory. For the first time in eight hours, the aisle is open.", "The wall is GONE. Go. GO. This is not a drill.")],
   enter=[M(180)],
-  choices=[OFFER("Stay put. \"I'm fine!\" she tells nobody at all.", "Unbuckle... half stand... and sit back down as he returns.", "Tidy the seat pocket instead. Fold the blanket. Very busy.", "descent")]),
+  choices=[OFFER("Stay put. \"I'm fine!\" she tells nobody at all.", "Unbuckle... half stand... and sit back down as he returns.", "Tidy the seat pocket instead. Fold the blanket. Very busy.", "descent"),
+   C("Go. A hurried half-visit, before the queue at the lavatory door loses patience.", [S("halo", -10), F("went_once"), M(4)], "descent",
+     minigame=VISIT(2, "Quick! While nobody is knocking!", 35, ["Miss? Is everything all right in there?", "Excuse me, there is a queue out here.", "Hello? Miss?"],
+       win=[S("control", 15)], lose=[S("control", 8), S("suspicion", 15)]))]),
  scene("descent", "2:20 AM — The Descent", CH[3], [
    L(N, "Forty minutes of descent. The pilot points out landmarks. The plane leans, slowly, onto every one of them.", "Every. Single. Landmark.")],
   enter=[M(320)],
@@ -244,7 +256,7 @@ scenes = [
    L(N, "Irina thunders upstairs. A pot of tea the size of a lighthouse lands on the table."),
    L("mrs_higgins", "Milk? Sugar? Drink up, love.")],
   choices=[
-   C("Down it: graceful, grateful, gone.", [D(12), S("halo", 10), M(10)], "first_night"),
+   C("Down it: graceful, grateful, gone. Nobody with a problem drinks like that.", [D(12), S("halo", 10), S("suspicion", -10), M(10)], "first_night"),
    C("Sip it slowly: polite, and stalling for dear life.", [D(6), M(20), S("control", -5)], "first_night"),
    C("Nurse this one forever. Tiny sips, long stories, buy every possible second.", [D(3), M(35), S("control", -8), S("halo", -3)], "first_night"),
    C("\"I'm so sorry, the journey has absolutely wrecked me. Could I possibly just... go up to bed?\"", [S("halo", -10), S("suspicion", 8)], "first_night", when=[{"stat": "fullness", "gte": 85}])]),
@@ -307,12 +319,44 @@ scenes = [
    C("Down the trellis. Behind the hedge. May the rosebush forgive me.", [{"void": True}, S("halo", -40)], "ending_garden"),
    C("...I am not a garden person. The bedroom route. Final answer.", None, "sneak")]),
 
- # ---------------- game over: control hits zero, wherever she is ----------------
- scene("breakdown", "The Breaking Point", None, [
-   L(N, "It stops being a decision. Bonnie goes rigid mid-breath, every muscle she owns clamped around one last, failing idea.", "I can't. I'm sorry. I held as long as I could. I really, really did."),
+ # ---------------- the last chance: the first time control hits zero, adrenaline steps in ----------------
+ # (a threshold plays this once, puts control back to 100 and switches the "adrenaline" mode on)
+ scene("second_wind", "Second Wind", None, None, variants=[
+  [L(N, "It should be over. Instead something cold and electric pours down her spine, and every muscle she owns answers at once.", "What was THAT? I was halfway out the door!"),
+   L("bonnie", "I don't know. I don't KNOW. Don't question it.", "I am not questioning it. I am applauding. Where have you been hiding that?", mood="breathless"),
+   L(N, "It will not last, and it will not come twice. Everything costs more from here.", "Borrowed time. Spend it well.")],
+  [L(N, "Her heart slams twice, hard, and the world goes very sharp and very quiet.", "Hold on. HOLD on. You were finished. I felt you finish."),
+   L("bonnie", "So did I.", "And then you just... didn't? I have never been so impressed and so annoyed at the same time.", mood="astonished"),
+   L(N, "Adrenaline. A loan, at terrible interest.", "I will be collecting. Soon.")],
+  [L(N, "The last of her grip goes. And then, from nowhere, it comes back, all of it, like a door slammed by the wind.", "Excuse me?! That was MY moment."),
+   L("bonnie", "Not yet.", "Not yet, she says. Twenty hours in and she pulls out a spare. Unbelievable. Respect.", mood="through her teeth"),
+   L(N, "Her hands are shaking. That is the price, and there is more to pay.", "One encore. That is all anybody gets.")],
+  [L(N, "Panic does what manners could not: it clamps down on everything at once.", "Oh. OH. We are doing fight or flight now?"),
+   L("bonnie", "Fight. Definitely fight.", "I was betting on flight. Fine. I will admit that was magnificent.", mood="wide-eyed"),
+   L(N, "The rush is real, and it is already draining away.", "Enjoy it. It is the last one in the cupboard.")],
+  [L(N, "For one long second she is sure it has happened. It has not. Something older than politeness has taken the wheel.", "I had my speech ready. I had STARTED the speech."),
+   L("bonnie", "Save it.", "Saved. Honestly? I did not think you had that in you. Nobody did.", mood="barely audible"),
+   L(N, "She can feel exactly how thin this is.", "Thin is fine. Thin is still holding. For now.")]],
+  next="return"),
+
+ # ---------------- game over: control hits zero a second time, wherever she is ----------------
+ scene("breakdown", "The Breaking Point", None, None, variants=[
+  [L(N, "It stops being a decision. Bonnie goes rigid mid-breath, every muscle she owns clamped around one last, failing idea.", "I can't. I'm sorry. I held as long as I could. I really, really did."),
    L("bonnie", "No. No, no, no. Not now. Please. Thirty more seconds. I will do anything.", "You said that at four this morning. I have nothing left to give you.", mood="whispering"),
    L(N, "Her eyes sting. All those hours of flawless manners, and the one thing she cannot be polite to is her own body.", "It is not your fault. It is not mine either. We were both very brave and very stubborn."),
    L("bonnie", "...Okay. Okay. I know. I'm sorry too.", "Letting go now. Don't look at anybody.", mood="shaking")],
+  [L(N, "There is no wave this time, no warning. The strength simply runs out, like a battery.", "That is it. That is everything we had, and it was a LOT."),
+   L("bonnie", "I was so close.", "You were. Closer than anyone I have ever heard of. I am not even exaggerating.", mood="very quietly"),
+   L(N, "She stops fighting, because there is nothing left to fight with.", "You can stop now. You already did the impossible part.")],
+  [L(N, "The adrenaline goes out like a tide, and takes the last of her grip with it.", "Twice. You stopped me TWICE. Do you know how rare that is?"),
+   L("bonnie", "It doesn't feel like winning.", "It is not winning. It is the most impressive losing I have ever been part of.", mood="with a shaky laugh"),
+   L(N, "She closes her eyes.", "I have it from here. Thank you for trying so hard.")],
+  [L(N, "Bonnie counts to three, the way she has all day. This time nothing answers at three.", "I am calling it. As your bladder, and frankly as your biggest fan."),
+   L("bonnie", "Please. One more minute.", "You have asked for one more minute forty times today. I gave you every one. I am out.", mood="pleading"),
+   L(N, "She nods, once, to nobody.", "Hours past anything reasonable. Be proud of that part.")],
+  [L(N, "It is a small thing that does it in the end: one breath, taken a little too deep.", "Oh no. Oh, that was the last thread. I felt it go."),
+   L("bonnie", "After ALL that?", "After all that. A whole day and a whole ocean, and it was a breath. You were astonishing.", mood="disbelieving"),
+   L(N, "There is nothing left to decide.", "Let me take it from here. Eyes forward.")]],
   next="ending_lost", closing=True),
 
  # ---------------- interruptions: somebody notices ----------------
@@ -343,14 +387,24 @@ story = {
    {"id": "mrs_higgins", "name": "Mrs. Higgins", "age": 51, "notes": "Host. Hugs first, asks later."},
    {"id": "bladder", "name": "Bladder", "kind": "bladder"}],
  "stats": [
-   {"id": "control", "label": "Control", "start": 48, "thresholds": [{"atOrBelow": 0, "goto": "breakdown"}]},
+   {"id": "control", "label": "Control", "start": 48, "thresholds": [
+     {"atOrBelow": 0, "scene": "second_wind", "effects": [SET("control", 100), F("adrenaline")]},   # once: the last chance
+     {"atOrBelow": 0, "goto": "breakdown"}]},
    {"id": "halo", "label": "Halo", "icon": "😇", "start": 100},
    {"id": "suspicion", "label": "Suspicion", "icon": "👀", "start": 0, "thresholds": [{"atOrAbove": 100, "goto": "ending_found_out"}]}],
  "bladder": {"startFullness": 86, "fillPerMinute": 0.03, "absorbPerMinute": 0.5, "capacityMl": 2400,
-   "leakOnFail": {"above": 80, "amount": 1, "effects": [S("suspicion", 3)], "bladder": "That was a spasm. A little got out. I am SO sorry."}},
+   "leakOnFail": {"above": 80, "amount": 1, "effects": [S("suspicion", 3)], "bladder": "That was a spasm. A little got out. I am SO sorry."},
+   "overflow": {"amount": 2, "effects": [S("suspicion", 8), S("control", -5)], "bladder": "There is no more room. NONE. Some of that just left."}},
  "clock": {"start": "04:10"},
  "chapters": [{"name": n, "icon": i} for n, i in zip(CH, ["🌙", "🥞", "🛃", "✈️", "🛂", "🏠", "🛏️"])],
- "modes": [{"flag": "hard_mode", "label": "Hard mode", "minigameDifficulty": 1, "fillMultiplier": 1.5}],
+ "modes": [{"flag": "hard_mode", "label": "Hard mode", "minigameDifficulty": 1, "fillMultiplier": 1.5},
+   {"flag": "adrenaline", "label": "Adrenaline", "stats": {"control": {"loss": 1.5, "gain": 0.5}}}],
+ # Close to breaking, the bladder's thoughts lie over every answer and have to be tapped away
+ "thoughts": {"when": [{"stat": "control", "lt": 30}], "taps": 3, "freeSeconds": 30, "minutes": 1, "lines": [
+   "I would prefer having a wee.", "Or we could just GO. Right now.", "Say the word. Any sentence with 'bathroom' in it.",
+   "Nobody would mind. Ask them.", "You are allowed to stop, you know.", "Let go. Just a little. Who would know?",
+   "There is a door RIGHT there.", "Think about waterfalls.", "Why are we still doing this?", "One word. It starts with B.",
+   "Owh, but you ARE trying to hold it...", "I cannot hold this for you much longer."]},
  "choiceSets": [
    {"id": "noise_response", "options": [
      {"key": "freeze", "effects": [M(3), S("suspicion", -20), S("control", -8)]},
@@ -384,7 +438,8 @@ story = {
   {"id": "ending_lost", "kind": "bad", "accident": True, "title": "Not Quite", "text": "Control gives out before the journey does. Nothing a change of clothes and a very long shower cannot fix, but the perfect record is over. She will tell this story at parties in about ten years."}],
  "scorecard": [
   {"label": "Control", "stat": "control"}, {"label": "Halo", "stat": "halo"}, {"label": "Suspicion", "stat": "suspicion"},
-  {"label": "How full at the end", "stat": "fullness"}, {"label": "Hard mode", "flag": "hard_mode"}, {"label": "Made a friend", "flag": "friends"}]}
+  {"label": "How full at the end", "stat": "fullness"}, {"label": "Hard mode", "flag": "hard_mode"}, {"label": "Made a friend", "flag": "friends"},
+  {"label": "Sneaked a visit on the plane", "flag": "went_once"}, {"label": "Needed the adrenaline", "flag": "adrenaline"}]}
 
 def clean(o):
     if isinstance(o, dict): return {k: clean(v) for k, v in o.items() if v is not None}

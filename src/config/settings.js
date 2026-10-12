@@ -9,11 +9,13 @@ export const settings = {
   difficulty: TUNING.simSpikeDifficulty,
   voice: true,                          // speak the bladder's lines aloud (subtitles always show)
   vibration: true,
+  sound: 100,                           // sound effects volume in percent; 0 is muted
   disabledMinigames: [],                // minigame ids the player never wants to see
   blockedTags: [],                      // stories carrying any of these tags are hidden
 };
 
 export function isValidDifficulty(d) { return Number.isInteger(d) && d >= 1 && d <= 5; }
+export function isValidSound(v) { return Number.isInteger(v) && v >= 0 && v <= 100; }
 const isTextList = (v) => Array.isArray(v) && v.length <= 100 && v.every((x) => typeof x === 'string' && x.length <= 120);
 
 try {
@@ -23,6 +25,7 @@ try {
     if (isValidDifficulty(saved.difficulty)) settings.difficulty = saved.difficulty;
     if (typeof saved.voice === 'boolean') settings.voice = saved.voice;
     if (typeof saved.vibration === 'boolean') settings.vibration = saved.vibration;
+    if (isValidSound(saved.sound)) settings.sound = saved.sound;
     if (isTextList(saved.disabledMinigames)) settings.disabledMinigames = saved.disabledMinigames;
     if (isTextList(saved.blockedTags)) settings.blockedTags = saved.blockedTags;
   }

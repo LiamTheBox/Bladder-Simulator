@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { openGame, GEOM_JS } from './helpers.js';
 
 const RECORDED = ['thresholdCrossed', 'sphincterChanged', 'voidStarted', 'voidEnded', 'accident', 'drinkQueued',
-  'gameReset', 'spikeStarted', 'spikeCancelled', 'minigameStarted', 'minigameEnded', 'interaction', 'heartbeat'];
+  'gameReset', 'spikeStarted', 'spikeCancelled', 'minigameStarted', 'minigameEnded', 'interaction', 'heartbeat', 'danceBeat'];
 
 async function started(browser) {
   const game = await openGame(browser, 390, 844);
@@ -127,5 +127,25 @@ test('stamina thresholds, and gameReset when the difficulty changes', async ({ b
   await pg.locator('#btn-settings').dispatchEvent('pointerdown');
   await pg.locator('#difficulty-select').selectOption('3');
   expect(names(await events('gameReset'))).toEqual(['gameReset']);
+  await context.close();
+});
+
+test('danceBeat: the beats of the current potty-dance move, at that move\'s own pace; none below half full', async ({ browser }) => {
+  const { context, ev, events, clear, wait } = await started(browser);
+  await ev('st.volume=30; st.isClosed=true'); await wait(800);
+  expect(await events('danceBeat'), 'no dancing, no beats').toEqual([]);
+
+  const beatsOf = async (move) => {
+    await ev(`st.volume=90; st.stamina=100; st.dance.id='${move}'; st.dance.beat=null; st.dance.timer=30`);
+    await clear(); await wait(2000);
+    const beats = await events('danceBeat');
+    expect(beats.every(([, p]) => p.move === move), `every beat names ${move}`).toBe(true);
+    return beats.length;
+  };
+  // a beat every PI / beat seconds (config/dance.js): sway 3 -> about 2 in two seconds, hop 5.5 -> 3 or 4, march 13 -> 8
+  const sway = await beatsOf('sway'), hop = await beatsOf('hop'), march = await beatsOf('march');
+  expect(sway).toBeGreaterThanOrEqual(1); expect(sway).toBeLessThanOrEqual(3);
+  expect(hop).toBeGreaterThanOrEqual(2); expect(hop).toBeLessThanOrEqual(5);
+  expect(march).toBeGreaterThanOrEqual(6); expect(march).toBeLessThanOrEqual(10);
   await context.close();
 });

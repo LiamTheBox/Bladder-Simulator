@@ -6,16 +6,20 @@
 //   "characters": [ { "id", "name", "age": integer >= 18, "voice"?, "notes"? },
 //                   { "id": "bladder", "name", "kind": "bladder" } ],        // the bladder needs no age
 //   "stats":      [ { "id", "label", "start", "min"?: 0, "max"?: 100, "icon"?, "hidden"?: bool,
-//                     "thresholds"?: [ { "atOrBelow" | "atOrAbove": number, "goto": target } ] } ],
+//                     "thresholds"?: [ { "atOrBelow" | "atOrAbove": number,
+//                                        "goto": target  |  "scene": scene id, "effects"?: [effect] } ] } ],
 //   "bladder":    { "startFullness": 0..100, "fillPerMinute"?: n, "absorbPerMinute"?: n, "capacityMl"?: n,
-//                   "leakOnFail"?: { "above": 0..100, "amount": n, "effects"?: [effect], "bladder"?: text } },
+//                   "leakOnFail"?: { "above": 0..100, "amount": n, "effects"?: [effect], "bladder"?: text },
+//                   "overflow"?: { "amount"?: n, "effects"?: [effect], "bladder"?: text } },
 //   "clock":      { "start": "HH:MM" },
 //   "chapters":   [ { "name": text, "icon": emoji } ],                        // in reading order
-//   "modes":      [ { "flag", "label", "minigameDifficulty"?: -2..2, "fillMultiplier"?: 0.25..4 } ],
+//   "modes":      [ { "flag", "label", "minigameDifficulty"?: -2..2, "fillMultiplier"?: 0.25..4,
+//                     "stats"?: { stat id: { "loss"?: 0..10, "gain"?: 0..10 } } } ],
+//   "thoughts":   { "when": [condition], "lines": [text], "taps"?: 1..10, "freeSeconds"?: n, "minutes"?: n },
 //   "choiceSets": [ { "id", "options": [ { "key", "effects"?: [effect] } ] } ],
 //   "triggers":   [ trigger ],                                                // watched in every scene
 //   "start":      scene id,
-//   "scenes":     [ { "id", "title"?, "chapter"?, "lines": [line], "onEnter"?: [effect],
+//   "scenes":     [ { "id", "title"?, "chapter"?, "lines": [line], "variants"?: [ [line], ... ], "onEnter"?: [effect],
 //                     "choices"?: [choice | set use], "next"?: target, "triggers"?: [trigger], "closing"?: bool } ],
 //   "endings":    [ { "id", "title", "text", "kind"?: "good" | "neutral" | "bad", "accident"?: bool } ],
 //   "scorecard":  [ { "label", "stat" } | { "label", "flag" } ]
@@ -33,9 +37,16 @@
 //             Interrupts when all conditions hold, e.g. fullness above 70. With "scene" the story cuts to that
 //             scene; a "next" of "return" there goes back to where it was interrupted.
 //   minigame  { "id", "difficulty": 1..5, "prompt"?: text,
-//               "success"?: { "effects"?, "next"? }, "fail"?: { "effects"?, "next"? } }
+//               "success"?: { "effects"?, "next"? }, "fail"?: { "effects"?, "next"? },
+//               "relief"?: 0..100, "heard"?: { "stat", "max": n }, "lines"?: [text] }
 //             The story only names the game and how hard it is. An outcome without "next" continues with the
 //             choice's own "next" (for a trigger: back to the interrupted scene).
+//             The last three are for a visit to the toilet ("sneak_a_pee"), where it matters how well the game
+//             went, not only whether it was won. "relief" is the most fullness the visit can drain; the bladder
+//             loses that times the share the player managed (all of it for a win in any other game, none for a
+//             loss). "heard" raises a stat by "max" times how much was overheard (0 to 1), whatever the outcome:
+//             with "max": 10, every 10% heard is 1 point. "lines" is what the person outside the door says.
+//             These come before the outcome's own effects. Being caught outright is the "fail" outcome.
 //   effect    { "stat", "add": n } | { "stat", "set": n } | { "fullness": n } | { "drink": n }
 //             | { "minutes": n } | { "clock": "HH:MM" } | { "flag": id, "value"?: bool (default true) } | { "void": true }
 //             "drink" queues fluid that is absorbed as minutes pass; "void" empties the bladder; "clock" only
@@ -51,9 +62,24 @@
 //             stat threshold at it instead of straight at the ending.
 //   leakOnFail  whenever a minigame is lost while fullness is above "above", the bladder spasms and "amount"
 //             percent leaks out; "effects" apply as well (say, a little suspicion) and "bladder" is what it says.
+//   overflow  whenever the bladder would go past 100 (a drink arriving in a full bladder, say), the excess escapes
+//             as a spasm: fullness ends at 100 minus "amount" (default 0), "effects" apply and "bladder" is what
+//             it says. Without this block the bladder silently stays at 100.
 //   ending    with "accident": true the bladder gives out on arrival: it empties by itself, as an accident (for the
 //             ending a "lost all control" threshold jumps to). The scorecard still shows how full it was.
-//   mode      while its flag is set, every minigame is that much harder and the bladder fills that much faster
+//   mode      while its flag is set, every minigame is that much harder and the bladder fills that much faster.
+//             "stats" scales what "add" effects do to a meter meanwhile: "loss" for what lowers it, "gain" for
+//             what raises it (an adrenaline rush: control falls 1.5 times as fast and comes back half as fast).
+//   variants  a scene can be written several ways: one list of lines is picked by chance each time the scene is
+//             entered, and shown after the scene's own "lines" (which may then be left out).
+//   threshold "goto" jumps there for good, every time the meter is at the mark. "scene" is a rescue that happens
+//             once: its "effects" apply at once (say, the meter back to 100 and a flag for a mode), then the scene
+//             plays as an interruption and its "next": "return" carries on with whatever was about to happen.
+//             Thresholds are tried in the order written: put the rescue before the "goto" it postpones.
+//   thoughts  while the conditions hold, the bladder's thoughts cover every choice when choices come up: each is
+//             tapped "taps" times (default 3) to get the real answer back. The player has "freeSeconds" (default
+//             30) at no cost; after that "minutes" of story time (default 1) pass every few seconds until an
+//             answer is picked. "lines" is what the thoughts say.
 //
 // "fullness" (0..100, how full the bladder is) is built in: usable as a "stat" in conditions and the scorecard,
 // and changed with the "fullness" / "drink" / "void" effects. A story's own stats must not reuse that id.
@@ -67,6 +93,7 @@ export const FULLNESS = 'fullness';
 export const RETURN = 'return';
 export const ID_PATTERN = /^[a-z][a-z0-9_]{0,39}$/;
 export const CLOCK_PATTERN = /^([01]\d|2[0-3]):[0-5]\d$/;
+export const THOUGHT_DEFAULTS = { taps: 3, freeSeconds: 30, minutes: 1 };
 export const COMPARISONS = ['lt', 'lte', 'gt', 'gte', 'eq'];
 export const ENDING_KINDS = ['good', 'neutral', 'bad'];
 
@@ -74,7 +101,7 @@ export const ENDING_KINDS = ['good', 'neutral', 'bad'];
 export const LIMITS = {
   fileBytes: 512 * 1024,
   characters: 40, stats: 12, chapters: 60, scenes: 500, endings: 40, scorecard: 12, tags: 20, modes: 6, choiceSets: 20, setOptions: 8,
-  storyTriggers: 12,
+  storyTriggers: 12, minigameLines: 6, variants: 8, thoughtLines: 20,
   linesPerScene: 60, choicesPerScene: 8, triggersPerScene: 8, effects: 12, conditions: 8, thresholds: 6,
   shortText: 120,    // names, labels, titles, tags
   text: 2000,        // one line of dialogue, a description, an ending

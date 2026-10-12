@@ -60,7 +60,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   }
 
   /* --- top level --- */
-  if (!keys(data, 'story', ['schemaVersion', 'meta', 'characters', 'start', 'scenes', 'endings'], ['stats', 'bladder', 'clock', 'chapters', 'scorecard', 'modes', 'choiceSets', 'triggers'])) return done();
+  if (!keys(data, 'story', ['schemaVersion', 'meta', 'characters', 'start', 'scenes', 'endings'], ['stats', 'bladder', 'clock', 'chapters', 'scorecard', 'modes', 'choiceSets', 'triggers', 'thoughts'])) return done();
   if (data.schemaVersion !== SCHEMA_VERSION) { err('schemaVersion', `must be ${SCHEMA_VERSION} (this file says ${JSON.stringify(data.schemaVersion)})`); return done(); }
 
   if (keys(data.meta, 'meta', ['title', 'rating'], ['id', 'author', 'description', 'tags'])) {
@@ -178,10 +178,16 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   // Returns the targets this minigame can lead to. fallback = where an outcome without "next" continues.
   function minigame(m, path, fallback) {
     const out = [];
-    if (!keys(m, path, ['id', 'difficulty'], ['prompt', 'success', 'fail'])) return out;
+    if (!keys(m, path, ['id', 'difficulty'], ['prompt', 'success', 'fail', 'relief', 'heard', 'lines'])) return out;
     if (typeof m.id !== 'string' || !minigameIds.includes(m.id)) err(`${path}.id`, `"${m.id}" is not a minigame this game has (available: ${minigameIds.join(', ')})`);
     if (!Number.isInteger(m.difficulty) || m.difficulty < 1 || m.difficulty > 5) err(`${path}.difficulty`, 'must be a whole number from 1 to 5');
     if ('prompt' in m) text(m.prompt, `${path}.prompt`, LIMITS.shortText * 2);
+    if ('relief' in m) number(m.relief, `${path}.relief`, 0, 100);
+    if ('heard' in m && keys(m.heard, `${path}.heard`, ['stat', 'max'])) {
+      if (!statIds.has(m.heard.stat)) err(`${path}.heard.stat`, `"${m.heard.stat}" is not one of this story's stats`);
+      number(m.heard.max, `${path}.heard.max`, 0, 1000);
+    }
+    if ('lines' in m && list(m.lines, `${path}.lines`, LIMITS.minigameLines, { min: 1 })) m.lines.forEach((l, i) => text(l, `${path}.lines[${i}]`, LIMITS.shortText));
     for (const outcome of ['success', 'fail']) {
       const o = m[outcome], p = `${path}.${outcome}`;
       if (o !== undefined && keys(o, p, [], ['effects', 'next'])) {
@@ -196,6 +202,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
 
   /* --- stats in detail (thresholds can jump to an ending from anywhere) --- */
   const roots = [];
+  const rescues = [];   // scenes that a threshold plays as an interruption
   if (Array.isArray(data.stats)) data.stats.forEach((s, i) => {
     const p = `stats[${i}]`;
     if (!keys(s, p, ['id', 'label', 'start'], ['min', 'max', 'icon', 'hidden', 'thresholds'])) return;
@@ -210,14 +217,21 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
       const tp = `${p}.thresholds[${j}]`;
       if (!isObject(t)) { err(tp, 'must be an object'); return; }
       const side = 'atOrBelow' in t ? 'atOrBelow' : 'atOrAbove';
-      if (!keys(t, tp, [side, 'goto'])) return;
+      const rescue = 'scene' in t; // plays once as an interruption, instead of jumping for good
+      if (!keys(t, tp, [side, rescue ? 'scene' : 'goto'], rescue ? ['effects'] : [])) return;
       number(t[side], `${tp}.${side}`, min, max);
-      if (t.goto === RETURN) err(`${tp}.goto`, `cannot be "${RETURN}"`);
+      if (rescue) {
+        if ('effects' in t) effects(t.effects, `${tp}.effects`);
+        if (id(t.scene, `${tp}.scene`)) {
+          if (!sceneIds.has(t.scene)) err(`${tp}.scene`, `points to "${t.scene}", which is not a scene`);
+          else rescues.push(t.scene);
+        }
+      } else if (t.goto === RETURN) err(`${tp}.goto`, `cannot be "${RETURN}"`);
       else if (target(t.goto, `${tp}.goto`)) roots.push(t.goto);
     });
   });
 
-  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'absorbPerMinute', 'capacityMl', 'leakOnFail'])) {
+  if ('bladder' in data && keys(data.bladder, 'bladder', ['startFullness'], ['fillPerMinute', 'absorbPerMinute', 'capacityMl', 'leakOnFail', 'overflow'])) {
     number(data.bladder.startFullness, 'bladder.startFullness', 0, 100);
     if ('fillPerMinute' in data.bladder) number(data.bladder.fillPerMinute, 'bladder.fillPerMinute', 0, 100);
     if ('absorbPerMinute' in data.bladder) number(data.bladder.absorbPerMinute, 'bladder.absorbPerMinute', 0, 100);
@@ -229,6 +243,12 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
       if ('effects' in leak) effects(leak.effects, 'bladder.leakOnFail.effects');
       if ('bladder' in leak) text(leak.bladder, 'bladder.leakOnFail.bladder');
     }
+    const spill = data.bladder.overflow;
+    if ('overflow' in data.bladder && keys(spill, 'bladder.overflow', [], ['amount', 'effects', 'bladder'])) {
+      if ('amount' in spill) number(spill.amount, 'bladder.overflow.amount', 0, 100);
+      if ('effects' in spill) effects(spill.effects, 'bladder.overflow.effects');
+      if ('bladder' in spill) text(spill.bladder, 'bladder.overflow.bladder');
+    }
   }
   if ('clock' in data && keys(data.clock, 'clock', ['start']) && (typeof data.clock.start !== 'string' || !CLOCK_PATTERN.test(data.clock.start))) {
     err('clock.start', 'must be a 24-hour time like "04:10"');
@@ -236,12 +256,26 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
 
   if ('modes' in data && list(data.modes, 'modes', LIMITS.modes)) data.modes.forEach((m, i) => {
     const p = `modes[${i}]`;
-    if (!keys(m, p, ['flag', 'label'], ['minigameDifficulty', 'fillMultiplier'])) return;
+    if (!keys(m, p, ['flag', 'label'], ['minigameDifficulty', 'fillMultiplier', 'stats'])) return;
+    if ('stats' in m && keys(m.stats, `${p}.stats`, [], [...statIds])) for (const [stat, k] of Object.entries(m.stats)) {
+      if (!keys(k, `${p}.stats.${stat}`, [], ['loss', 'gain'])) continue;
+      if ('loss' in k) number(k.loss, `${p}.stats.${stat}.loss`, 0, 10);
+      if ('gain' in k) number(k.gain, `${p}.stats.${stat}.gain`, 0, 10);
+    }
     if (id(m.flag, `${p}.flag`)) flagsRead.push([m.flag, where(`${p}.flag`)]);
     text(m.label, `${p}.label`, LIMITS.shortText);
     if ('minigameDifficulty' in m && (!Number.isInteger(m.minigameDifficulty) || Math.abs(m.minigameDifficulty) > 2)) err(`${p}.minigameDifficulty`, 'must be a whole number from -2 to 2');
     if ('fillMultiplier' in m) number(m.fillMultiplier, `${p}.fillMultiplier`, 0.25, 4);
   });
+
+  if ('thoughts' in data && keys(data.thoughts, 'thoughts', ['when', 'lines'], ['taps', 'freeSeconds', 'minutes'])) {
+    const t = data.thoughts;
+    conditions(t.when, 'thoughts.when');
+    if (list(t.lines, 'thoughts.lines', LIMITS.thoughtLines, { min: 1 })) t.lines.forEach((l, i) => text(l, `thoughts.lines[${i}]`, LIMITS.shortText));
+    if ('taps' in t && (!Number.isInteger(t.taps) || t.taps < 1 || t.taps > 10)) err('thoughts.taps', 'must be a whole number from 1 to 10');
+    if ('freeSeconds' in t) number(t.freeSeconds, 'thoughts.freeSeconds', 0, 600);
+    if ('minutes' in t) number(t.minutes, 'thoughts.minutes', 0, 60);
+  }
 
   /* --- choice sets: recurring kinds of decision, worded differently by each scene that uses them --- */
   const choiceSets = new Map(); // id -> [{ key, effects }]
@@ -332,7 +366,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
   scenes.forEach((s, i) => {
     sceneId = isObject(s) && typeof s.id === 'string' ? s.id : null;
     const p = sceneId ? '' : `scenes[${i}]`, at = (f) => sub(p, f);
-    if (!keys(s, p, ['id', 'lines'], ['title', 'chapter', 'onEnter', 'choices', 'next', 'triggers', 'closing'])) return;
+    if (!keys(s, p, ['id', ...(isObject(s) && 'variants' in s ? [] : ['lines'])], ['lines', 'variants', 'title', 'chapter', 'onEnter', 'choices', 'next', 'triggers', 'closing'])) return;
     const out = [];
     if ('title' in s) text(s.title, at('title'), LIMITS.shortText);
     if ('chapter' in s && text(s.chapter, at('chapter'), LIMITS.shortText)) {
@@ -340,15 +374,17 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
       if (chapterNames && !chapterNames.has(s.chapter)) err(at('chapter'), `"${s.chapter}" is not in this story's "chapters" list`);
     }
     if ('closing' in s && typeof s.closing !== 'boolean') err(at('closing'), 'must be true or false');
-    if (list(s.lines, at('lines'), LIMITS.linesPerScene, { min: 1 })) s.lines.forEach((l, j) => {
-      const lp = at(`lines[${j}]`);
+    const checkLines = (lines, name) => { if (list(lines, at(name), LIMITS.linesPerScene, { min: 1 })) lines.forEach((l, j) => line(l, at(`${name}[${j}]`))); };
+    if ('lines' in s) checkLines(s.lines, 'lines');
+    if ('variants' in s && list(s.variants, at('variants'), LIMITS.variants, { min: 2 })) s.variants.forEach((v, j) => checkLines(v, `variants[${j}]`));
+    function line(l, lp) {
       if (!keys(l, lp, ['speaker', 'text'], ['mood', 'bladder', 'if'])) return;
       if ('if' in l) conditions(l.if, `${lp}.if`);
       if (l.speaker !== NARRATOR && !characterIds.has(l.speaker)) err(`${lp}.speaker`, `"${l.speaker}" is not "${NARRATOR}" or one of this story's characters`);
       text(l.text, `${lp}.text`);
       if ('mood' in l) text(l.mood, `${lp}.mood`, LIMITS.shortText);
       if ('bladder' in l) text(l.bladder, `${lp}.bladder`);
-    });
+    }
     if ('onEnter' in s) effects(s.onEnter, at('onEnter'));
     if ('next' in s && target(s.next, at('next'))) out.push(s.next);
 
@@ -413,7 +449,7 @@ export function validateStory(data, { file = 'story', minigameIds = [] } = {}) {
     return seen;
   }
   const ordinary = spread([data.start, ...roots], false);
-  const reached = spread([data.start, ...roots, ...storyInterruptions], true);
+  const reached = spread([data.start, ...roots, ...storyInterruptions, ...rescues], true);
   for (const s of sceneIds) if (!reached.has(s)) { sceneId = s; err('', 'can never be reached from the start'); }
   for (const s of usesReturn) if (ordinary.has(s)) { sceneId = s; err('', `uses "${RETURN}" but can be reached in the ordinary flow, where there is nothing to return to`); }
   sceneId = null;

@@ -56,12 +56,31 @@ export function spasmLeak() {
   return true;
 }
 
+// A minigame takes over letting go (sneak_a_pee): while its rate is set, an open sphincter drains at that pace
+// and the level on screen is the game's business. The game opens and closes with setSphincter(); endFlow()
+// always closes again.
+export function beginFlow(ratePerSec) { st.flowRate = ratePerSec; }
+export function endFlow() {
+  if (st.flowRate === null) return;
+  st.flowRate = null;
+  if (!st.isClosed && !st.isVoiding && !st.failureEvent) setSphincter(true, 'minigame');
+}
+
 export function setSpeedUp(on) { st.isSpeedingUp = on; }
 
-// amount is in percent of bladder capacity
-export function queueDrink(amount, name) {
-  st.pendingFluid += amount;
+// amount is in percent of bladder capacity. kind: the drink's { speed, effect } from config/content.js.
+// Each drink is digested on its own curve (sim/step.js); st.pendingFluid is what is still to arrive in all.
+export function queueDrink(amount, name, { speed = 1, effect = null, feel = null } = {}) {
+  addToDigest(amount, T.digestTau / speed);
+  // a diuretic draws out more than was drunk, later: a second, slower drink on the way
+  if (effect === 'diuretic') addToDigest(amount * T.diureticShare, (T.digestTau * T.diureticDelay) / speed);
+  if (effect === 'relaxing') st.relaxedTimer = T.relaxedSec;
+  if (feel === 'fizzy') st.fizz = T.fizzSec;
   emit('drinkQueued', { name, amount });
+}
+function addToDigest(amount, tau) {
+  st.pendingFluid += amount;
+  st.drinks.push({ amount, left: amount, age: 0, tau });
 }
 
 // Story mode on or off (see st.storyMode)
@@ -70,9 +89,30 @@ export function setStoryMode(on) { st.storyMode = on; }
 // Fullness in percent, set at once (story start) or approached smoothly (every frame in story mode)
 export function setVolume(v) { st.volume = Math.max(0, Math.min(100, v)); }
 export function easeVolumeToward(target, dt) {
-  if (st.isVoiding || !st.isClosed) return; // draining has its own pace
+  if (st.isVoiding || !st.isClosed || st.flowRate !== null) return; // draining has its own pace
   st.volume += (target - st.volume) * Math.min(1, T.storyVolumeEase * dt);
   if (Math.abs(target - st.volume) < 0.05) st.volume = target;
+}
+
+/* --- Developer mode (ui/dev_panel.js): shortcuts for testing, never used by the game itself --- */
+export function setStamina(v) { st.stamina = Math.max(0, Math.min(100, v)); }
+// name: 'holdStamina' (control never drains) or 'noSpikes' (no random urge spikes)
+export function setDevSwitch(name, on) { if (name in st.dev) st.dev[name] = Boolean(on); }
+// Holds one potty-dance move for a while. Dancing needs a bladder over half full, so an emptier one is filled.
+export function forceDance(id, seconds = T.devDanceSec) {
+  if (st.volume <= 50) setVolume(T.devDanceVolume);
+  st.dance.id = id; st.dance.timer = seconds; st.dance.beat = null;
+}
+// Squeezes as hard as asked (0..squeezeMax) and lets go after a while, the way the scroll wheel does
+export function holdSqueeze(tension, seconds = T.devSqueezeSec) {
+  st.squeeze.active = true; st.squeeze.wheelTimer = seconds;
+  st.squeeze.tension = Math.max(0, Math.min(T.squeezeMax, tension));
+}
+
+// Brings the next urge spike close enough to watch its wave build (fills the bladder if it is too empty for spikes)
+export function hurrySpike() {
+  if (st.volume <= T.spikeMinVolume) setVolume(T.devDanceVolume);
+  st.minigame.cooldown = T.urgeBuildSec;
 }
 
 // Phone tilt in degrees (left/right); the fluid leans that way

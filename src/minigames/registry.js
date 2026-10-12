@@ -3,19 +3,20 @@
 // A minigame is an object with:
 //   id            string, unique
 //   start(config, report)   set up state and show its controls.
-//                 config = { difficulty: 1..5, duration: seconds, text: optional overrides }
-//                 report({ success, quality? })  call once if the player finishes before the timer runs out
+//                 config = { difficulty: 1..5, duration: seconds, text: optional overrides, relief?: percent }
+//                 report({ success, quality?, noise? })  call once if the player finishes before the timer runs out
 //   update(dt)    called every frame while it runs
 //   cleanup()     hide its controls; always called when it ends, however it ends
 // and optionally:
 //   duration(difficulty)    seconds allowed; the runner owns the countdown and the timer bar
-//   timeUp()                the timer ran out: return { success, quality? }. Default is a failure.
+//   timeUp()                the timer ran out: return { success, quality?, noise? }. Default is a failure.
 //   onPlayAreaPointer(x, y, geom)   a touch on the play area (the bladder), for games played on the bladder itself
 //   draw(ctx, geom, t)      draw on the canvas over the bladder
 //   freezesBody   true if the bladder should stop dancing so things on it are easy to hit
 //   prompts       lines the bladder may say to announce it (config.text.prompt overrides)
 //   failStamina   stamina lost on failure, if different from TUNING.minigameFailStamina
 // quality is 0..1: how well it went, for callers that want more than pass/fail.
+// noise is 0..1: how much of it was noticed by others (sneak_a_pee's "heard" meter); most games have none.
 const games = new Map();
 
 export function registerMinigame(game) {

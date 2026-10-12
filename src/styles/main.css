@@ -28,6 +28,12 @@
   @media (min-width: 600px) { 
     #toy-container { height: 90vh; border-radius: 32px; border: 1px solid var(--panel-border); } 
   }
+  /* An upright tablet: the stacked phone layout, but using the width it has instead of a phone-sized column */
+  @media (min-width: 600px) and (max-width: 899px) {
+    #toy-container { max-width: 760px; max-height: 1100px; }
+    .action-btn { font-size: 1.15rem; padding: 18px; }
+    #stamina-row .stm-track { height: 16px; }
+  }
 
   #canvas-wrapper { flex: 1; position: relative; overflow: hidden; touch-action: none; }
   #fluid-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
@@ -50,6 +56,13 @@
   }
 
   .status-dot { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 8px currentColor; }
+  /* The fullness ring: --fill (0..1) is how far round it is drawn, --ring its colour; --urge (0..1) makes it glow
+     and pulse as an urge wave rises (all set in ui/hud.js) */
+  #urge-ring { --fill: 0; --urge: 0; --ring: #38bdf8; display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; flex: none;
+    background: radial-gradient(closest-side, #1b1220 60%, transparent 64%), conic-gradient(var(--ring) calc(var(--fill) * 360deg), rgba(255,255,255,0.14) 0);
+    box-shadow: 0 0 calc(var(--urge) * 16px) rgba(251, 113, 133, calc(var(--urge))); }
+  #urge-ring.surging { animation: urge-pulse 0.5s ease-in-out infinite; }
+  @keyframes urge-pulse { 50% { transform: scale(1.18); } }
 
   /* CONTROLS STYLING */
   #controls { 
@@ -79,12 +92,18 @@
   #btn-speedup { background: linear-gradient(180deg, #0ea5e9, #0284c7); box-shadow: 0 6px 0 #0369a1; }
   #btn-speedup.holding { transform: translateY(6px); box-shadow: 0 0 0 #0369a1; filter: brightness(1.2); }
   
+  #desk-drinks { display: none; }
+  #btn-shop { background: linear-gradient(180deg, #a78bfa, #7c3aed); box-shadow: 0 6px 0 #6d28d9; }
+  #btn-shop:active { transform: translateY(6px); box-shadow: 0 0 0 transparent; }
   .btn-empty { background: linear-gradient(180deg, #10b981, #059669); box-shadow: 0 6px 0 #047857; }
   
+  #clench-row { display: flex; align-items: center; justify-content: center; gap: 14px; padding-bottom: 6px; }
   #btn-clench {
     background: linear-gradient(180deg, #f43f5e, #e11d48); box-shadow: 0 6px 0 #be123c;
-    padding: 16px 20px;
+    flex: none; width: 64px; height: 64px; padding: 0; border-radius: 50%; font-size: 1.7rem;
   }
+  #clench-label { display: flex; flex-direction: column; pointer-events: none; color: white; font-weight: 800; text-transform: uppercase; min-width: 11.5em; }
+  #clench-label .sub-text { margin-top: 2px; }
   #btn-clench.open-state { background: linear-gradient(180deg, #34d399, #059669); box-shadow: 0 6px 0 #047857; }
   #btn-clench:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 transparent; }
 
@@ -104,6 +123,12 @@
     padding: 20px 40px; border-radius: 99px; font-size: 1.5rem; font-weight: 800;
     box-shadow: 0 10px 30px rgba(56, 189, 248, 0.4); animation: float 3s ease-in-out infinite;
   }
+  #how-to { margin-top: 28px; width: min(86%, 380px); display: flex; flex-direction: column; gap: 12px; color: #cbd5e1; font-size: 0.92rem; line-height: 1.35; }
+  .how-row { display: flex; align-items: center; gap: 14px; }
+  .how-row[hidden] { display: none; }
+  .how-icon { flex: none; width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.12); }
+  .how-row b { color: #f8fafc; }
+  #how-note { margin-top: 6px; text-align: center; font-size: 0.78rem; color: #94a3b8; }
   @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
   
   /* Modal Boxes */
@@ -123,16 +148,21 @@
   
   .drink-icon { font-size: 2.2rem; margin-bottom: 8px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
   .drink-name { font-weight: 800; font-size: 0.95rem; color: #f8fafc; }
+  .drink-hint { margin-top: 4px; font-size: 0.68rem; color: #c4b5fd; font-weight: 700; }
   .drink-amt { font-size: 0.75rem; color: var(--accent); font-weight: 700; margin-top: 4px; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 99px; }
 
   /* STAMINA: lives at the top of the control panel so it never covers the bladder */
+  /* Control (stamina): what decides the game, so big and labelled; it pulses red when low (.low, set in ui/hud.js) */
   #stamina-row { display: flex; align-items: center; gap: 10px; opacity: 0.35; transition: opacity 0.3s; }
-  #stamina-row .stm-lbl { font-size: 0.65rem; font-weight: 900; color: #94a3b8; letter-spacing: 1px; }
-  #stamina-row .stm-track { flex: 1; height: 8px; background: rgba(0,0,0,0.6); border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+  #stamina-row .stm-lbl { font-size: 0.8rem; font-weight: 900; color: #e2e8f0; letter-spacing: 1px; }
+  #stamina-row .stm-track { flex: 1; height: 14px; background: rgba(0,0,0,0.6); border-radius: 7px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+  #stamina-row.low .stm-track { animation: control-low 0.8s ease-in-out infinite; }
+  @keyframes control-low { 0%, 100% { box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 0 0 rgba(244, 63, 94, 0); } 50% { box-shadow: inset 0 1px 3px rgba(0,0,0,0.5), 0 0 14px rgba(244, 63, 94, 0.9); } }
   #stamina-bar { height: 100%; width: 100%; background: var(--success); transition: width 0.2s, background-color 0.3s; }
-  #stamina-text { font-size: 0.75rem; font-weight: 900; color: white; width: 38px; text-align: right; }
+  #stamina-text { font-size: 0.9rem; font-weight: 900; color: white; width: 44px; text-align: right; }
 
-  /* BLADDER SPEECH BUBBLE: minigame prompts and subtitles. Sits at the bottom of the play area. */
+  /* BLADDER SPEECH BUBBLE: minigame prompts and subtitles. Sits at the bottom of the play area, except for
+     free-play chatter (.overhead, below). */
   #bladder-bubble {
     position: absolute; left: 50%; bottom: 14px; transform: translate(-50%, 8px);
     max-width: 86%; padding: 10px 16px; border-radius: 18px; text-align: center;
@@ -147,6 +177,11 @@
     border: 8px solid transparent; border-top: 0; border-bottom-color: rgba(255,255,255,0.94);
   }
   #bladder-bubble.alarm::after { border-bottom-color: #fee2e2; }
+  /* Above the head (free-play chatter): placed by ui/bubble.js, with the tail pointing down at the bladder */
+  #toy-container #bladder-bubble.overhead { bottom: auto; } /* outranks the story-mode rules that pin it to the foot */
+  /* a phone has little room between the top buttons and the head: one compact line fits where two would not */
+  @media (max-width: 599px) { #bladder-bubble.overhead { max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; } }
+  #bladder-bubble.overhead::after { top: auto; bottom: -8px; border: 8px solid transparent; border-bottom: 0; border-top-color: rgba(255,255,255,0.94); }
 
   /* MINIGAME PANEL: takes the place of the SPEED UP / VOID row during an urge spike */
   #action-zone { position: relative; }
@@ -160,6 +195,18 @@
     font-size: 1.4rem; font-weight: 900; cursor: pointer; transition: transform 0.1s; box-shadow: 0 6px 0 #fca5a5;
   }
   #mg-btn-mash:active { transform: translateY(6px); box-shadow: 0 0 0 transparent; }
+
+  /* Sneak a pee: the hold button on the left; what is said outside and the "heard" meter on the right */
+  #mg-pee-area { flex: 1; display: none; gap: 10px; min-height: 0; }
+  #pee-btn { flex: 1; border: none; border-radius: 16px; background: white; color: #0369a1; font-size: 1.1rem; font-weight: 900; cursor: pointer; touch-action: none; user-select: none; -webkit-user-select: none; box-shadow: 0 6px 0 #7dd3fc; }
+  #pee-btn.flowing { transform: translateY(6px); box-shadow: 0 0 0 transparent; background: #bae6fd; }
+  #pee-side { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 6px; padding: 6px 10px; border-radius: 16px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); transition: background-color 0.15s; }
+  #mg-pee-area[data-phase="warn"] #pee-side { background: rgba(250, 204, 21, 0.3); }
+  #mg-pee-area[data-phase="listen"] #pee-side { background: rgba(244, 63, 94, 0.4); }
+  #pee-voice { min-height: 2.4em; font-weight: 800; font-size: 0.9rem; line-height: 1.2; color: white; overflow: hidden; }
+  #pee-heard { height: 8px; border-radius: 4px; background: rgba(0,0,0,0.5); overflow: hidden; }
+  #pee-heard-fill { height: 100%; width: 0; background: #f43f5e; }
+  #pee-heard-label { font-size: 0.8rem; font-weight: 800; color: white; }
 
   /* Breathe */
   /* The whole strip is the touch target (easy to hold with a thumb). The ring is small enough that it still
@@ -225,10 +272,12 @@
   #tremor-label { min-width: 130px; font-weight: 900; font-size: 1.05rem; letter-spacing: 0.5px; color: white; pointer-events: none; }
 
   /* ---------- STORY MODE ---------- */
+  /* As big as the free-play button: the two ways to play weigh the same */
   #btn-story-mode {
-    position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%);
-    padding: 12px 22px; border-radius: 99px; border: 1px solid rgba(255,255,255,0.25);
-    background: rgba(255,255,255,0.08); color: #f8fafc; font-weight: 800; font-size: 0.95rem; letter-spacing: 0.5px; cursor: pointer;
+    position: absolute; left: 50%; bottom: 24px; transform: translateX(-50%); white-space: nowrap;
+    padding: 18px 36px; border-radius: 99px; border: 0;
+    background: linear-gradient(135deg, #f472b6, #c084fc); box-shadow: 0 10px 30px rgba(244, 114, 182, 0.35);
+    color: #fff; font-weight: 800; font-size: 1.3rem; letter-spacing: 0.5px; cursor: pointer;
   }
   .story-card { margin-bottom: 12px; padding: 14px 16px; border-radius: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.12); color: #f8fafc; }
   .story-card.broken { opacity: 0.7; }
@@ -247,13 +296,14 @@
 
   #story-panel { display: none; }
   .story-mode #story-panel {
-    display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; gap: 10px; padding: 12px 16px 14px;
+    display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; gap: 10px;
+    padding: 12px 16px max(18px, env(safe-area-inset-bottom)); /* the last choice never sits on the screen's edge */
     background: rgba(15, 10, 20, 0.85); border-top: 1px solid var(--panel-border);
     border-bottom-left-radius: inherit; border-bottom-right-radius: inherit;
   }
   /* The bladder keeps the top third; the sim's own controls only appear while a minigame runs */
   .story-mode #canvas-wrapper { flex: 0 0 34%; }
-  .story-mode #btn-shop, .story-mode #pending-lbl, .story-mode #stamina-row, .story-mode #btn-clench, .story-mode #btn-row { display: none !important; }
+  .story-mode #btn-shop, .story-mode #stamina-row, .story-mode #clench-row, .story-mode #btn-row { display: none !important; }
   .story-mode #controls { display: none; }
   .story-mode.mg-active #controls { display: flex; border-radius: 0; }
   .story-mode.mg-active #story-panel { border-radius: 0; }
@@ -283,10 +333,13 @@
   .story-stat-fill { height: 100%; background: linear-gradient(90deg, #a3e635, #fde047); transition: width 0.3s; }
 
   /* The text scrolls on its own; panning is allowed here even though the page itself never scrolls */
-  #story-log { flex: 1 1 0; min-height: 0; overflow-y: auto; touch-action: pan-y; user-select: text; padding-right: 4px; }
+  /* The text scrolls above the choices; its top edge fades, so text scrolled away reads as "more above" */
+  #story-log { flex: 1 1 0; min-height: 0; overflow-y: auto; touch-action: pan-y; user-select: text; padding-right: 4px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); padding-top: 10px; }
   .story-line { margin: 0 0 10px; font-size: 0.98rem; line-height: 1.5; color: #f1f5f9; overflow-wrap: anywhere; }
   .story-line.narration { color: #cbd5e1; }
   .story-speaker { font-weight: 800; color: #f9a8d4; }
+  .story-line.bladder-voice.in-bubble { display: none; }
   .story-line.bladder-voice { font-style: italic; color: #fbbf24; padding-left: 10px; border-left: 3px solid #b45309; }
   .story-ending-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 10px; color: #f8fafc; }
   .story-ending-title.good { color: #6ee7b7; }
@@ -300,6 +353,19 @@
     background: rgba(255,255,255,0.06); border: 1px solid rgba(253, 230, 138, 0.35); color: #f8fafc; font-weight: 700; font-size: 0.92rem; line-height: 1.3;
   }
   .story-choice:active { background: rgba(255,255,255,0.15); }
+  /* A thought of the bladder's lying over a choice: tap it away. --left is the share of taps still needed. */
+  .story-choice.thought {
+    --left: 1; background: rgba(248, 250, 252, calc(0.35 + 0.6 * var(--left))); color: #0f172a; border-color: #f8fafc;
+    font-weight: 500; font-size: 1.05rem; user-select: none; -webkit-user-select: none;
+  }
+  .story-choice.thought.cracked { border-style: dashed; }
+  .story-choice.thought:active { background: #e2e8f0; }
+  /* The free time with the thoughts, draining; red once story time is being charged */
+  #story-thought-bar { display: none; flex: none; height: 4px; border-radius: 2px; background: rgba(0,0,0,0.5); overflow: hidden; }
+  #story-thought-bar.on { display: block; }
+  #story-thought-fill { height: 100%; width: 100%; background: #fef08a; }
+  #story-thought-bar.late #story-thought-fill { width: 100% !important; background: #f43f5e; }
+  .story-mode.mg-active #story-thought-bar { display: none; }
   .story-choice.story-continue { text-align: center; border-color: rgba(255,255,255,0.2); color: #e2e8f0; }
 
   /* ---------- AGE GATE AND SETTINGS ---------- */
@@ -309,6 +375,8 @@
   .setting-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 20px; color: #94a3b8; font-size: 0.85rem; }
   .setting-check { display: flex; align-items: center; gap: 10px; min-height: 40px; color: #e2e8f0; font-size: 0.95rem; cursor: pointer; }
   .setting-check input { width: 20px; height: 20px; flex: none; accent-color: #38bdf8; }
+  .setting-slider { display: flex; flex-direction: column; gap: 4px; min-height: 40px; margin-bottom: 6px; color: #e2e8f0; font-size: 0.95rem; }
+  .setting-slider input { width: 100%; height: 28px; accent-color: #38bdf8; }
   /* In a story the play area is short: a more compact bubble leaves the bladder's legs visible */
   .story-mode #bladder-bubble { bottom: 8px; max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; }
   #story-guide-link { color: #7dd3fc; font-size: 0.85rem; padding: 6px 0; }
@@ -338,22 +406,52 @@
   @keyframes tile-wrong { 0%, 100% { transform: translateX(0); background: rgba(244, 63, 94, 0.6); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
   #settings-try-list .age-btn { text-align: left; padding-left: 16px; }
+  /* Developer panel: sections of small buttons that wrap */
+  .dev-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .dev-tab { min-height: 36px; padding: 6px 12px; border-radius: 99px; font-weight: 800; font-size: 0.8rem; cursor: pointer; color: #cbd5e1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); }
+  .dev-tab.on { background: rgba(250, 204, 21, 0.2); border-color: #facc15; color: #fef9c3; }
+  .dev-page[hidden] { display: none; }
+  /* an even grid, so every button is the same size whatever its label */
+  .dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
+  #dev-body h3 { color: #94a3b8; font-size: 0.9rem; margin: 18px 0 8px; }
+  #dev-body .dev-note { color: #94a3b8; font-size: 0.8rem; margin-bottom: 8px; }
+  .dev-btn { min-height: 40px; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: #e2e8f0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); }
+  .dev-btn:active { background: rgba(250, 204, 21, 0.25); }
+  #dev-body select { min-height: 40px; padding: 6px 10px; border-radius: 10px; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem; }
   .story-mode #settings-try { display: none; } /* a story decides its own minigames */
 
   /* ---------- DESKTOP (wide screens) ----------
      Same page, same elements: above this size the panel moves beside the bladder instead of under it.
      Phones, portrait tablets and phones held sideways (too short) keep the stacked layout above. */
   @media (min-width: 900px) and (min-height: 520px) {
+    /* A big monitor gets a bigger frame (it used to stop at 1100 x 950) */
     #toy-container {
-      display: grid; grid-template-columns: 360px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
-      max-width: 1100px; overflow: hidden;
+      display: grid; grid-template-columns: 380px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr);
+      max-width: 1400px; max-height: 1100px; overflow: hidden;
     }
+    /* Free play: the drinks stay open at the top of the left column, so the drink button is not needed */
+    /* Developer panel: a drawer over the left column; the game runs on beside it (ui/dev_panel.js) */
+    #dev-overlay { flex-direction: row; justify-content: flex-start; align-items: stretch; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; pointer-events: none; }
+    #dev-overlay .modal-box { pointer-events: auto; width: 380px; max-width: 380px; height: 100%; max-height: none; border-radius: 0; border-width: 0 1px 0 0; }
+    #dev-overlay .dev-paused { display: none; }
+    /* in a story the left column is the text: the drawer opens over the bladder's side instead */
+    .story-mode #dev-overlay { justify-content: flex-end; }
+    .story-mode #dev-overlay .modal-box { border-width: 0 0 0 1px; }
+    #toy-container:not(.story-mode) #desk-drinks { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; flex: 0 1 auto; }
+    #toy-container:not(.story-mode) #btn-shop { display: none; }
+    #desk-drinks-head { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 900; letter-spacing: 1px; color: #e2e8f0; }
+    #desk-pending { color: #a78bfa; letter-spacing: 0.5px; }
+    #desk-drink-grid { grid-template-columns: repeat(4, 1fr); gap: 6px; }
+    #desk-drink-grid .drink-btn { padding: 6px 2px; border-radius: 10px; }
+    #desk-drink-grid .drink-icon { font-size: 1.3rem; margin-bottom: 2px; }
+    #desk-drink-grid .drink-name { font-size: 0.62rem; line-height: 1.1; text-align: center; }
+    #desk-drink-grid .drink-hint { display: none; }
+    #desk-drink-grid .drink-amt { font-size: 0.6rem; margin-top: 2px; padding: 1px 6px; }
     #canvas-wrapper { grid-column: 2; grid-row: 1 / -1; }
     #controls {
       grid-column: 1; grid-row: 1; justify-content: center; padding: 24px;
       border-top: 0; border-right: 1px solid var(--panel-border); border-radius: 0;
     }
-    #btn-clench { flex: none; padding: 26px 20px; } /* in a column it would otherwise stretch to fill the height */
     /* The buttons are centred in a tall column: the popups keep to a band around them, so they still crowd the lock */
     #mg-popups-layer { top: 50%; bottom: auto; height: 340px; max-height: 100%; transform: translateY(-50%); }
     .story-mode #mg-popups-layer { top: 0; bottom: 0; height: auto; transform: none; }

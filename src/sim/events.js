@@ -18,14 +18,17 @@
 //     spikeStarted                       an urge spike begins now; in sim mode the runner answers with a minigame
 //     spikeCancelled                     the hold ended (opened, voided, or dropped below the threshold) mid-spike
 //     minigameStarted  { id, difficulty }
-//     minigameEnded    { id, difficulty, success, cancelled, quality? }
+//     minigameEnded    { id, difficulty, success, cancelled, quality?, noise? }
 //
 //   Touching the bladder (sim/interactions.js)
-//     interaction      { type: 'poke'|'stretchStart'|'snapback'|'soothe'|'squeeze', force? }
+//     interaction      { type: 'poke'|'stretchStart'|'snapback'|'soothe'|'squeeze'|'squirt'|'squeezeRelease', force? }
+//                         'squeeze': a squeeze became firm (once per squeeze); 'squirt': liquid is being forced out
+//                         by a hard squeeze (repeats while it lasts); 'squeezeRelease': a firm squeeze was let go
 //
-//   Presentation cues (sim/step.js): the sim asks, audio/haptics answer
+//   Presentation cues (sim/step.js, sim/dance.js): the sim asks, audio/haptics answer
 //     voiceCue (category)                a good moment for a voice line; a listener returns true if it was spoken
 //     heartbeat                          one beat
+//     danceBeat        { move }          one beat of the current potty-dance move (a step, a clench, a hop landing)
 //     haptic (pattern)                   a vibration
 //     fillFlow (bool) / drainFlow (bool) every frame: whether fluid is rushing in / out right now
 const listeners = {};

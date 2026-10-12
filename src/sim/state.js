@@ -5,9 +5,14 @@ import { TUNING } from '../config/tuning.js';
 function initialState() {
   return {
   volume: TUNING.startVolume, pendingFluid: 0,
+  drinks: [],          // drinks on their way in: { amount, left, age, tau } (sim/actions.js queueDrink)
+  relaxedTimer: 0,
+  fizz: 0,             // seconds of bubbles left from a fizzy drink (drawn rising through the liquid)
+  strain: 0,           // seconds of holding not yet recovered from: recovery is slower while it lasts     // seconds a relaxing drink (beer) still makes holding harder
   isClosed: true, isSpeedingUp: false, isVoiding: false,
   stamina: 100, failureEvent: false,
   prevVolume: TUNING.startVolume, prevStamina: 100, // last frame's values, for the thresholdCrossed event
+  flowRate: null, // percent per second while a minigame lets the bladder go at its own pace (null = nobody does)
   storyMode: false, // story mode drives fullness itself: no stamina drain, random spikes or idle chatter
   staminaDraining: false, // true while holding costs stamina; the HUD brightens the stamina bar from this
   // Minigame State
@@ -23,11 +28,14 @@ function initialState() {
   particles: [], sweatDrops: [],
   pokeTimer: 0, heartTimer: 0, faceTimer: 0, voiceCooldown: 0,
   faceState: { e: 'open', m: 'neutral' }, blinkTimer: 2.0,
-  dance: { id: 'sway', timer: 0 }, body: { x: 0, y: 0 }, bubbleTimer: 0,
+  dance: { id: 'sway', timer: 0, beat: null }, body: { x: 0, y: 0 }, bubbleTimer: 0,
   legs: { al: Math.PI * 0.65, ar: Math.PI * 0.35, bl: 0, br: 0, xl: -0.15, xr: 0.15 },
   drag: { active: false, angle: 0, dist: 0, targetDist: 0, vel: 0, peakDist: 0 },
   soothe: { active: false, lastX: 0, lastY: 0, acc: 0, timer: 0 },
-  squeeze: { active: false, tension: 0, wheelTimer: 0, initialDist: 0, spoke: false },
+  squeeze: { active: false, tension: 0, wheelTimer: 0, initialDist: 0, spoke: false, peak: 0, wobble: 0, wobbleVel: 0, squirtTimer: 0, forcing: false, heldHard: 0 },
+  flow: 0, // how strongly liquid is leaving right now, 0 (shut) to 1 (a full stream); see TUNING.streamCurve
+  urge: 0, // the current urge wave, 0 (calm) to 1 (a spike is here); see TUNING.urgeBuildSec
+  dev: { holdStamina: false, noSpikes: false }, // developer-mode switches (sim/actions.js setDevSwitch)
   slosh: { val: 0, vel: 0 }, gravity: { x: 0, targetX: 0 },
   viscoelasticCreep: 0,
   desperateTimer: TUNING.desperateFirstSec, beggingTimer: TUNING.beggingFirstSec, lastBand: 0, voidBtnDisabled: false

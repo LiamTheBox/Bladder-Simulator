@@ -5,7 +5,7 @@ import { validateStory } from '../src/story/validator.js';
 import { parseStory } from '../src/story/loader.js';
 import { LIMITS } from '../src/story/schema.js';
 
-const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'];
+const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else', 'sneak_a_pee'];
 const FILE = 'stories/placeholder.json';
 const TEXT = readFileSync(new URL('../stories/placeholder.json', import.meta.url), 'utf8');
 const fresh = () => JSON.parse(TEXT);
@@ -68,6 +68,14 @@ test('minigames must be ones the game has, at difficulty 1 to 5', () => {
   expectError((s) => { s.scenes[1].choices[0].minigame.difficulty = 6; }, /minigame\.difficulty: must be a whole number from 1 to 5/);
   expectError((s) => { s.scenes[1].choices[0].minigame.difficulty = 2.5; }, /whole number from 1 to 5/);
   expectError((s) => { s.scenes[1].triggers[0].when = []; }, /triggers\[0\]\.when: needs at least one condition/);
+  const visit = (extra) => (s) => { Object.assign(s.scenes[1].choices[0].minigame, { id: 'sneak_a_pee' }, extra); };
+  expect(errorsAfter(visit({ relief: 40, heard: { stat: 'suspicion', max: 10 }, lines: ['Sam? You in there?'] }))).toEqual([]);
+  expectError(visit({ relief: 140 }), /minigame\.relief: must be between 0 and 100/);
+  expectError(visit({ heard: { stat: 'nope', max: 10 } }), /minigame\.heard\.stat: "nope" is not one of this story's stats/);
+  expectError(visit({ heard: { stat: 'suspicion' } }), /minigame\.heard\.max: is required/);
+  expectError(visit({ lines: [] }), /minigame\.lines: needs at least 1 entry/);
+  expectError(visit({ lines: ['a', 'b', 'c', 'd', 'e', 'f', 'g'] }), /minigame\.lines: has too many entries/);
+  expectError(visit({ lines: [5] }), /minigame\.lines\[0\]: must be non-empty text/);
 });
 
 test('stats, effects and conditions must refer to things the story defines', () => {
@@ -104,6 +112,11 @@ test('ids, duplicates and misspelled fields are caught', () => {
   expectError((s) => { s.bladder.leakOnFail = { above: 180, amount: 1 }; }, /bladder\.leakOnFail\.above: must be between 0 and 100/);
   expectError((s) => { s.bladder.leakOnFail = { above: 80, amount: 1, effects: [{ stat: 'nope', add: 1 }] }; }, /bladder\.leakOnFail\.effects\[0\]\.stat: "nope" is not one of this story's stats/);
   expect(errorsAfter((s) => { s.bladder.leakOnFail = { above: 80, amount: 1, effects: [{ stat: 'suspicion', add: 3 }], bladder: 'Oops.' }; })).toEqual([]);
+  expectError((s) => { s.bladder.overflow = { amount: 120 }; }, /bladder\.overflow\.amount: must be between 0 and 100/);
+  expectError((s) => { s.bladder.overflow = { above: 90 }; }, /bladder\.overflow\.above: unknown field/);
+  expectError((s) => { s.bladder.overflow = { effects: [{ stat: 'nope', add: 1 }] }; }, /bladder\.overflow\.effects\[0\]\.stat: "nope" is not one of this story's stats/);
+  expect(errorsAfter((s) => { s.bladder.overflow = {}; })).toEqual([]);
+  expect(errorsAfter((s) => { s.bladder.overflow = { amount: 2, effects: [{ stat: 'suspicion', add: 3 }], bladder: 'Too much!' }; })).toEqual([]);
   expectError((s) => { s.characters[1].id = 'sam'; }, /"sam" is used more than once/);
   expectError((s) => { s.characters[0].id = 'narrator'; }, /"narrator" is reserved/);
   expectError((s) => { s.scenes[0].choises = []; }, /scene "slide_one": choises: unknown field \(check the spelling\)/);
@@ -165,6 +178,47 @@ test('interruptions: "return" only inside a scene that interrupts, and the scene
   expectError((s) => { s.triggers[0].minigame = { id: 'mash', difficulty: 1 }; }, /triggers\[0\]\.minigame: unknown field/);
   // a scene-level trigger can cut to a scene too
   expect(errorsAfter((s) => { s.scenes[1].triggers.push({ when: [{ stat: 'control', lt: 20 }], scene: 'dana_notices' }); s.triggers = []; })).toEqual([]);
+});
+
+test('variants, rescue thresholds, mode multipliers and thoughts are checked', () => {
+  const line = { speaker: 'narrator', text: 'Hm.' };
+  expect(errorsAfter((s) => { s.scenes[2].variants = [[line], [line, line]]; })).toEqual([]);
+  expect(errorsAfter((s) => { delete s.scenes[2].lines; s.scenes[2].variants = [[line], [line]]; }), 'variants can stand in for lines').toEqual([]);
+  expectError((s) => { delete s.scenes[0].lines; }, /scene "slide_one": lines: is required/);
+  expectError((s) => { s.scenes[2].variants = [[line]]; }, /variants: needs at least 2 entries/);
+  expectError((s) => { s.scenes[2].variants = Array(9).fill([line]); }, /variants: has too many entries/);
+  expectError((s) => { s.scenes[2].variants = [[line], []]; }, /variants\[1\]: needs at least 1 entry/);
+  expectError((s) => { s.scenes[2].variants = [[line], [{ speaker: 'nobody', text: 'Hm.' }]]; }, /variants\[1\]\[0\]\.speaker: "nobody" is not/);
+  expectError((s) => { s.scenes[2].variants = [[line], [{ speaker: 'narrator', text: 'Hm.', html: '<b>' }]]; }, /variants\[1\]\[0\]\.html: unknown field/);
+
+  const rescue = (extra = {}) => (s) => { s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'dana_notices', ...extra }); };
+  expect(errorsAfter(rescue({ effects: [{ stat: 'control', set: 100 }, { flag: 'rush' }] }))).toEqual([]);
+  expectError(rescue({ goto: 'ending_dash' }), /thresholds\[0\]\.goto: unknown field/);
+  expectError((s) => { s.stats[0].thresholds[0].effects = []; }, /thresholds\[0\]\.effects: unknown field/);
+  expectError((s) => { s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'ending_dash' }); }, /thresholds\[0\]\.scene: points to "ending_dash", which is not a scene/);
+  expectError(rescue({ effects: [{ stat: 'nope', add: 1 }] }), /thresholds\[0\]\.effects\[0\]\.stat: "nope" is not one of this story's stats/);
+  // a scene that only a rescue leads to counts as reachable
+  expect(errorsAfter((s) => {
+    s.scenes.push({ id: 'second_wind', lines: [line], next: 'return' });
+    s.stats[0].thresholds.unshift({ atOrBelow: 0, scene: 'second_wind' });
+  })).toEqual([]);
+
+  const mode = (stats) => (s) => { s.modes.push({ flag: 'double_espresso', label: 'Rush', stats }); };
+  expect(errorsAfter(mode({ control: { loss: 1.5, gain: 0.5 }, composure: { loss: 2 } }))).toEqual([]);
+  expectError(mode({ luck: { loss: 2 } }), /modes\[1\]\.stats\.luck: unknown field/);
+  expectError(mode({ control: { loss: 11 } }), /stats\.control\.loss: must be between 0 and 10/);
+  expectError(mode({ control: { speed: 2 } }), /stats\.control\.speed: unknown field/);
+
+  const thoughts = (t) => (s) => { s.thoughts = t; };
+  expect(errorsAfter(thoughts({ when: [{ stat: 'control', lt: 30 }], lines: ['Just go.'], taps: 3, freeSeconds: 30, minutes: 0.5 }))).toEqual([]);
+  expect(errorsAfter(thoughts({ when: [], lines: ['Always.'] }))).toEqual([]);
+  expectError(thoughts({ lines: ['Go.'] }), /thoughts\.when: is required/);
+  expectError(thoughts({ when: [], lines: [] }), /thoughts\.lines: needs at least 1 entry/);
+  expectError(thoughts({ when: [{ stat: 'nope', lt: 3 }], lines: ['Go.'] }), /thoughts\.when\[0\]/);
+  expectError(thoughts({ when: [], lines: ['Go.'], taps: 0 }), /thoughts\.taps: must be a whole number from 1 to 10/);
+  expectError(thoughts({ when: [], lines: ['Go.'], freeSeconds: -1 }), /thoughts\.freeSeconds: must be between 0 and 600/);
+  expectError(thoughts({ when: [], lines: ['Go.'], minutes: 90 }), /thoughts\.minutes: must be between 0 and 60/);
+  expectError(thoughts({ when: [], lines: ['x'.repeat(200)] }), /thoughts\.lines\[0\]: is too long/);
 });
 
 test('modes, conditional lines and the void effect are checked', () => {

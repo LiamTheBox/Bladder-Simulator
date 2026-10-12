@@ -1,5 +1,7 @@
 // The bladder's outline: a pear that bulges with fill, squeeze, stretch, tilt, slosh and pokes.
 import { st } from '../sim/state.js';
+import { TUNING } from '../config/tuning.js';
+import { tautness } from '../sim/geometry.js';
 
 export function drawSmoothPath(ctx, points) {
   ctx.beginPath();
@@ -12,6 +14,9 @@ export function drawSmoothPath(ctx, points) {
   }
   ctx.closePath();
 }
+
+// How squeezed the waist is: 0 at rest, 1 at the hardest squeeze, below zero while it rebounds
+export function squeezeAmount() { return Math.max(-0.6, Math.min(1, (st.squeeze.tension + st.squeeze.wobble) / TUNING.squeezeMax)); }
 
 export function getPearPoints(cx, cy, baseR, t, fillPerc) {
   const points = [];
@@ -28,8 +33,14 @@ export function getPearPoints(cx, cy, baseR, t, fillPerc) {
        if (ey > 0) r += ey * baseR * 0.1 * lobe;
     }
 
-    r -= baseR * (st.squeeze.tension * 0.007) * Math.abs(ex);
-    r += baseR * (st.squeeze.tension * 0.007) * Math.abs(ey) * 0.6;
+    // Squeeze: a rubber band around the waist. The sides are pulled in at mid height, and the top and bottom
+    // bulge to make room. On release the wobble swings the same shape the other way (sq below zero).
+    const sq = squeezeAmount();
+    r -= baseR * 0.4 * sq * Math.exp(-(ey * ey) / 0.16);
+    r += baseR * 0.2 * sq * ey * ey;
+
+    // an urge wave: the whole bladder swells and sinks in quick throbs, stronger as the wave rises
+    r += baseR * TUNING.urgeThrob * st.urge * Math.pow(Math.sin(t * 9), 2);
 
     const stretch = Math.max(st.drag.dist, st.viscoelasticCreep * 3);
     if (stretch > 0.1) {
@@ -40,7 +51,7 @@ export function getPearPoints(cx, cy, baseR, t, fillPerc) {
 
     r += Math.cos(th) * st.gravity.x * baseR * 0.25 * fillPerc;
     let wobble = Math.sin(th * 4 + t * 5) * 0.02 * baseR + Math.sin(th * 2 + st.slosh.val * 3) * 0.06 * baseR; 
-    r += wobble * ((fillPerc > 0.5 ? 1 : 0.5) + Math.abs(st.slosh.vel) * 0.2);
+    r += wobble * ((fillPerc > 0.5 ? 1 : 0.5) + Math.abs(st.slosh.vel) * 0.2) * (1 - tautness() * TUNING.tautWobbleCut); // taut: it barely wobbles
 
     if (st.pokeTimer > 0) {
        let pDiff = th - (Math.PI/2); 

@@ -406,10 +406,14 @@
 
   #settings-try-list .age-btn { text-align: left; padding-left: 16px; }
   /* Developer panel: sections of small buttons that wrap */
-  .story-mode #btn-dev { display: none !important; }
+  .dev-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .dev-tab { min-height: 36px; padding: 6px 12px; border-radius: 99px; font-weight: 800; font-size: 0.8rem; cursor: pointer; color: #cbd5e1; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); }
+  .dev-tab.on { background: rgba(250, 204, 21, 0.2); border-color: #facc15; color: #fef9c3; }
+  .dev-page[hidden] { display: none; }
+  /* an even grid, so every button is the same size whatever its label */
+  .dev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 6px; }
   #dev-body h3 { color: #94a3b8; font-size: 0.9rem; margin: 18px 0 8px; }
   #dev-body .dev-note { color: #94a3b8; font-size: 0.8rem; margin-bottom: 8px; }
-  .dev-grid { display: flex; flex-wrap: wrap; gap: 6px; }
   .dev-btn { min-height: 40px; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: #e2e8f0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); }
   .dev-btn:active { background: rgba(250, 204, 21, 0.25); }
   #dev-body select { min-height: 40px; padding: 6px 10px; border-radius: 10px; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem; }
@@ -425,6 +429,13 @@
       max-width: 1400px; max-height: 1100px; overflow: hidden;
     }
     /* Free play: the drinks stay open at the top of the left column, so the drink button is not needed */
+    /* Developer panel: a drawer over the left column; the game runs on beside it (ui/dev_panel.js) */
+    #dev-overlay { flex-direction: row; justify-content: flex-start; align-items: stretch; background: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; pointer-events: none; }
+    #dev-overlay .modal-box { pointer-events: auto; width: 380px; max-width: 380px; height: 100%; max-height: none; border-radius: 0; border-width: 0 1px 0 0; }
+    #dev-overlay .dev-paused { display: none; }
+    /* in a story the left column is the text: the drawer opens over the bladder's side instead */
+    .story-mode #dev-overlay { justify-content: flex-end; }
+    .story-mode #dev-overlay .modal-box { border-width: 0 0 0 1px; }
     #toy-container:not(.story-mode) #desk-drinks { display: flex; flex-direction: column; gap: 8px; min-height: 0; overflow-y: auto; flex: 0 1 auto; }
     #toy-container:not(.story-mode) #btn-shop { display: none; }
     #desk-drinks-head { display: flex; justify-content: space-between; font-size: 0.8rem; font-weight: 900; letter-spacing: 1px; color: #e2e8f0; }

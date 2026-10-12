@@ -446,3 +446,22 @@ test('every bundled story is valid, and a random walk through it always reaches 
     expect([...seen].sort(), `${name}: every ending is reachable in play`).toEqual(story.endings.map((e) => e.id).sort());
   }
 });
+
+test('developer shortcuts: jump to a scene or an ending, set a meter within its range, skip to the next choice', async () => {
+  const story = JSON.parse(readFileSync(new URL('../stories/placeholder.json', import.meta.url)));
+  const r = createRunner(story);
+  r.devSkip();
+  expect(['choices', 'minigame', 'ended']).toContain(r.state.phase);
+  const other = story.scenes[story.scenes.length - 1].id;
+  r.devJump(other);
+  expect(r.state.sceneId).toBe(other);
+  r.devJump('no-such-scene');
+  expect(r.state.sceneId, 'an unknown target is ignored').toBe(other);
+  const stat = story.stats[0];
+  r.devSetStat(stat.id, 1e9);
+  expect(r.state.stats[stat.id]).toBe(stat.max ?? 100);
+  r.devSetStat(stat.id, -1e9);
+  expect(r.state.stats[stat.id]).toBe(stat.min ?? 0);
+  r.devJump(story.endings[0].id);
+  expect(r.view().phase).toBe('ended');
+});

@@ -8,7 +8,7 @@ import { on } from '../sim/events.js';
 import { st } from '../sim/state.js';
 import { setStoryMode, setVolume, easeVolumeToward, startVoid, triggerAccident, spasmLeak } from '../sim/actions.js';
 import { speakLine } from '../audio/speech.js';
-import { startMinigame } from '../minigames/index.js';
+import { startMinigame, endMinigame } from '../minigames/index.js';
 import { saveProgress, clearProgress } from '../story/library.js';
 import { showBubble, hideBubble, bubbleEl } from './bubble.js';
 import { setVolumeLabel } from './hud.js';
@@ -84,6 +84,23 @@ export function exitStory() {
 }
 // Anything else that resets the game (changing the difficulty in Settings) ends the story too
 on('gameReset', () => { if (runner && !resetting) exitStory(); });
+
+// Developer mode (ui/dev_panel.js): the running story's chapters and meters, and shortcuts through it.
+// null when no story is running.
+export function storyDevTools() {
+  if (!runner) return null;
+  const leave = () => { if (st.minigame.active) endMinigame(false, true); }; // a running game is called off, not lost
+  return {
+    title: story.meta?.title ?? '',
+    // each chapter, by the first scene that belongs to it
+    chapters: runner.view().chapters.list.map((c) => ({ ...c, scene: story.scenes.find((s) => s.chapter === c.name)?.id })).filter((c) => c.scene),
+    endings: story.endings.map((e) => ({ id: e.id, title: e.title })),
+    stats: runner.view().stats,
+    jump(target) { leave(); runner.devJump(target); render(); },
+    setStat(id, value) { runner.devSetStat(id, value); render(); },
+    skip() { runner.devSkip(); render(); },
+  };
+}
 
 // The newest bladder reply waits out of the text while its bubble shows it; once the bubble is gone (or shows
 // something else) it takes its place in the text, and the text scrolls to keep the end in view

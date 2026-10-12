@@ -323,6 +323,18 @@ export function createRunner(story, saved = null, random = Math.random) {
       applyThenGo([...measured, ...effects], outcome.next ?? fallback);
     },
 
+    /* --- Developer mode only (ui/dev_panel.js through ui/story_screen.js); a story never uses these --- */
+    // Jumps straight to a scene (or ending), leaving any interruption and running minigame behind
+    devJump(target) {
+      if (!scenes.has(target) && !endings.has(target)) return;
+      state.stack.length = 0; state.pendingScene = null; state.minigame = null;
+      go(target);
+    },
+    // Sets a meter, kept within its range. Its thresholds are judged at the story's next step, as for any change.
+    devSetStat(id, v) { const s = stats.get(id); if (s && Number.isFinite(v)) state.stats[id] = clamp(v, s.min, s.max); },
+    // Reads on until there is something to choose (or a minigame, or an ending)
+    devSkip() { for (let i = 0; i < 500 && state.phase === 'lines'; i++) this.next(); },
+
     // Plain data that createRunner(story, snapshot) can continue from. Only taken at rest (reading or choosing);
     // in the middle of a minigame it returns null and the previous snapshot stays the latest.
     snapshot() {

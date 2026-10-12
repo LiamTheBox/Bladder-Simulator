@@ -226,7 +226,7 @@ The owner approved a review of 15 layout items and 9 rules. Built so far:
 - Desktop free play keeps the drinks open at the top of the left column (`#desk-drinks`, built by `drinkButton()`
   in `ui/menus.js`, which the pop-up shop shares) and hides the drink button; the frame may grow to 1400 x 1100.
 - `tests/new-touch.spec.js` covers the lock, the bubble, the tablet width, the HUD and the start screen.
-Still to do, in this order: (4) developer panel: tabs, live drawer, story tools; (5) rules: drinks with their own speed and after-effect,
+Still to do: (5) rules: drinks with their own speed and after-effect,
 a digestion curve, a bladder that grows taut, richer liquid, stretch that buys room, recovery tied to soothing.
 
 ## Squeeze (reworked at the owner's request; **not yet playtested**)
@@ -246,11 +246,15 @@ A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.s
   below the outline, which hid the first 15% or so: a bladder at the starting volume looked empty.
 
 ## Developer mode (`TUNING.developerMode`, **on: switch it off before publishing**)
-While it is `true` the start button reads DEVELOPER MODE and free play has a 🛠️ button that opens the tools
-panel (`src/ui/dev_panel.js`): fullness and stamina sliders, "stamina never drains" / "no random spikes"
-switches (`st.dev`), every minigame at any difficulty as a practice run, every potty dance, poke and squeeze
-buttons, and a sound board. The panel only calls `sim/actions.js` (`setStamina`, `setDevSwitch`, `forceDance`,
-`holdSqueeze`) and `sim/interactions.js` (`poke`). Set the flag to `false` to get TAP TO START back and hide
+While it is `true` the start button reads DEVELOPER MODE and a 🛠️ button (free play and stories) opens the
+tools panel (`src/ui/dev_panel.js`) in tabs: Bladder (fullness and stamina sliders, "stamina never drains" / "no
+random spikes" switches in `st.dev`, "urge wave now"), Minigames (every game at any difficulty, as a practice
+run), Dances & touch, Sounds (a sound board), and Story (on a running story: skip to the next choice, jump to a
+chapter or an ending, set its meters, through `storyDevTools()` in `story_screen.js` and the runner's `dev…`
+methods). On a phone the panel covers and pauses the game; on a wide screen it is a drawer that leaves the game
+running (over the left column in free play, over the bladder's side in a story). The panel only calls
+`sim/actions.js` (`setStamina`, `setDevSwitch`, `forceDance`, `holdSqueeze`, `hurrySpike`) and
+`sim/interactions.js` (`poke`). Set the flag to `false` to get TAP TO START back and hide
 the tools. `tests/dev-mode.spec.js` covers it. When a new feature needs testing by hand, add a button there.
 
 ## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance and drink sounds)

@@ -10,12 +10,11 @@ import { resetGame } from './reset.js';
 import { startStory } from './story_screen.js';
 import { openStoryMenu, closeStoryMenu } from './story_menu.js';
 import { isAgeGateOpen, onBackToStart } from './settings_panel.js';
-import './dev_panel.js';
+import { devPanelPauses } from './dev_panel.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
 const shopOverlayEl = document.getElementById('shop-overlay');
 const settingsOverlayEl = document.getElementById('settings-overlay');
-const devOverlayEl = document.getElementById('dev-overlay');
 
 /* --- PAUSE: menus, start screen, hidden tab --- */
 export function isPaused() {
@@ -23,7 +22,7 @@ export function isPaused() {
     startOverlayEl.style.display !== 'none' ||
     shopOverlayEl.style.display === 'flex' ||
     settingsOverlayEl.style.display === 'flex' ||
-    devOverlayEl.style.display === 'flex';
+    devPanelPauses();
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { stopAllWater(); clearPointers(); if (window.speechSynthesis) window.speechSynthesis.cancel(); }

@@ -130,6 +130,11 @@ export const TUNING = {
   sloshSpring: 180, sloshDamping: 10,
   gravityFollowRate: 6, tiltFullDeg: 45,
   clenchSloshKick: 1.5, mashSloshKick: 2, digestSloshKick: 0.4, drainSloshKick: 0.8,
+  // Slosh sound: one "glug" each time the wave swings to a side (st.slosh.val peaks). A poke peaks near 0.12,
+  // a hard snapback near 0.5; the trickle of a drain or a heartbeat stays under the minimum and is silent.
+  sloshSoundMinPeak: 0.05, sloshSoundFullPeak: 0.4,   // quietest wave that is heard / wave played at full loudness
+  sloshSoundMinGapSec: 0.1, sloshSoundMinFill: 0.04,  // (fill is 0..1) a nearly empty bladder has nothing to slosh
+  sloshSoundTightFrom: 0.85,                          // from this fill up there is no room to splash: glugs only
 
   // Voice
   voiceCooldownSec: 4.0, voiceCooldownAfterEndSec: 3.0,

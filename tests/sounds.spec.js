@@ -59,3 +59,53 @@ test('the volume slider works when storage is blocked or holds a bad value', asy
     await context.close();
   }
 });
+
+// Kicks the liquid as a touch would, then gives the wave time to swing to a side
+async function kick(pg, vel) { await pg.evaluate(`window.__audio.length=0; st.slosh.val=0; st.slosh.vel=${vel}`); await pg.waitForTimeout(500); }
+const count = (log, name) => log.filter((x) => x === `${name}:ar`).length;
+
+test('the liquid glugs when it sloshes, and stays quiet when it barely moves or the bladder is empty', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  await pg.evaluate('st.volume=40; st.isClosed=true');
+
+  await pg.evaluate('window.__audio.length=0'); await pg.waitForTimeout(500);
+  expect(await pg.evaluate('window.__audio'), 'at rest: silence').toEqual([]);
+
+  await kick(pg, 3); // what a poke does (TUNING.pokeSlosh)
+  let log = await pg.evaluate('window.__audio');
+  expect(count(log, 'glug'), 'a poke-sized slosh glugs').toBeGreaterThanOrEqual(1);
+  expect(count(log, 'splash'), 'with a splash while there is room').toBeGreaterThanOrEqual(1);
+
+  await kick(pg, 12); // a hard snapback swings back and forth: several glugs, never a machine-gun
+  log = await pg.evaluate('window.__audio');
+  expect(count(log, 'glug')).toBeGreaterThanOrEqual(2);
+  expect(count(log, 'glug')).toBeLessThanOrEqual(5);
+
+  await kick(pg, 0.5); // a heartbeat's nudge
+  expect(await pg.evaluate('window.__audio'), 'a tiny ripple is silent').toEqual([]);
+
+  await pg.evaluate('st.volume=95');
+  await kick(pg, 3);
+  log = await pg.evaluate('window.__audio');
+  expect(count(log, 'glug'), 'nearly full: tight glugs').toBeGreaterThanOrEqual(1);
+  expect(count(log, 'splash'), 'nearly full: no splash').toBe(0);
+
+  await pg.evaluate('st.volume=0; st.pendingFluid=0');
+  await kick(pg, 12);
+  expect(await pg.evaluate('window.__audio'), 'empty: nothing to slosh').toEqual([]);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('a real poke on the bladder is heard as a slosh', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  await pg.evaluate('st.volume=40; st.isClosed=true; window.__audio.length=0');
+  const g = await pg.evaluate('(()=>{const r=canvasContainer.getBoundingClientRect(); const g=bladderGeom(); return {x:r.left+g.cx, y:r.top+g.cy}})()');
+  await pg.mouse.click(g.x, g.y);
+  await pg.waitForTimeout(500);
+  expect(count(await pg.evaluate('window.__audio'), 'glug')).toBeGreaterThanOrEqual(1);
+  expect(errors).toEqual([]);
+  await context.close();
+});

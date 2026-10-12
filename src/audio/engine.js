@@ -1,12 +1,19 @@
 // Sound effects (Tone.js). Every play function is a no-op until initAudio() has run on the first tap.
 import * as Tone from 'tone';
 import { settings } from '../config/settings.js';
+import { TUNING } from '../config/tuning.js';
 
 let audioCtxReady = false;
 let waterSynth, waterFilter, waterLfo, fillSynth, fillFilter, fillLfo;
 let heartBeat, snapSynth, pokeSynth, bubbleSynth, stretchSynth, snapbackSynth;
 export const waterState = { fill: false, drain: false }; // which water sounds are currently playing
 let bubbleTimer = 0;
+let glugSynth, splashSynth, splashFilter;
+let sloshLastVel = 0, sloshGap = 0;
+
+// Tags a synth with the name of its sound, so the test mock can log which one played (Tone ignores the tag)
+function named(label, synth) { synth.label = label; return synth; }
+const lerp = (a, b, k) => a + (b - a) * k;
 
 export function isAudioReady() { return audioCtxReady; }
 
@@ -34,6 +41,12 @@ function initAudio() {
   pokeSynth = new Tone.MembraneSynth({ pitchDecay: 0.1, octaves: 2, envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(); pokeSynth.volume.value = -8;
   stretchSynth = new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.1, decay: 0.2, sustain: 0, release: 0.1 } }).toDestination(); stretchSynth.volume.value = -15;
   snapbackSynth = new Tone.MembraneSynth({ pitchDecay: 0.2, octaves: 4, envelope: { attack: 0.001, decay: 0.3, sustain: 0, release: 0.2 } }).toDestination(); snapbackSynth.volume.value = -4;
+
+  // Slosh: a low sine that drops in pitch (the "glug") plus a short burst of muffled noise (the splash).
+  // Placeholders made by code; a recorded clip can replace either without touching updateSlosh().
+  glugSynth = named('glug', new Tone.MembraneSynth({ pitchDecay: 0.09, octaves: 1.2, oscillator: { type: "sine" }, envelope: { attack: 0.004, decay: 0.16, sustain: 0, release: 0.05 } })).toDestination(); glugSynth.volume.value = -8;
+  splashSynth = named('splash', new Tone.NoiseSynth({ noise: { type: "brown" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.05 } }));
+  splashFilter = new Tone.Filter({ frequency: 800, type: "lowpass", rolloff: -24 }).toDestination(); splashSynth.connect(splashFilter); splashSynth.volume.value = -6;
 
   audioCtxReady = true;
   setSoundVolume(settings.sound);
@@ -70,6 +83,23 @@ export function updateBubbles(dt) {
   if (bubbleTimer <= 0) {
     bubbleTimer = 0.0625;
     if (Math.random() > 0.3) bubbleSynth.triggerAttackRelease(400 + Math.random() * 600, "32n");
+  }
+}
+// Slosh, driven from the game loop with the wave's position and speed (st.slosh) and the fill (0..1).
+// The wave turns around where its speed changes sign: that is the moment the liquid hits a side.
+export function updateSlosh(dt, val, vel, fill) {
+  const T = TUNING;
+  const turned = (vel > 0) !== (sloshLastVel > 0);
+  sloshLastVel = vel; sloshGap -= dt;
+  const peak = Math.abs(val);
+  if (!audioCtxReady || !turned || sloshGap > 0 || peak < T.sloshSoundMinPeak || fill < T.sloshSoundMinFill) return;
+  sloshGap = T.sloshSoundMinGapSec;
+  const loud = Math.min(1, peak / T.sloshSoundFullPeak);
+  // a fuller bladder sounds lower and more muffled, and near the top has no air left to splash in
+  glugSynth.triggerAttackRelease(lerp(170, 95, fill) * (0.92 + Math.random() * 0.16), 0.15, undefined, loud);
+  if (fill < T.sloshSoundTightFrom) {
+    splashFilter.frequency.value = lerp(1100, 380, fill);
+    splashSynth.triggerAttackRelease(0.18, undefined, loud * (1 - fill / T.sloshSoundTightFrom * 0.6));
   }
 }
 export function playSnap(closing) { if (!audioCtxReady) return; snapSynth.triggerAttackRelease(closing ? ["C3", "E3"] : ["E2", "G2"], "16n"); }

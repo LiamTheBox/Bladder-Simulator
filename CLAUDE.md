@@ -201,6 +201,25 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   every game off a story treats its minigames as passed.
 - Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
 
+## Squeeze (reworked at the owner's request; **not yet playtested**)
+A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.squeezeMax`). Rules in `sim/step.js`:
+- Under `TUNING.squeezeLeakFrom` it only complains. Above it, liquid is forced out **although the sphincter is
+  locked** (`squeezeLeakPerSec`), stamina falls (`squeezeStaminaPerSec`) and does not recover meanwhile, drops
+  fly, and the `interaction` event repeats with type `squirt`. Stamina at zero is the normal accident.
+- An unlocked bladder drains faster while squeezed (`squeezeDrainBoost`).
+- Not in story mode: there a squeeze changes the shape and sound only, because the story decides the fullness.
+- Look: a pinched waist with bulging ends and a rubber band drawn around it (`render/bladder.js`,
+  `render/scene.js`). Letting go of a firm squeeze raises `interaction` type `squeezeRelease` and the waist
+  wobbles back like a spring (`st.squeeze.wobble`). `tests/squeeze.spec.js` covers all of it.
+
+## Developer mode (`TUNING.developerMode`, **on: switch it off before publishing**)
+While it is `true` the start button reads DEVELOPER MODE and free play has a 🛠️ button that opens the tools
+panel (`src/ui/dev_panel.js`): fullness and stamina sliders, "stamina never drains" / "no random spikes"
+switches (`st.dev`), every minigame at any difficulty as a practice run, every potty dance, poke and squeeze
+buttons, and a sound board. The panel only calls `sim/actions.js` (`setStamina`, `setDevSwitch`, `forceDance`,
+`holdSqueeze`) and `sim/interactions.js` (`poke`). Set the flag to `false` to get TAP TO START back and hide
+the tools. `tests/dev-mode.spec.js` covers it. When a new feature needs testing by hand, add a button there.
+
 ## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance and drink sounds)
 Every sound is made by Tone.js synths in `src/audio/engine.js`; there are no audio files. They are placeholders:
 a recorded clip can replace any one of them inside its `play…` / `update…` function without touching callers.
@@ -221,7 +240,8 @@ a recorded clip can replace any one of them inside its `play…` / `update…` f
   every new sound takes its start from `startTime(synth)`, which queues it just behind.
 - Minigames: quiet alarm (`TUNING.spikeAlarmLoudness`) on `minigameStarted`, win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
   and a tick for each of the last `TUNING.minigameTickLastSec` seconds (from the runner, which owns the countdown).
-- Character: squeak on a poke, creak as a stretch is pulled further, boing on each hop landing, gurgle while a drink digests, sigh after a void that was not an accident, and
+- Squeeze: a creak as the band tightens, a squirt per `squirt` cue, a twang on `squeezeRelease`.
+- Character: squeak on a poke (thump and squeak on a different note each time), creak as a stretch is pulled further, boing on each hop landing, gurgle while a drink digests, sigh after a void that was not an accident, and
   babble blips in place of the spoken voice when it is switched off.
 - Settings has a sound effects volume slider (`settings.sound`, 0 to 100, 0 mutes) that sets Tone's master output.
 - Not built yet: story-mode sounds (text, choices, meters, chapters), one signature sound per minigame, music,
@@ -241,7 +261,8 @@ area is a short strip (`H < W`), so it needs no knowledge of the layout. `tests/
 `npm run build` writes a self-contained static site to `dist/` (relative paths, no server, no CDN): upload
 that folder to any static host. Netlify / Cloudflare Pages: build command `npm run build`, output `dist`.
 GitHub Pages: `.github/workflows/deploy-pages.yml`, which only runs when started by hand.
-Publishing is the owner's decision; do not deploy without being asked.
+Publishing is the owner's decision; do not deploy without being asked. Before publishing, set
+`TUNING.developerMode` to `false` (see Developer mode).
 
 ## Testing
 - `tests_reference/v11_regression.py` (38 checks) and `tests_reference/v12_suite.py` (128 checks) are

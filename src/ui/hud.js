@@ -9,6 +9,7 @@ const stmContainer = document.getElementById('stamina-row');
 const stmText = document.getElementById('stamina-text');
 const stmBar = document.getElementById('stamina-bar');
 const drinkSub = document.getElementById('drink-sub');
+const deskPending = document.getElementById('desk-pending');
 const urgeRing = document.getElementById('urge-ring');
 
 // Story mode can show fullness its own way (e.g. in ml); null goes back to percent
@@ -39,6 +40,7 @@ export function updateHud() {
 
   // what is still on its way in shows on the drink button itself
   drinkSub.textContent = st.pendingFluid > 0 ? `+${Math.floor(st.pendingFluid)}% digesting` : 'Pick one';
+  deskPending.textContent = st.pendingFluid > 0 ? `+${Math.floor(st.pendingFluid)}% digesting` : '';
 }
 
 // currentPulseRate: the heartbeat period from sim (stepHeartbeat); the background flashes at the start of each beat

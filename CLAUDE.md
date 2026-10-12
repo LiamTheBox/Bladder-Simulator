@@ -223,9 +223,10 @@ The owner approved a review of 15 layout items and 9 rules. Built so far:
 - Story layout: the newest bladder reply is only in its bubble while the bubble shows it, then joins the text
   (class `in-bubble`, `revealBubbleLine()` in `story_screen.js`); the text's top edge fades when scrolled; the last
   choice keeps clear of the screen edge; on a wide screen the story bubble floats above the head too.
+- Desktop free play keeps the drinks open at the top of the left column (`#desk-drinks`, built by `drinkButton()`
+  in `ui/menus.js`, which the pop-up shop shares) and hides the drink button; the frame may grow to 1400 x 1100.
 - `tests/new-touch.spec.js` covers the lock, the bubble, the tablet width, the HUD and the start screen.
-Still to do, in this order: (3) desktop free play uses its left column;
-(4) developer panel: tabs, live drawer, story tools; (5) rules: drinks with their own speed and after-effect,
+Still to do, in this order: (4) developer panel: tabs, live drawer, story tools; (5) rules: drinks with their own speed and after-effect,
 a digestion curve, a bladder that grows taut, richer liquid, stretch that buys room, recovery tied to soothing.
 
 ## Squeeze (reworked at the owner's request; **not yet playtested**)

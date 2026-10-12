@@ -274,7 +274,7 @@ test('drinks sound different: more gulps for a bigger drink, a fizz, a slurp or 
   const drink = async (name) => {
     await pg.evaluate('window.__notes.length=0; st.volume=10; st.pendingFluid=0');
     await pg.locator('#btn-shop').dispatchEvent('pointerdown');
-    await pg.locator('.drink-btn', { has: pg.getByText(name, { exact: true }) }).dispatchEvent('pointerdown');
+    await pg.locator('#drink-grid .drink-btn', { has: pg.getByText(name, { exact: true }) }).dispatchEvent('pointerdown');
     const notes = await pg.evaluate('window.__notes');
     const of = (sound) => notes.filter((n) => n.sound === sound);
     return { gulps: of('gulp').map((n) => Math.round(n.pitch)), fizz: of('fizz').length, slurp: of('slurp').length };

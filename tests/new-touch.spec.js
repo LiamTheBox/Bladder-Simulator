@@ -112,7 +112,7 @@ test('the HUD: a labelled Control bar that pulses when low, a fullness ring, and
   expect(drink.right).toBeLessThanOrEqual(speed.left);
   await expect(pg.locator('#drink-sub')).toHaveText('Pick one');
   await pg.locator('#btn-shop').dispatchEvent('pointerdown');
-  await pg.locator('.drink-btn', { has: pg.getByText('Beer', { exact: true }) }).dispatchEvent('pointerdown');
+  await pg.locator('#drink-grid .drink-btn', { has: pg.getByText('Beer', { exact: true }) }).dispatchEvent('pointerdown');
   await expect(pg.locator('#drink-sub')).toHaveText(/^\+3[45]% digesting$/);
   expect(await ev("document.querySelectorAll('.hud-overlay #btn-shop').length"), 'no longer in the top row').toBe(0);
   expect(errors).toEqual([]);

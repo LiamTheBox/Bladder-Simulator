@@ -123,7 +123,8 @@ for (const [w, h] of [[360, 640], [390, 844], [768, 1024], [1280, 800]]) {
   test(`the tools button and panel fit at ${w}x${h}; story mode has no tools button`, async ({ browser }) => {
     const { context, pg, errors, open } = await started(browser, w, h);
     const inView = async (sel) => { const b = await pg.locator(sel).boundingBox(); return b && b.x >= 0 && b.y >= 0 && b.x + b.width <= w && b.y + b.height <= h; };
-    for (const sel of ['#btn-dev', '#btn-shop', '#btn-settings']) expect(await inView(sel), sel).toBe(true);
+    // (a wide screen has the drinks open in the left column instead of the drink button)
+    for (const sel of ['#btn-dev', w >= 900 ? '#desk-drinks' : '#btn-shop', '#btn-settings']) expect(await inView(sel), sel).toBe(true);
     await open();
     expect(await inView('#dev-overlay .modal-box'), 'the panel is on screen').toBe(true);
     expect(await pg.evaluate('document.documentElement.scrollWidth <= window.innerWidth'), 'no sideways scroll').toBe(true);

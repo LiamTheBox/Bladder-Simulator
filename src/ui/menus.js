@@ -50,9 +50,9 @@ document.getElementById('tts-add').addEventListener('click', () => {
   }
 });
 
-// Drink shop. innerHTML is fine here: the drink list is our own config, never user or story data.
-const grid = document.getElementById('drink-grid');
-drinks.forEach(d => {
+// Drinks: the pop-up shop, and on a wide screen the same list kept open in the left column (#desk-drinks).
+// innerHTML is fine here: the drink list is our own config, never user or story data.
+function drinkButton(d) {
   const btn = document.createElement('div'); btn.className = 'drink-btn';
   btn.innerHTML = `<div class="drink-icon">${d.icon}</div><div class="drink-name">${d.name}</div><div class="drink-amt">+${d.amt}%</div>`;
   btn.addEventListener('pointerdown', (e) => {
@@ -60,8 +60,10 @@ drinks.forEach(d => {
     shopOverlayEl.style.display = 'none'; vibe(20);
     playGulp(d);
   });
-  grid.appendChild(btn);
-});
+  return btn;
+}
+document.getElementById('desk-drink-grid').append(...drinks.map(drinkButton));
+document.getElementById('drink-grid').append(...drinks.map(drinkButton));
 
 document.getElementById('btn-shop').addEventListener('pointerdown', () => shopOverlayEl.style.display = 'flex');
 document.getElementById('btn-settings').addEventListener('pointerdown', () => settingsOverlayEl.style.display = 'flex');

@@ -203,7 +203,8 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 
 ## Squeeze (reworked at the owner's request; **not yet playtested**)
 A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.squeezeMax`). Rules in `sim/step.js`:
-- Under `TUNING.squeezeLeakFrom` it only complains. Above it, liquid is forced out **although the sphincter is
+- Under `TUNING.squeezeLeakFrom` it only complains. Above it the bladder strains but holds for
+  `TUNING.squeezeHoldSec` (2 s; easing off starts the count again); after that liquid is forced out **although the sphincter is
   locked** (`squeezeLeakPerSec`), stamina falls (`squeezeStaminaPerSec`) and does not recover meanwhile, drops
   fly, and the `interaction` event repeats with type `squirt`. Stamina at zero is the normal accident.
 - An unlocked bladder drains faster while squeezed (`squeezeDrainBoost`).

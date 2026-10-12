@@ -75,12 +75,12 @@ test('dances, squeezes and pokes can be triggered; the switches stop stamina dra
   await wait(1500);
   expect(await ev('st.dance.id'), 'the move is held').toBe('march');
 
-  await ev('st.volume=40; st.stamina=100');
+  await ev('st.volume=40; st.stamina=100; TUNING.squeezeHoldSec=0'); // no wait before a hard squeeze leaks
   await open(); await press('squeeze-firm'); await wait(300);
   expect(await ev('[st.squeeze.active, st.squeeze.tension, st.volume]'), 'firm: no leak').toEqual([true, 40, 40]);
   await open(); await press('squeeze-hard'); await wait(500);
   expect(await ev('st.volume'), 'hard: liquid is forced out').toBeLessThan(38);
-  await wait(3000);
+  await wait(5500);
   expect(await ev('[st.squeeze.active, st.squeeze.tension]'), 'let go by itself').toEqual([false, 0]);
 
   await ev('window.__pokes=0; onSimEvent("interaction", (p) => { if (p.type === "poke") window.__pokes++; })');

@@ -7,7 +7,7 @@ export const TUNING = {
   // TAP TO START and hides the tools.
   developerMode: true,
   devDanceSec: 6, devDanceVolume: 75,   // a dance picked there is held this long; an emptier bladder is filled to this
-  devSqueezeSec: 2.5,                   // and a squeeze is held this long
+  devSqueezeSec: 5,                     // and a squeeze is held this long
 
   // Bladder placement and size, as fractions of the play area. Pointer tests and the renderer share these.
   bodyCy: 0.43, minR: 0.15, maxR: 0.31,
@@ -132,6 +132,7 @@ export const TUNING = {
   // A hard squeeze (tension above squeezeLeakFrom) forces liquid out, past a locked sphincter too. The rates are
   // per second at the hardest squeeze and scale down to nothing at squeezeLeakFrom. Not in story mode.
   squeezeLeakFrom: 40, squeezeLeakPerSec: 12, squeezeStaminaPerSec: 25,
+  squeezeHoldSec: 2,             // the bladder holds against a hard squeeze this long before anything leaks or stamina falls
   squeezeSquirtEvery: 0.22,      // seconds between "squirt" cues (sound, vibration) while liquid is forced out
   squeezeDrainBoost: 1.5,        // unlocked: the hardest squeeze drains this much faster (1.5 = two and a half times)
   // Letting go: the waist springs back past its rest shape and wobbles, like a rubber band

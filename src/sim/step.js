@@ -81,11 +81,14 @@ export function stepSim(dt, pointerCount) {
   // (In story mode the story decides the fullness; a minigame that lets go sets its own pace with flowRate.)
   const squeezing = st.storyMode || st.failureEvent ? 0 : st.squeeze.tension;
   const squeezeHard = Math.max(0, squeezing - T.squeezeLeakFrom) / (T.squeezeMax - T.squeezeLeakFrom); // 0..1
-  st.squeeze.forcing = squeezeHard > 0 && st.isClosed && st.volume > 0;
+  // It holds out for a moment first: only a hard squeeze kept up for squeezeHoldSec gets anything out
+  const pressed = squeezeHard > 0 && st.isClosed && st.volume > 0;
+  st.squeeze.heldHard = pressed ? st.squeeze.heldHard + dt : 0;
+  if (pressed) { st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 0.4; } // straining from the start
+  st.squeeze.forcing = pressed && st.squeeze.heldHard >= T.squeezeHoldSec;
   if (st.squeeze.forcing) {
     st.volume = Math.max(0, st.volume - T.squeezeLeakPerSec * squeezeHard * dt);
     if (!st.dev.holdStamina) st.stamina = Math.max(0, st.stamina - T.squeezeStaminaPerSec * squeezeHard * dt);
-    st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 0.4;
     if (Math.random() < 0.3 + 0.5 * squeezeHard) spawnDrop();
     st.squeeze.squirtTimer -= dt;
     if (st.squeeze.squirtTimer <= 0) { st.squeeze.squirtTimer = T.squeezeSquirtEvery; emit('interaction', { type: 'squirt' }); }

@@ -3,10 +3,12 @@
 import { test, expect } from '@playwright/test';
 import { openGame } from './helpers.js';
 
-async function started(browser) {
+async function started(browser, holdSec = 0) {
   const game = await openGame(browser, 390, 844);
   const { pg } = game;
   await pg.mouse.click(195, 400); await pg.waitForTimeout(300);
+  // these tests are about what a forced leak does, so the bladder gives way at once (the hold has its own test)
+  await pg.evaluate(`TUNING.squeezeHoldSec=${holdSec}`);
   await pg.evaluate("st.pendingFluid=0; st.minigame.cooldown=999; window.__ev=[]; onSimEvent('interaction', (p) => { window.__ev.push(p); })");
   const ev = (js) => pg.evaluate(js);
   // holds a squeeze of the given strength (0..60) as two fingers would
@@ -151,6 +153,31 @@ test('a squeeze makes the liquid stand higher, shows the sphincter forced open, 
   expect(await ev('[st.particles.length, st.squeeze.forcing]'), 'empty: no more drops').toEqual([0, false]);
   expect(await seen('squirt')).toEqual([]);
   expect(await sphincter(), 'and the sphincter is shut').not.toEqual(DARK);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('the bladder holds against a hard squeeze for two seconds before it leaks or loses stamina', async ({ browser }) => {
+  const { context, errors, ev, squeeze, letGo, seen, wait } = await started(browser, 2);
+  await ev('st.volume=40; st.isClosed=true; st.stamina=100');
+  await squeeze(60); await wait(1500);
+  expect(await ev('[st.volume, st.stamina, st.squeeze.forcing]'), 'still holding').toEqual([40, 100, false]);
+  expect(await seen('squirt')).toEqual([]);
+  expect(await ev('st.faceState.e'), 'but straining').toBe('shut_tight');
+  await wait(1100);
+  expect(await ev('st.squeeze.forcing'), 'after two seconds it gives way').toBe(true);
+  expect(await ev('st.volume')).toBeLessThan(40);
+  expect(await ev('st.stamina')).toBeLessThan(100);
+  expect((await seen('squirt')).length).toBeGreaterThanOrEqual(1);
+
+  // easing off starts the count again
+  await letGo(); await wait(600);
+  const volume = await ev('st.volume');
+  await squeeze(60); await wait(1200);
+  expect(await ev('st.volume')).toBe(volume);
+  await squeeze(30); await wait(200);   // down to a firm squeeze: the hold is forgotten
+  await squeeze(60); await wait(1200);
+  expect(await ev('st.volume'), 'two shorter squeezes do not add up').toBe(volume);
   expect(errors).toEqual([]);
   await context.close();
 });

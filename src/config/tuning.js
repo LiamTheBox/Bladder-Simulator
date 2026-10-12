@@ -139,6 +139,7 @@ export const TUNING = {
   creakStepPx: 14,               // a stretch creaks each time it is pulled this much further
   gurgleEveryMin: 4, gurgleEverySpread: 5,   // seconds between tummy gurgles while a drink digests
   babbleMaxBlips: 8, babbleCharsPerBlip: 6,  // "talking" blips for a line when the spoken voice is off
+  gulpPerAmount: 0.11, gulpMax: 5,           // gulps heard per percent of a drink (15% -> 2, 35% -> 4), and the most
   pitchSteps: 6,                 // notes a varied sound chooses from; each is used once before any comes back
   sloshSoundTightFrom: 0.85,                          // from this fill up there is no room to splash: glugs only
 

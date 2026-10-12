@@ -55,7 +55,7 @@ drinks.forEach(d => {
   btn.addEventListener('pointerdown', (e) => {
     e.stopPropagation(); queueDrink(d.amt, d.name); speakDirect(d.reaction);
     shopOverlayEl.style.display = 'none'; vibe(20);
-    playGulp();
+    playGulp(d);
   });
   grid.appendChild(btn);
 });

@@ -14,6 +14,7 @@ let sloshLastVel = 0, sloshGap = 0;
 let jingleSynth, wompSynth;
 let squeakSynth, creakSynth, boingSynth, gurgleSynth, sighSynth, sighFilter, babbleSynth;
 let creakAt = 0, gurgleTimer = 0;
+let gulpSynth, slurpSynth, slurpFilter, fizzSynth;
 
 // Tags a synth with the name of its sound, so the test mock can log which one played (Tone ignores the tag)
 function named(label, synth) { synth.label = label; return synth; }
@@ -76,9 +77,9 @@ function initAudio() {
   glugSynth = named('glug', new Tone.MembraneSynth({ pitchDecay: 0.09, octaves: 1.2, oscillator: { type: "sine" }, envelope: { attack: 0.004, decay: 0.16, sustain: 0, release: 0.05 } })).toDestination(); glugSynth.volume.value = -8;
   splashSynth = named('splash', new Tone.NoiseSynth({ noise: { type: "brown" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.05 } }));
   splashFilter = new Tone.Filter({ frequency: 800, type: "lowpass", rolloff: -24 }).toDestination(); splashSynth.connect(splashFilter); splashSynth.volume.value = -6;
-  plipSynth = named('plip', new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.002, decay: 0.06, sustain: 0, release: 0.03 } })).toDestination(); plipSynth.volume.value = -14;
+  plipSynth = named('plip', new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.002, decay: 0.06, sustain: 0, release: 0.03 } })).toDestination(); plipSynth.volume.value = -5;
   swishSynth = named('swish', new Tone.NoiseSynth({ noise: { type: "pink" }, envelope: { attack: 0.07, decay: 0.18, sustain: 0, release: 0.05 } }));
-  swishFilter = new Tone.Filter({ frequency: 600, type: "bandpass", Q: 2 }).toDestination(); swishSynth.connect(swishFilter); swishSynth.volume.value = -2;
+  swishFilter = new Tone.Filter({ frequency: 600, type: "bandpass", Q: 1.2 }).toDestination(); swishSynth.connect(swishFilter); swishSynth.volume.value = 9;
 
   // Minigame cues: one small synth plays every short tune (see jingle()); the losing "womp-womp" slides in pitch
   jingleSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.12, sustain: 0.15, release: 0.15 } }).toDestination(); jingleSynth.volume.value = -12;
@@ -95,6 +96,13 @@ function initAudio() {
   sighFilter = new Tone.Filter({ frequency: 1000, type: "bandpass", Q: 0.8 }).toDestination(); sighSynth.connect(sighFilter); sighSynth.volume.value = 2;
   babbleSynth = named('babble', new Tone.Synth({ oscillator: { type: "square" }, envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.02 } }));
   babbleSynth.connect(new Tone.Filter({ frequency: 1400, type: "lowpass" }).toDestination()); babbleSynth.volume.value = -20;
+
+  // Drinking: gulps for every drink, a slurp before a hot one, a fizz after a fizzy one (see playGulp())
+  gulpSynth = named('gulp', new Tone.MembraneSynth({ pitchDecay: 0.12, octaves: 1.6, oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.14, sustain: 0, release: 0.05 } })).toDestination(); gulpSynth.volume.value = -10;
+  slurpSynth = named('slurp', new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.12, decay: 0.2, sustain: 0, release: 0.05 } }));
+  slurpFilter = new Tone.Filter({ frequency: 700, type: "bandpass", Q: 3 }).toDestination(); slurpSynth.connect(slurpFilter); slurpSynth.volume.value = -6;
+  fizzSynth = named('fizz', new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.05, decay: 0.9, sustain: 0, release: 0.1 } }));
+  fizzSynth.connect(new Tone.Filter({ frequency: 4500, type: "highpass" }).toDestination()); fizzSynth.volume.value = -22;
 
   audioCtxReady = true;
   setSoundVolume(settings.sound);
@@ -233,5 +241,28 @@ export function playPoke() { if (audioCtxReady) pokeSynth.triggerAttackRelease("
 export function playStretch(amt) { if (audioCtxReady) stretchSynth.triggerAttackRelease(150 + Math.min(600, amt * 6), "16n"); }
 export function playSnapback(int) { if (audioCtxReady) snapbackSynth.triggerAttackRelease(Math.min(400, 80 + int * 4), "8n"); }
 export function playHeartbeat() { if (audioCtxReady) heartBeat.triggerAttackRelease("C1", "8n"); }
-// Short gulp when a drink is picked; skipped if the fill sound is already running
-export function playGulp() { if (audioCtxReady && !waterState.fill) fillSynth.triggerAttackRelease(0.5); }
+// A drink going down. How it sounds depends on the drink (config/content.js): its size sets the number of gulps,
+// its "feel" the rest. low / high: the gulps' pitch range in Hz; every: seconds from one gulp to the next.
+const GULP_FEEL = {
+  plain: { low: 150, high: 230, every: 0.2 },
+  fizzy: { low: 170, high: 260, every: 0.18, fizz: true },
+  thick: { low: 85, high: 130, every: 0.3 },
+  hot: { low: 160, high: 240, every: 0.24, slurp: true },
+};
+export function playGulp(drink) {
+  if (!audioCtxReady) return;
+  const feel = GULP_FEEL[drink?.feel] ?? GULP_FEEL.plain;
+  const gulps = Math.max(1, Math.min(TUNING.gulpMax, Math.round((drink?.amt ?? 20) * TUNING.gulpPerAmount)));
+  const lead = feel.slurp ? 0.35 : 0; // the slurp comes first
+  const t = startTime(gulpSynth, lead + (gulps - 1) * feel.every); // a second drink queues up behind the first
+  if (feel.slurp) {
+    const ts = Math.max(t, startTime(slurpSynth)); slurpSynth.queuedAt = ts;
+    slurpFilter.frequency.setValueAtTime(700, ts); slurpFilter.frequency.rampTo(2600, 0.3, ts);
+    slurpSynth.triggerAttackRelease(0.3, ts);
+  }
+  for (let i = 0; i < gulps; i++) gulpSynth.triggerAttackRelease(nextPitch('gulp', feel.low, feel.high), 0.12, t + lead + i * feel.every);
+  if (feel.fizz) {
+    const tf = Math.max(t + gulps * feel.every, startTime(fizzSynth)); fizzSynth.queuedAt = tf;
+    fizzSynth.triggerAttackRelease(0.9, tf);
+  }
+}

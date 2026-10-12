@@ -255,3 +255,25 @@ test('each potty dance has its own slosh, with pitches dealt like a shuffled dec
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test('drinks sound different: more gulps for a bigger drink, a fizz, a slurp or lower gulps by its feel', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  // picks a drink in the shop and returns the notes it played
+  const drink = async (name) => {
+    await pg.evaluate('window.__notes.length=0; st.volume=10; st.pendingFluid=0');
+    await pg.locator('#btn-shop').dispatchEvent('pointerdown');
+    await pg.locator('.drink-btn', { has: pg.getByText(name, { exact: true }) }).dispatchEvent('pointerdown');
+    const notes = await pg.evaluate('window.__notes');
+    const of = (sound) => notes.filter((n) => n.sound === sound);
+    return { gulps: of('gulp').map((n) => Math.round(n.pitch)), fizz: of('fizz').length, slurp: of('slurp').length };
+  };
+  const water = await drink('Water'), beer = await drink('Beer'), coffee = await drink('Coffee'), milk = await drink('Milk');
+  expect([water.gulps.length, water.fizz, water.slurp], 'Water (15%): two plain gulps').toEqual([2, 0, 0]);
+  expect([beer.gulps.length, beer.fizz, beer.slurp], 'Beer (35%): four gulps and a fizz').toEqual([4, 1, 0]);
+  expect([coffee.gulps.length, coffee.fizz, coffee.slurp], 'Coffee (20%): a slurp, then two gulps').toEqual([2, 0, 1]);
+  expect(Math.max(...milk.gulps), 'a thick drink gulps lower than water').toBeLessThan(Math.min(...water.gulps));
+  for (let i = 1; i < beer.gulps.length; i++) expect(beer.gulps[i], 'no pitch twice running').not.toBe(beer.gulps[i - 1]);
+  expect(errors).toEqual([]);
+  await context.close();
+});

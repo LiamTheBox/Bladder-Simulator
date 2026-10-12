@@ -26,7 +26,7 @@ export const DANCE_MOVES = [
   // whole-body tremble
   { id: 'shiver', min: 0.50, beat: 16, slosh: [['plip', 1100, 1700, 0.25]] },
   // jumping on the spot (with a floor shadow)
-  { id: 'hop', min: 0.55, beat: 5.5, slosh: [['splash', 500, 1000, 0.6]] },
+  { id: 'hop', min: 0.55, beat: 5.5, slosh: [['splash', 500, 1000, 0.9]] },
   // fast side-to-side wiggle
   { id: 'shimmy', min: 0.60, beat: 9, slosh: [['swish', 800, 1500, 0.45], ['plip', 600, 900, 0.25]] },
   // frantic running in place

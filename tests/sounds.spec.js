@@ -109,3 +109,37 @@ test('a real poke on the bladder is heard as a slosh', async ({ browser }) => {
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test('a minigame has an alarm, ticks for its last seconds, and a win or lose tune; a cancelled one ends silently', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  await pg.evaluate('st.volume=75; st.isClosed=true');
+  const begin = (duration) => pg.evaluate(`window.__audio.length=0; startMinigame({ id: 'mash', duration: ${duration} })`);
+  const heard = async (name) => count(await pg.evaluate('window.__audio'), name);
+
+  await begin(30);
+  expect(await heard('alarm'), 'the alarm is three notes').toBe(3);
+  await pg.waitForTimeout(600);
+  expect(await heard('tick'), 'no ticking with plenty of time left').toBe(0);
+  await pg.evaluate('endMinigame(true)');
+  expect(await heard('win')).toBe(4);
+  expect(await heard('lose')).toBe(0);
+
+  await begin(30);
+  await pg.evaluate('endMinigame(false)');
+  expect(await heard('lose'), 'womp-womp').toBe(2);
+  expect(await heard('win')).toBe(0);
+
+  await begin(30);
+  await pg.evaluate('endMinigame(false, true)');
+  expect([await heard('win'), await heard('lose')], 'cancelled: no verdict').toEqual([0, 0]);
+
+  // running out of time: one tick each for 3, 2 and 1 seconds left, then the losing tune
+  await begin(3.4);
+  await pg.waitForTimeout(3900);
+  expect(await pg.evaluate('st.minigame.active')).toBe(false);
+  expect(await heard('tick')).toBe(3);
+  expect(await heard('lose')).toBe(2);
+  expect(errors).toEqual([]);
+  await context.close();
+});

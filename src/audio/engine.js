@@ -10,6 +10,7 @@ export const waterState = { fill: false, drain: false }; // which water sounds a
 let bubbleTimer = 0;
 let glugSynth, splashSynth, splashFilter;
 let sloshLastVel = 0, sloshGap = 0;
+let jingleSynth, wompSynth;
 
 // Tags a synth with the name of its sound, so the test mock can log which one played (Tone ignores the tag)
 function named(label, synth) { synth.label = label; return synth; }
@@ -47,6 +48,11 @@ function initAudio() {
   glugSynth = named('glug', new Tone.MembraneSynth({ pitchDecay: 0.09, octaves: 1.2, oscillator: { type: "sine" }, envelope: { attack: 0.004, decay: 0.16, sustain: 0, release: 0.05 } })).toDestination(); glugSynth.volume.value = -8;
   splashSynth = named('splash', new Tone.NoiseSynth({ noise: { type: "brown" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.05 } }));
   splashFilter = new Tone.Filter({ frequency: 800, type: "lowpass", rolloff: -24 }).toDestination(); splashSynth.connect(splashFilter); splashSynth.volume.value = -6;
+
+  // Minigame cues: one small synth plays every short tune (see jingle()); the losing "womp-womp" slides in pitch
+  jingleSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.12, sustain: 0.15, release: 0.15 } }).toDestination(); jingleSynth.volume.value = -12;
+  wompSynth = named('lose', new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.12 } }));
+  wompSynth.connect(new Tone.Filter({ frequency: 700, type: "lowpass", rolloff: -24 }).toDestination()); wompSynth.volume.value = -9;
 
   audioCtxReady = true;
   setSoundVolume(settings.sound);
@@ -101,6 +107,23 @@ export function updateSlosh(dt, val, vel, fill) {
     splashFilter.frequency.value = lerp(1100, 380, fill);
     splashSynth.triggerAttackRelease(0.18, undefined, loud * (1 - fill / T.sloshSoundTightFrom * 0.6));
   }
+}
+// Plays a short tune on the shared jingle synth. notes: [pitch, seconds after now, length in seconds]
+function jingle(label, notes) {
+  if (!audioCtxReady) return;
+  jingleSynth.label = label; // for the test mock, as in named()
+  const t = Tone.now();
+  for (const [pitch, at, len] of notes) jingleSynth.triggerAttackRelease(pitch, len, t + at);
+}
+export function playSpikeAlarm() { jingle('alarm', [["E5", 0, 0.06], ["E5", 0.11, 0.06], ["A5", 0.22, 0.12]]); }
+export function playTick() { jingle('tick', [["C6", 0, 0.03]]); }
+export function playWin() { jingle('win', [["C5", 0, 0.09], ["E5", 0.09, 0.09], ["G5", 0.18, 0.09], ["C6", 0.27, 0.25]]); }
+// "Womp-womp": two sagging notes, the second lower and longer
+export function playLose() {
+  if (!audioCtxReady) return;
+  const t = Tone.now();
+  wompSynth.triggerAttackRelease(233, 0.3, t); wompSynth.frequency.rampTo(196, 0.28, t);
+  wompSynth.triggerAttackRelease(185, 0.5, t + 0.4); wompSynth.frequency.rampTo(123, 0.48, t + 0.4);
 }
 export function playSnap(closing) { if (!audioCtxReady) return; snapSynth.triggerAttackRelease(closing ? ["C3", "E3"] : ["E2", "G2"], "16n"); }
 export function playPoke() { if (audioCtxReady) pokeSynth.triggerAttackRelease("G2", "8n"); }

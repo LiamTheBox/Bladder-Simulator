@@ -42,6 +42,7 @@ export const TUNING = {
   simSpikePool: ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'],
   simSpikeNoRepeat: 2,
   simSpikeDifficulty: 2,         // the default; the player can change it in Settings (1..5)
+  minigameTickLastSec: 3,        // a tick sounds as each of the last whole seconds of a minigame goes by
   minigameDefaultDuration: 5.0,  // for a game that does not say how long it takes
 
   // Per-game settings. The "...ByDifficulty" lists run from difficulty 1 to 5; the middle value (difficulty 3) is the prototype's.

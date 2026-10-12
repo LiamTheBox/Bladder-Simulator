@@ -10,6 +10,7 @@ import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { emit, on } from '../sim/events.js';
 import { vibe } from '../audio/haptics.js';
+import { playTick } from '../audio/engine.js';
 import { speak, speakLine } from '../audio/speech.js';
 import { showBubble, hideBubble } from '../ui/bubble.js';
 import { mgTimerBar, showMgPanel } from './panel.js';
@@ -137,7 +138,10 @@ export function endMinigame(success, cancelled = false, quality, noise) {
 
 export function updateMinigame(dt) {
   if (!st.minigame.active) return;
+  const before = st.minigame.timer;
   st.minigame.timer -= dt;
+  // a tick as each of the last few whole seconds goes by
+  if (st.minigame.timer > 0 && st.minigame.timer <= TUNING.minigameTickLastSec && Math.ceil(before) !== Math.ceil(st.minigame.timer)) playTick();
   mgTimerBar.style.width = `${(st.minigame.timer / st.minigame.duration) * 100}%`;
 
   if (current) current.update(dt);

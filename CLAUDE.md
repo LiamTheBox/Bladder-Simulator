@@ -201,19 +201,28 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
   every game off a story treats its minigames as passed.
 - Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
 
-## Sound effects (code-generated placeholders, **not yet listened to by the owner**)
+## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance and drink sounds)
 Every sound is made by Tone.js synths in `src/audio/engine.js`; there are no audio files. They are placeholders:
 a recorded clip can replace any one of them inside its `play…` / `update…` function without touching callers.
 - Slosh: `updateSlosh()` runs every frame from `src/main.js` and plays a "glug" (plus a splash while there is
   room) each time the wave in `st.slosh` turns around. Louder for a bigger wave, lower and more muffled for a
   fuller bladder, silent when nearly empty or for ripples under `TUNING.sloshSoundMinPeak`.
-- Minigames: alarm on `minigameStarted`, win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
+- Slosh per potty dance: `sim/dance.js` raises `danceBeat { move }` on every beat of the current move, and
+  `playDanceSlosh()` plays that move's row from `src/config/dance.js` (`beat` = its rhythm, `slosh` = layers of
+  kind, pitch range, loudness). Four kinds: glug, splash, plip, swish. Edit that table to change a dance's sound.
+- Varied pitch never repeats back to back: `nextPitch()` deals `TUNING.pitchSteps` notes like a shuffled deck
+  (all used before any returns). Used by the wave slosh, the dance sloshes and the gulps.
+- Drinks: `playGulp(drink)` plays more gulps for a bigger `amt`, and the drink's `feel` in `config/content.js`
+  ("plain", "fizzy", "thick", "hot") adds a fizz, lower slower gulps, or a slurp first.
+- Each synth has one voice and real Tone.js throws if a note starts at or before one already queued on it, so
+  every new sound takes its start from `startTime(synth)`, which queues it just behind.
+- Minigames: quiet alarm (`TUNING.spikeAlarmLoudness`) on `minigameStarted`, win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
   and a tick for each of the last `TUNING.minigameTickLastSec` seconds (from the runner, which owns the countdown).
-- Character: squeak on a poke, creak as a stretch is pulled further, boing on each hop landing (the `danceBeat`
-  event from `sim/dance.js`), gurgle while a drink digests, sigh after a void that was not an accident, and
+- Character: squeak on a poke, creak as a stretch is pulled further, boing on each hop landing, gurgle while a drink digests, sigh after a void that was not an accident, and
   babble blips in place of the spoken voice when it is switched off.
 - Settings has a sound effects volume slider (`settings.sound`, 0 to 100, 0 mutes) that sets Tone's master output.
-- Not built yet: story-mode sounds (text, choices, meters, chapters), one signature sound per minigame, music.
+- Not built yet: story-mode sounds (text, choices, meters, chapters), one signature sound per minigame, music,
+  and a developer mode for trying sounds (the owner's idea, to be asked for later).
 - `tests/sounds.spec.js` checks *when* each sound plays, through the recording mock. The mock accepts calls the
   real Tone.js rejects (two triggers of one synth at the same instant throw), so after changing `engine.js` also
   play the sounds once in `npm run dev`.

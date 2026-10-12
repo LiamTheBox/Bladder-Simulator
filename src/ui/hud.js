@@ -1,4 +1,4 @@
-// Read-only displays: volume pill, digesting label, stamina bar, and the background that reddens with urgency.
+// Read-only displays: volume pill with the urge-wave ring, digesting label, stamina bar, and the background that reddens with urgency.
 import { st } from '../sim/state.js';
 
 const elVol = document.getElementById('vol-lbl');
@@ -7,6 +7,7 @@ const stmContainer = document.getElementById('stamina-row');
 const stmText = document.getElementById('stamina-text');
 const stmBar = document.getElementById('stamina-bar');
 const elPending = document.getElementById('pending-lbl');
+const urgeRing = document.getElementById('urge-ring');
 
 // Story mode can show fullness its own way (e.g. in ml); null goes back to percent
 let volumeLabel = null;
@@ -25,6 +26,8 @@ export function updateHud() {
   volSpan.textContent = volumeLabel ? volumeLabel(st.volume) : `${Math.floor(st.volume)}%`;
   if (st.volume >= 50) { volSpan.style.color = "#fde047"; elVol.querySelector('.status-dot').style.color = "#fbbf24"; }
   else { volSpan.style.color = "#bae6fd"; elVol.querySelector('.status-dot').style.color = "var(--accent)"; }
+
+  urgeRing.style.setProperty('--urge', st.urge.toFixed(3));
 
   elPending.textContent = `+${Math.floor(st.pendingFluid)}% DIGESTING`;
   elPending.style.display = st.pendingFluid > 0 ? 'flex' : 'none';

@@ -49,6 +49,14 @@ export const TUNING = {
   spikeMinVolume: 55,
   spikeFirstCooldown: 15,        // seconds
   spikeCooldownMin: 15, spikeCooldownSpread: 10,
+  // Urge comes in waves (st.urge, 0..1): it builds over the last seconds before a spike, peaks while the minigame
+  // runs, then passes. The countdown to the next spike (st.minigame.cooldown) runs faster the fuller the bladder.
+  urgeBuildSec: 4,               // how long before a spike the wave starts to rise (the player's warning)
+  urgeFallRate: 1.5,             // how fast it passes afterwards (per second, exponential)
+  urgeHurry: 1.0,                // at 100% the countdown runs this much faster than at spikeMinVolume (1.0 = twice as fast)
+  urgeDrainBoost: 1.0,           // at the top of a rising wave, holding costs this much more stamina (1.0 = double)
+  urgeHeartSpeedup: 0.3,         // ...and the heart beats this much faster
+  urgeThrob: 0.035,              // drawing: how far the bladder swells with each throb, in radii
   // Sim mode picks one of these at random, but never one of the last simSpikeNoRepeat games played
   simSpikePool: ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else'],
   simSpikeNoRepeat: 2,

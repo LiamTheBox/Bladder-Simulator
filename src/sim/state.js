@@ -29,6 +29,7 @@ function initialState() {
   drag: { active: false, angle: 0, dist: 0, targetDist: 0, vel: 0, peakDist: 0 },
   soothe: { active: false, lastX: 0, lastY: 0, acc: 0, timer: 0 },
   squeeze: { active: false, tension: 0, wheelTimer: 0, initialDist: 0, spoke: false, peak: 0, wobble: 0, wobbleVel: 0, squirtTimer: 0, forcing: false, heldHard: 0 },
+  urge: 0, // the current urge wave, 0 (calm) to 1 (a spike is here); see TUNING.urgeBuildSec
   dev: { holdStamina: false, noSpikes: false }, // developer-mode switches (sim/actions.js setDevSwitch)
   slosh: { val: 0, vel: 0 }, gravity: { x: 0, targetX: 0 },
   viscoelasticCreep: 0,

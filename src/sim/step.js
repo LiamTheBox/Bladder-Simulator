@@ -132,13 +132,15 @@ export function stepSim(dt, pointerCount) {
     if (st.volume >= T.staminaDrainFrom && st.isClosed && !st.failureEvent) {
         st.staminaDraining = true;
 
-        const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct);
+        // a rising wave makes holding harder (not during the minigame itself: that has its own stakes)
+        const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct) * (1 + (st.minigame.active ? 0 : st.urge) * T.urgeDrainBoost);
         if (!st.dev.holdStamina) st.stamina = Math.max(0, st.stamina - drainRate * dt);
 
         if (st.stamina <= 0) triggerAccident();
         // not in the frame of an accident: the spike would be cancelled a frame later and wipe the accident subtitle
         else if (!st.minigame.active) {
-           st.minigame.cooldown -= dt;
+           // the fuller it is, the sooner the next wave
+           st.minigame.cooldown -= dt * (1 + fullnessAboveSpikeMin() * T.urgeHurry);
            if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume && !st.dev.noSpikes) emit('spikeStarted');
         }
 
@@ -149,10 +151,20 @@ export function stepSim(dt, pointerCount) {
     }
   } else st.staminaDraining = false;
 
+  // The urge wave. It rises with the countdown's last seconds, so the player sees a spike coming, stays at the
+  // top while a minigame runs (a story's too), and passes afterwards.
+  const spikeComing = !st.storyMode && st.staminaDraining && !st.dev.noSpikes && st.volume > T.spikeMinVolume;
+  const urgeTarget = st.minigame.active ? 1 : spikeComing ? Math.max(0, Math.min(1, 1 - st.minigame.cooldown / T.urgeBuildSec)) : 0;
+  st.urge = urgeTarget > st.urge ? urgeTarget : st.urge + (urgeTarget - st.urge) * Math.min(1, T.urgeFallRate * dt);
+  if (st.urge < 0.005) st.urge = 0;
+
   announceThresholds('volume', st.prevVolume, st.volume, T.volumeThresholds);
   announceThresholds('stamina', st.prevStamina, st.stamina, T.staminaThresholds);
   st.prevVolume = st.volume; st.prevStamina = st.stamina;
 }
+
+// 0 at the fullness where spikes begin, 1 at a full bladder
+function fullnessAboveSpikeMin() { return Math.max(0, Math.min(1, (st.volume - T.spikeMinVolume) / (100 - T.spikeMinVolume))); }
 
 // One drop of the stream. It leaves from the sphincter, wherever the body is right now.
 function spawnDrop() {
@@ -177,7 +189,7 @@ function announceThresholds(stat, before, now, marks) {
 export function stepHeartbeat(dt) {
   let currentPulseRate = 1.0;
   if (st.volume > T.heartbeatFrom && st.isClosed) {
-    st.heartTimer -= dt; currentPulseRate = 1.0 - ((st.volume - T.heartbeatFrom) / (100 - T.heartbeatFrom)) * T.heartbeatSpeedup;
+    st.heartTimer -= dt; currentPulseRate = (1.0 - ((st.volume - T.heartbeatFrom) / (100 - T.heartbeatFrom)) * T.heartbeatSpeedup) * (1 - st.urge * T.urgeHeartSpeedup);
     if (st.heartTimer <= 0) {
       st.heartTimer = currentPulseRate;
       emit('heartbeat');

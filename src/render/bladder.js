@@ -38,6 +38,9 @@ export function getPearPoints(cx, cy, baseR, t, fillPerc) {
     r -= baseR * 0.4 * sq * Math.exp(-(ey * ey) / 0.16);
     r += baseR * 0.2 * sq * ey * ey;
 
+    // an urge wave: the whole bladder swells and sinks in quick throbs, stronger as the wave rises
+    r += baseR * TUNING.urgeThrob * st.urge * Math.pow(Math.sin(t * 9), 2);
+
     const stretch = Math.max(st.drag.dist, st.viscoelasticCreep * 3);
     if (stretch > 0.1) {
       let diff = th - st.drag.angle;

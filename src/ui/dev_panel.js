@@ -7,7 +7,7 @@ import { DANCE_MOVES } from '../config/dance.js';
 import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { on } from '../sim/events.js';
-import { setVolume, setStamina, setDevSwitch, forceDance, holdSqueeze, toggleSphincter, startVoid, triggerAccident } from '../sim/actions.js';
+import { setVolume, setStamina, setDevSwitch, forceDance, holdSqueeze, hurrySpike, toggleSphincter, startVoid, triggerAccident } from '../sim/actions.js';
 import { poke } from '../sim/interactions.js';
 import { minigameIds } from '../minigames/registry.js';
 import { startMinigame } from '../minigames/index.js';
@@ -63,7 +63,7 @@ if (TUNING.developerMode) {
     fullness, stamina,
     checkbox('Stamina never drains', 'holdStamina'), checkbox('No random urge spikes', 'noSpikes'),
     grid(button('Lock / unlock', 'lock', toggleSphincter), button('Void', 'void', startVoid),
-      button('Accident', 'accident', triggerAccident), button('Start over', 'reset', resetGame)));
+      button('Accident', 'accident', triggerAccident), button('Urge wave now', 'spike', hurrySpike), button('Start over', 'reset', resetGame)));
 
   // Every registered game, the try-out ones too, as a practice run: no stamina at stake, never cancelled by the spike rules
   const difficulty = el('select'); difficulty.id = 'dev-difficulty';

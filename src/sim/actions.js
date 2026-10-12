@@ -100,6 +100,12 @@ export function holdSqueeze(tension, seconds = T.devSqueezeSec) {
   st.squeeze.tension = Math.max(0, Math.min(T.squeezeMax, tension));
 }
 
+// Brings the next urge spike close enough to watch its wave build (fills the bladder if it is too empty for spikes)
+export function hurrySpike() {
+  if (st.volume <= T.spikeMinVolume) setVolume(T.devDanceVolume);
+  st.minigame.cooldown = T.urgeBuildSec;
+}
+
 // Phone tilt in degrees (left/right); the fluid leans that way
 export function setTilt(gammaDeg) {
   st.gravity.targetX = Math.max(-1, Math.min(1, gammaDeg / T.tiltFullDeg));

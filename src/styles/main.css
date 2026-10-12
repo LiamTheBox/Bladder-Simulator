@@ -365,6 +365,14 @@
   @keyframes tile-wrong { 0%, 100% { transform: translateX(0); background: rgba(244, 63, 94, 0.6); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
   #settings-try-list .age-btn { text-align: left; padding-left: 16px; }
+  /* Developer panel: sections of small buttons that wrap */
+  .story-mode #btn-dev { display: none !important; }
+  #dev-body h3 { color: #94a3b8; font-size: 0.9rem; margin: 18px 0 8px; }
+  #dev-body .dev-note { color: #94a3b8; font-size: 0.8rem; margin-bottom: 8px; }
+  .dev-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+  .dev-btn { min-height: 40px; padding: 8px 12px; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; color: #e2e8f0; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.2); }
+  .dev-btn:active { background: rgba(250, 204, 21, 0.25); }
+  #dev-body select { min-height: 40px; padding: 6px 10px; border-radius: 10px; background: #1e293b; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.2); font-size: 0.9rem; }
   .story-mode #settings-try { display: none; } /* a story decides its own minigames */
 
   /* ---------- DESKTOP (wide screens) ----------

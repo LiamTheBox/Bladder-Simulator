@@ -85,6 +85,21 @@ export function easeVolumeToward(target, dt) {
   if (Math.abs(target - st.volume) < 0.05) st.volume = target;
 }
 
+/* --- Developer mode (ui/dev_panel.js): shortcuts for testing, never used by the game itself --- */
+export function setStamina(v) { st.stamina = Math.max(0, Math.min(100, v)); }
+// name: 'holdStamina' (control never drains) or 'noSpikes' (no random urge spikes)
+export function setDevSwitch(name, on) { if (name in st.dev) st.dev[name] = Boolean(on); }
+// Holds one potty-dance move for a while. Dancing needs a bladder over half full, so an emptier one is filled.
+export function forceDance(id, seconds = T.devDanceSec) {
+  if (st.volume <= 50) setVolume(T.devDanceVolume);
+  st.dance.id = id; st.dance.timer = seconds; st.dance.beat = null;
+}
+// Squeezes as hard as asked (0..squeezeMax) and lets go after a while, the way the scroll wheel does
+export function holdSqueeze(tension, seconds = T.devSqueezeSec) {
+  st.squeeze.active = true; st.squeeze.wheelTimer = seconds;
+  st.squeeze.tension = Math.max(0, Math.min(T.squeezeMax, tension));
+}
+
 // Phone tilt in degrees (left/right); the fluid leans that way
 export function setTilt(gammaDeg) {
   st.gravity.targetX = Math.max(-1, Math.min(1, gammaDeg / T.tiltFullDeg));

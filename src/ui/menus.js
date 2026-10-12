@@ -1,4 +1,4 @@
-// Start screen, drink shop and settings. The game is paused while any of them is open.
+// Start screen, drink shop, settings and the developer panel. The game is paused while any of them is open.
 import { drinks, voiceLines } from '../config/content.js';
 import { queueDrink } from '../sim/actions.js';
 import { startAudio, stopAllWater, playGulp } from '../audio/engine.js';
@@ -10,17 +10,20 @@ import { resetGame } from './reset.js';
 import { startStory } from './story_screen.js';
 import { openStoryMenu, closeStoryMenu } from './story_menu.js';
 import { isAgeGateOpen, onBackToStart } from './settings_panel.js';
+import './dev_panel.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
 const shopOverlayEl = document.getElementById('shop-overlay');
 const settingsOverlayEl = document.getElementById('settings-overlay');
+const devOverlayEl = document.getElementById('dev-overlay');
 
 /* --- PAUSE: menus, start screen, hidden tab --- */
 export function isPaused() {
   return document.hidden || isAgeGateOpen() ||
     startOverlayEl.style.display !== 'none' ||
     shopOverlayEl.style.display === 'flex' ||
-    settingsOverlayEl.style.display === 'flex';
+    settingsOverlayEl.style.display === 'flex' ||
+    devOverlayEl.style.display === 'flex';
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { stopAllWater(); clearPointers(); if (window.speechSynthesis) window.speechSynthesis.cancel(); }

@@ -56,13 +56,17 @@ export function touchMove(mx, my, count, pinchDist) {
   }
 }
 
+export function poke() {
+  st.pokeTimer = T.pokeSec; st.faceTimer = 0; st.slosh.vel += (Math.random() > 0.5 ? 1 : -1) * T.pokeSlosh;
+  emit('interaction', { type: 'poke' });
+}
+
 // A finger left. tracked = it was one of ours; lifted = a real lift (not a cancelled touch);
 // countBefore / countAfter = fingers down before and after it left.
 export function touchUp({ tracked, lifted, countBefore, countAfter }) {
   // A touch inside the bladder that barely moved is a poke
   if (tracked && lifted && st.soothe.acc < T.pokeMaxRub && countBefore === 1 && st.soothe.lastX !== 0 && !st.minigame.active) {
-    st.pokeTimer = T.pokeSec; st.faceTimer = 0; st.slosh.vel += (Math.random() > 0.5 ? 1 : -1) * T.pokeSlosh;
-    emit('interaction', { type: 'poke' });
+    poke();
   }
 
   if (st.drag.active && countAfter === 0) {

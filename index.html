@@ -25,7 +25,7 @@
   </div>
   
   <div id="start-overlay">
-    <div class="start-btn-visual">TAP TO START</div>
+    <div class="start-btn-visual" id="start-label">TAP TO START</div>
     <div style="color: #94a3b8; margin-top: 24px; font-size: 0.9rem; text-align: center; max-width: 80%; line-height: 1.5;">
       <b style="color:#f8fafc;font-size:1rem;">How to play</b><br><br>
       Pick a drink 🍹 and let it digest into the bladder.<br>
@@ -34,6 +34,7 @@
       Tap to poke &bull; rub to soothe &bull; pull the edge to stretch<br>
       Two-finger pinch (or scroll wheel) to squeeze<br>
       Tilt your phone to slosh the fluid<br><br>
+      <span id="dev-hint" hidden><b style="color:#f8fafc;">Developer mode</b><br>The 🛠️ button at the top opens the testing tools: any minigame, dance or sound.<br><br></span>
       <span style="opacity:.7;">The game pauses while menus are open or the tab is hidden.</span>
     </div>
     <button id="btn-story-mode">📖 STORY MODE</button>
@@ -69,6 +70,16 @@
         <button class="close-modal" data-target="shop-overlay" style="background: none; border: none; color: #94a3b8; font-size: 2rem; cursor: pointer; line-height: 1; pointer-events: auto;">&times;</button>
       </div>
       <div class="drink-grid" id="drink-grid"></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="dev-overlay">
+    <div class="modal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2 style="margin: 0; font-size: 1.5rem; font-weight: 800; color: white;">DEVELOPER <span style="font-size:.7rem;color:#94a3b8;font-weight:700;">&#9208; paused</span></h2>
+        <button class="close-modal" data-target="dev-overlay" style="background: none; border: none; color: #94a3b8; font-size: 2rem; cursor: pointer; line-height: 1; pointer-events: auto;">&times;</button>
+      </div>
+      <div id="dev-body"></div>
     </div>
   </div>
 
@@ -141,6 +152,7 @@
         </div>
 
         <div style="display: flex; gap: 8px;">
+          <div class="glass-pill" id="btn-dev" style="display: none; cursor: pointer; background: rgba(250, 204, 21, 0.15); border-color: #facc15; pointer-events: auto; padding: 10px 14px;">🛠️</div>
           <div class="glass-pill" id="btn-shop" style="cursor: pointer; background: rgba(56, 189, 248, 0.15); border-color: var(--accent); pointer-events: auto; padding: 10px 14px;">🍹</div>
           <div class="glass-pill" id="btn-settings" style="cursor: pointer; background: rgba(255, 255, 255, 0.1); pointer-events: auto; padding: 10px 14px;">⚙️</div>
         </div>

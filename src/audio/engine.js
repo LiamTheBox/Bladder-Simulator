@@ -108,7 +108,7 @@ function initAudio() {
 
   // Squeeze: a squirt each time liquid is forced out, a twang when the band is let go (the creak is creakSynth)
   squirtSynth = named('squirt', new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.005, decay: 0.09, sustain: 0, release: 0.03 } }));
-  squirtFilter = new Tone.Filter({ frequency: 2200, type: "bandpass", Q: 2.5 }).toDestination(); squirtSynth.connect(squirtFilter); squirtSynth.volume.value = -4;
+  squirtFilter = new Tone.Filter({ frequency: 2200, type: "bandpass", Q: 2.5 }).toDestination(); squirtSynth.connect(squirtFilter); squirtSynth.volume.value = 2;
   twangSynth = named('twang', new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.003, decay: 0.35, sustain: 0, release: 0.1 } })).toDestination(); twangSynth.volume.value = -10;
 
   audioCtxReady = true;

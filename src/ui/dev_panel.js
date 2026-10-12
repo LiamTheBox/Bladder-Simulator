@@ -1,0 +1,101 @@
+// Developer mode (TUNING.developerMode): a panel of shortcuts for testing every feature without playing up to
+// it. Start any minigame at any difficulty, set the bladder, hold a potty dance, squeeze or poke, play any sound.
+// Like every other UI file it never edits the state itself: it calls sim/actions.js and sim/interactions.js.
+import { TUNING } from '../config/tuning.js';
+import { minigameNames, drinks } from '../config/content.js';
+import { DANCE_MOVES } from '../config/dance.js';
+import { settings } from '../config/settings.js';
+import { st } from '../sim/state.js';
+import { on } from '../sim/events.js';
+import { setVolume, setStamina, setDevSwitch, forceDance, holdSqueeze, toggleSphincter, startVoid, triggerAccident } from '../sim/actions.js';
+import { poke } from '../sim/interactions.js';
+import { minigameIds } from '../minigames/registry.js';
+import { startMinigame } from '../minigames/index.js';
+import { resetGame } from './reset.js';
+import * as sound from '../audio/engine.js';
+
+const overlay = document.getElementById('dev-overlay');
+const body = document.getElementById('dev-body');
+const close = () => { overlay.style.display = 'none'; };
+
+const el = (tag, className, text) => { const e = document.createElement(tag); if (className) e.className = className; if (text) e.textContent = text; return e; };
+function section(title, note, ...children) {
+  body.append(el('h3', '', title));
+  if (note) body.append(el('div', 'dev-note', note));
+  body.append(...children);
+}
+// A button. closes: shut the panel first, so what it does can be seen (the game is paused while the panel is open)
+function button(label, id, onClick, closes = true) {
+  const b = el('button', 'dev-btn', label); b.dataset.dev = id;
+  b.addEventListener('click', () => { if (closes) close(); onClick(); });
+  return b;
+}
+const grid = (...buttons) => { const g = el('div', 'dev-grid'); g.append(...buttons); return g; };
+function slider(labelText, id, max, read, write) {
+  const label = el('label', 'setting-slider'), span = el('span');
+  const range = el('input'); range.type = 'range'; range.id = id; range.min = 0; range.max = max; range.step = 1;
+  const show = () => { span.textContent = `${labelText}: ${range.value}`; };
+  range.addEventListener('input', () => { write(Number(range.value)); show(); });
+  label.append(span, range);
+  label.refresh = () => { range.value = Math.round(read()); show(); };
+  return label;
+}
+function checkbox(labelText, name) {
+  const label = el('label', 'setting-check'), box = el('input'); box.type = 'checkbox'; box.dataset.dev = name;
+  box.addEventListener('change', () => setDevSwitch(name, box.checked));
+  label.append(box, el('span', '', labelText));
+  // starting the game over clears the sim's switches: put them back as the boxes show
+  on('gameReset', () => setDevSwitch(name, box.checked));
+  return label;
+}
+
+if (TUNING.developerMode) {
+  document.getElementById('start-label').textContent = 'DEVELOPER MODE';
+  document.getElementById('dev-hint').hidden = false;
+  const openBtn = document.getElementById('btn-dev');
+  openBtn.style.display = '';
+
+  const fullness = slider('Fullness %', 'dev-fullness', 100, () => st.volume, setVolume);
+  const stamina = slider('Stamina %', 'dev-stamina', 100, () => st.stamina, setStamina);
+  openBtn.addEventListener('pointerdown', () => { fullness.refresh(); stamina.refresh(); overlay.style.display = 'flex'; });
+
+  section('Bladder', 'Sliders apply at once; close the panel to see the result.',
+    fullness, stamina,
+    checkbox('Stamina never drains', 'holdStamina'), checkbox('No random urge spikes', 'noSpikes'),
+    grid(button('Lock / unlock', 'lock', toggleSphincter), button('Void', 'void', startVoid),
+      button('Accident', 'accident', triggerAccident), button('Start over', 'reset', resetGame)));
+
+  // Every registered game, the try-out ones too, as a practice run: no stamina at stake, never cancelled by the spike rules
+  const difficulty = el('select'); difficulty.id = 'dev-difficulty';
+  for (let d = 1; d <= 5; d++) { const o = el('option', '', `Difficulty ${d}`); o.value = d; difficulty.append(o); }
+  difficulty.value = settings.difficulty;
+  section('Minigames', 'A minigame switched off in Settings is replaced by another one.', difficulty,
+    el('div', 'dev-note'),
+    grid(...minigameIds().map((id) => button(minigameNames[id] ?? id, `minigame-${id}`,
+      () => startMinigame({ id, difficulty: Number(difficulty.value), practice: true })))));
+
+  section('Potty dances', `Holds the move for ${TUNING.devDanceSec} seconds (fills the bladder to ${TUNING.devDanceVolume}% if it is under half full).`,
+    grid(...DANCE_MOVES.map((m) => button(m.id, `dance-${m.id}`, () => forceDance(m.id)))));
+
+  section('Touch', `For testing without two fingers or a scroll wheel. A squeeze is held for ${TUNING.devSqueezeSec} seconds, then let go.`,
+    grid(button('Poke', 'poke', poke),
+      button('Squeeze lightly', 'squeeze-light', () => holdSqueeze(TUNING.squeezeLeakFrom * 0.6)),
+      button('Squeeze firmly', 'squeeze-firm', () => holdSqueeze(TUNING.squeezeLeakFrom)),
+      button('Squeeze hard', 'squeeze-hard', () => holdSqueeze(TUNING.squeezeMax))));
+
+  // The sound board plays with the panel open (sound is not paused), so a sound can be tried again and again
+  const play = (label, id, fn) => button(label, `sound-${id}`, fn, false);
+  section('Sounds', 'These play right here; the panel stays open.',
+    grid(play('Poke', 'poke', () => { sound.playPoke(); sound.playSqueak(); }), play('Stretch', 'stretch', () => sound.playStretch(20)),
+      play('Snapback', 'snapback', () => sound.playSnapback(60)), play('Heartbeat', 'heartbeat', sound.playHeartbeat),
+      play('Squirt', 'squirt', sound.playSquirt), play('Twang', 'twang', () => sound.playTwang(TUNING.squeezeMax)),
+      play('Boing', 'boing', sound.playBoing), play('Sigh', 'sigh', sound.playSigh),
+      play('Babble', 'babble', () => sound.playBabble('The quick brown bladder jumps.')),
+      play('Lock', 'lock', () => sound.playSnap(true)), play('Unlock', 'unlock', () => sound.playSnap(false))),
+    el('div', 'dev-note', 'Minigame cues'),
+    grid(play('Alarm', 'alarm', sound.playSpikeAlarm), play('Tick', 'tick', sound.playTick), play('Win', 'win', sound.playWin), play('Lose', 'lose', sound.playLose)),
+    el('div', 'dev-note', 'Slosh of each potty dance'),
+    grid(...DANCE_MOVES.map((m) => play(m.id, `slosh-${m.id}`, () => sound.playDanceSlosh(m.id, st.volume / 100)))),
+    el('div', 'dev-note', 'Drinks'),
+    grid(...drinks.map((d) => play(`${d.icon} ${d.name}`, `drink-${d.name}`, () => sound.playGulp(d)))));
+}

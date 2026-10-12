@@ -84,7 +84,7 @@ export function stepSim(dt, pointerCount) {
   st.squeeze.forcing = squeezeHard > 0 && st.isClosed && st.volume > 0;
   if (st.squeeze.forcing) {
     st.volume = Math.max(0, st.volume - T.squeezeLeakPerSec * squeezeHard * dt);
-    st.stamina = Math.max(0, st.stamina - T.squeezeStaminaPerSec * squeezeHard * dt);
+    if (!st.dev.holdStamina) st.stamina = Math.max(0, st.stamina - T.squeezeStaminaPerSec * squeezeHard * dt);
     st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 0.4;
     if (Math.random() < 0.3 + 0.5 * squeezeHard) spawnDrop();
     st.squeeze.squirtTimer -= dt;
@@ -130,13 +130,13 @@ export function stepSim(dt, pointerCount) {
         st.staminaDraining = true;
 
         const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct);
-        st.stamina = Math.max(0, st.stamina - drainRate * dt);
+        if (!st.dev.holdStamina) st.stamina = Math.max(0, st.stamina - drainRate * dt);
 
         if (st.stamina <= 0) triggerAccident();
         // not in the frame of an accident: the spike would be cancelled a frame later and wipe the accident subtitle
         else if (!st.minigame.active) {
            st.minigame.cooldown -= dt;
-           if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume) emit('spikeStarted');
+           if (st.minigame.cooldown <= 0 && st.volume > T.spikeMinVolume && !st.dev.noSpikes) emit('spikeStarted');
         }
 
     } else {

@@ -2,6 +2,13 @@
 // Not here on purpose: the choreography numbers inside each dance move (sim/dance.js) and the drawing
 // proportions (render/). Those describe a shape, not a rule, and read better next to the code that uses them.
 export const TUNING = {
+  // Developer mode: the start button reads DEVELOPER MODE and free play gets a tools button (ui/dev_panel.js)
+  // for starting any minigame, dance or sound. Set to false before publishing the site: that restores
+  // TAP TO START and hides the tools.
+  developerMode: true,
+  devDanceSec: 6, devDanceVolume: 75,   // a dance picked there is held this long; an emptier bladder is filled to this
+  devSqueezeSec: 2.5,                   // and a squeeze is held this long
+
   // Bladder placement and size, as fractions of the play area. Pointer tests and the renderer share these.
   bodyCy: 0.43, minR: 0.15, maxR: 0.31,
   // Story mode has a shorter play area with the speech bubble at its foot: the bladder sits higher and is

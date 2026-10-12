@@ -89,10 +89,11 @@ for (const [W, H] of [[1024, 600], [1280, 800], [1920, 1080]]) {
     for (const c of choices) { expect(c.in, 'choice inside the story panel').toBeGreaterThanOrEqual(0); expect(c.h).toBeGreaterThanOrEqual(48); }
 
     // the bladder's reply bubble stays inside its own side
-    await ev("bubbleEl.textContent = 'A fairly long thing for the bladder to say about all of this.'; bubbleEl.classList.add('show'); st.bubbleTimer = 5"); await pg.waitForTimeout(300);
+    await ev("prioritySpeechUntil=0; speakDirect('A fairly long thing for the bladder to say about all of this.')"); await pg.waitForTimeout(300);
     const b = await ev(RECTS);
     expect(Math.min(b.bubble.left - b.canvas.left, b.canvas.right - b.bubble.right, b.canvas.bottom - b.bubble.bottom), 'bubble inside the play area').toBeGreaterThanOrEqual(0);
-    expect(b.bubble.top, 'bubble below the legs at the story\'s fullness').toBeGreaterThan(b.canvas.top + (await ev('(()=>{const g=bladderGeom(); return g.cy+g.Rr*1.6})()')) - 1);
+    // the side is tall, so the bubble floats above the head, clear of the face and the legs
+    expect(b.bubble.bottom, 'bubble above the eyes').toBeLessThan(b.canvas.top + (await ev('(()=>{const g=bladderGeom(); return g.cy-g.Rr*0.35})()')));
 
     // a minigame opens under the text, in the same column, and everything still fits
     for (const [id, control] of [['mash', '#mg-btn-mash'], ['swipe_away', '#swipe-card'], ['tremor_lock', '#mg-tremor-area'], ['distraction_popups', '.mg-popup']]) {

@@ -10,7 +10,7 @@ import { setStoryMode, setVolume, easeVolumeToward, startVoid, triggerAccident, 
 import { speakLine } from '../audio/speech.js';
 import { startMinigame } from '../minigames/index.js';
 import { saveProgress, clearProgress } from '../story/library.js';
-import { showBubble, hideBubble } from './bubble.js';
+import { showBubble, hideBubble, bubbleEl } from './bubble.js';
 import { setVolumeLabel } from './hud.js';
 import { resetGame } from './reset.js';
 
@@ -85,11 +85,22 @@ export function exitStory() {
 // Anything else that resets the game (changing the difficulty in Settings) ends the story too
 on('gameReset', () => { if (runner && !resetting) exitStory(); });
 
+// The newest bladder reply waits out of the text while its bubble shows it; once the bubble is gone (or shows
+// something else) it takes its place in the text, and the text scrolls to keep the end in view
+function revealBubbleLine() {
+  const waiting = elLog.querySelector('.in-bubble');
+  if (!waiting) return;
+  if (bubbleEl.classList.contains('show') && `“${bubbleEl.textContent}”` === waiting.textContent) return;
+  waiting.classList.remove('in-bubble');
+  elLog.scrollTop = elLog.scrollHeight;
+}
+
 // Every frame: the bladder on screen follows the story's fullness, and thoughts over the choices write themselves
 // out while the player's free time runs. (No frames while a menu is open, so that time is not counted.)
 export function updateStory(dt) {
   if (!runner) return;
   easeVolumeToward(runner.view().fullness, dt);
+  revealBubbleLine();
   if (!thoughts) return;
   thoughts.elapsed += dt;
   typeThoughts();
@@ -227,7 +238,13 @@ function render() {
       if (line.speaker !== NARRATOR) p.append(el('span', 'story-speaker', `${names[line.speaker] ?? line.speaker}${line.mood ? ` (${line.mood})` : ''}: `));
       p.append(document.createTextNode(line.text));
       elLog.append(p);
-      if (line.bladder) elLog.append(el('p', 'story-line bladder-voice', `“${line.bladder}”`));
+      if (line.bladder) {
+        // The newest reply is in the bladder's bubble: it joins the text only once the bubble has gone, so the
+        // same words are never on screen twice (see revealBubbleLine)
+        const reply = el('p', 'story-line bladder-voice', `“${line.bladder}”`);
+        if (line === v.lines[v.lines.length - 1] && v.phase !== 'ended') reply.classList.add('in-bubble');
+        elLog.append(reply);
+      }
     }
     if (v.phase === 'stuck') elLog.append(el('p', 'story-line narration', 'This story has no way forward from here.'));
   }
@@ -257,6 +274,7 @@ function render() {
     speakLine(last.bladder, true);
     showBubble(last.bladder, BUBBLE_SEC);
   }
+  revealBubbleLine();
   if (v.voided > voidsSeen) { voidsSeen = v.voided; startVoid(); }
   // An accident ending: the bladder gives out by itself (nothing to show if it is already empty or pouring)
   if (v.accident && !accidentSeen) { accidentSeen = true; if (st.volume > 0 && !st.failureEvent) triggerAccident(); }

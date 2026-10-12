@@ -54,9 +54,13 @@ test('reading: lines one at a time, the bladder answers in its bubble, stats and
 
   await pg.locator('.story-continue').click();
   const reply = 'I filed a complaint at midnight. Nobody answered.';
-  await expect(pg.locator('.bladder-voice')).toHaveText(`“${reply}”`);
   await expect(pg.locator('#bladder-bubble')).toHaveText(reply);
   await expect(pg.locator('#bladder-bubble')).toHaveClass(/show/);
+  // while the bubble says it, it is not repeated in the text; it joins the text when the bubble goes
+  await expect(pg.locator('.bladder-voice')).toHaveText(`“${reply}”`);
+  await expect(pg.locator('.bladder-voice')).toBeHidden();
+  await ev('hideBubble()');
+  await expect(pg.locator('.bladder-voice')).toBeVisible();
   expect(await ev('window.__spoken')).toContain(reply);
 
   await pg.locator('.story-continue').click(); // the last line brings the choices with it

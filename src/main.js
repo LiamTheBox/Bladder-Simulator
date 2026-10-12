@@ -35,7 +35,7 @@ import { minigameIds } from './minigames/registry.js';
 import { mgBtnMash } from './minigames/mash.js';
 import { mgBreatheArea } from './minigames/breathe.js';
 import { mgLeaksArea } from './minigames/leaks.js';
-import { bubbleEl, subtitle, updateBubble } from './ui/bubble.js';
+import { bubbleEl, subtitle, updateBubble, hideBubble } from './ui/bubble.js';
 import { updateHud, updateBackground } from './ui/hud.js';
 import { btnVoid, updateClenchUI, lockClenchButton } from './ui/controls.js';
 import { pointerCount } from './ui/input.js';
@@ -118,7 +118,7 @@ if (import.meta.env.MODE === 'test') {
     st, canvasContainer, bladderGeom, waterState, updateClenchUI, voiceLines, triggerAccident, speakDirect,
     startMinigame, endMinigame, bubbleEl, minigameLines, mgPanel, btnRow, mgBtnMash, mgBreatheArea, mgLeaksArea,
     subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on, offSimEvent: off, TUNING, swipeCardTexts,
-    startStory, exitStory, storyView, isStoryActive, parseStory
+    startStory, exitStory, storyView, isStoryActive, parseStory, hideBubble
   });
   Object.defineProperty(window, 'prioritySpeechUntil', { get: getPrioritySpeechUntil, set: setPrioritySpeechUntil });
 }

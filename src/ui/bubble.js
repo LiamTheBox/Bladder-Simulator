@@ -1,8 +1,8 @@
 // The bladder's speech bubble: subtitles for every spoken line, and the pinned minigame prompt.
 // Where it sits: what the bladder says in free play floats above its head and follows it, so the legs and the
-// potty dance stay in view. A minigame prompt keeps to the foot of the play area, next to the controls it is
-// about (and clear of the games played on the bladder itself). In story mode it is always at the foot: the play
-// area there can be a short strip with no room above the head.
+// potty dance stay in view, in free play and in a story on a wide screen. A minigame prompt keeps to the foot of
+// the play area, next to the controls it is about (and clear of the games played on the bladder itself), and so
+// does every bubble in a story on a phone, where the bladder sits in a short strip with no room above the head.
 import { TUNING } from '../config/tuning.js';
 import { st } from '../sim/state.js';
 import { bladderGeom } from '../sim/geometry.js';
@@ -12,11 +12,14 @@ export const bubbleEl = document.getElementById('bladder-bubble');
 export function showBubble(text, seconds, alarm = false) {
   bubbleEl.textContent = text;
   bubbleEl.classList.toggle('alarm', alarm);
-  bubbleEl.classList.toggle('overhead', !alarm && !st.storyMode);
+  bubbleEl.classList.toggle('overhead', !alarm && !isStrip());
   bubbleEl.classList.add('show');
   st.bubbleTimer = seconds; // Infinity = stays until hideBubble()
   placeBubble();
 }
+// A story on a phone puts the bladder in a short strip (wider than tall): no room above the head there
+function isStrip() { const g = bladderGeom(); return st.storyMode && g.H < g.W; }
+
 export function hideBubble() { bubbleEl.classList.remove('show'); st.bubbleTimer = 0; }
 export function subtitle(text, seconds = TUNING.subtitleSec) { if (!st.minigame.active) showBubble(text, seconds); } // never overwrites a minigame prompt
 

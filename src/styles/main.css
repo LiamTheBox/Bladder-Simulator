@@ -176,7 +176,7 @@
   }
   #bladder-bubble.alarm::after { border-bottom-color: #fee2e2; }
   /* Above the head (free-play chatter): placed by ui/bubble.js, with the tail pointing down at the bladder */
-  #bladder-bubble.overhead { bottom: auto; }
+  #toy-container #bladder-bubble.overhead { bottom: auto; } /* outranks the story-mode rules that pin it to the foot */
   /* a phone has little room between the top buttons and the head: one compact line fits where two would not */
   @media (max-width: 599px) { #bladder-bubble.overhead { max-width: 94%; padding: 7px 12px; font-size: 0.85rem; line-height: 1.2; } }
   #bladder-bubble.overhead::after { top: auto; bottom: -8px; border: 8px solid transparent; border-bottom: 0; border-top-color: rgba(255,255,255,0.94); }
@@ -294,7 +294,8 @@
 
   #story-panel { display: none; }
   .story-mode #story-panel {
-    display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; gap: 10px; padding: 12px 16px 14px;
+    display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; gap: 10px;
+    padding: 12px 16px max(18px, env(safe-area-inset-bottom)); /* the last choice never sits on the screen's edge */
     background: rgba(15, 10, 20, 0.85); border-top: 1px solid var(--panel-border);
     border-bottom-left-radius: inherit; border-bottom-right-radius: inherit;
   }
@@ -330,10 +331,13 @@
   .story-stat-fill { height: 100%; background: linear-gradient(90deg, #a3e635, #fde047); transition: width 0.3s; }
 
   /* The text scrolls on its own; panning is allowed here even though the page itself never scrolls */
-  #story-log { flex: 1 1 0; min-height: 0; overflow-y: auto; touch-action: pan-y; user-select: text; padding-right: 4px; }
+  /* The text scrolls above the choices; its top edge fades, so text scrolled away reads as "more above" */
+  #story-log { flex: 1 1 0; min-height: 0; overflow-y: auto; touch-action: pan-y; user-select: text; padding-right: 4px;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 22px); mask-image: linear-gradient(to bottom, transparent 0, #000 22px); padding-top: 10px; }
   .story-line { margin: 0 0 10px; font-size: 0.98rem; line-height: 1.5; color: #f1f5f9; overflow-wrap: anywhere; }
   .story-line.narration { color: #cbd5e1; }
   .story-speaker { font-weight: 800; color: #f9a8d4; }
+  .story-line.bladder-voice.in-bubble { display: none; }
   .story-line.bladder-voice { font-style: italic; color: #fbbf24; padding-left: 10px; border-left: 3px solid #b45309; }
   .story-ending-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 10px; color: #f8fafc; }
   .story-ending-title.good { color: #6ee7b7; }

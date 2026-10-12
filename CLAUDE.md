@@ -206,8 +206,8 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 The owner approved a review of 15 layout items and 9 rules. Built so far:
 - The sphincter lock is a 64 px round button (`#btn-clench` inside `#clench-row`) with its label beside it; only
   the circle reacts. It stays in the control panel and stays visible during a minigame.
-- Free-play speech floats above the bladder's head and follows it (`ui/bubble.js`, class `overhead`). A minigame
-  prompt, and every bubble in story mode, stays at the foot of the play area.
+- Speech floats above the bladder's head and follows it (`ui/bubble.js`, class `overhead`). A minigame prompt,
+  and every bubble in a story on a phone (the bladder is in a short strip there), stays at the foot.
 - Upright tablets (600 to 899 px wide) use their width instead of a 550 px column.
 - Urge waves: `st.urge` (0..1) rises over the last `TUNING.urgeBuildSec` seconds before a spike, is 1 during a
   minigame, then passes. The countdown `st.minigame.cooldown` (still "0 = spike now") runs up to twice as fast in
@@ -220,8 +220,11 @@ The owner approved a review of 15 layout items and 9 rules. Built so far:
   with the bladder (blue, yellow, red) and glows and pulses with an urge wave (`#urge-ring`, `--fill`/`--urge`);
   the drink button (`#btn-shop`) sits with SPEED UP and VOID and shows what is still digesting; the start screen
   explains the game in icon rows, and Story Mode is as big a button as the main one.
+- Story layout: the newest bladder reply is only in its bubble while the bubble shows it, then joins the text
+  (class `in-bubble`, `revealBubbleLine()` in `story_screen.js`); the text's top edge fades when scrolled; the last
+  choice keeps clear of the screen edge; on a wide screen the story bubble floats above the head too.
 - `tests/new-touch.spec.js` covers the lock, the bubble, the tablet width, the HUD and the start screen.
-Still to do, in this order: (2) story layout: one place for the bladder's line, pinned choices; (3) desktop free play uses its left column;
+Still to do, in this order: (3) desktop free play uses its left column;
 (4) developer panel: tabs, live drawer, story tools; (5) rules: drinks with their own speed and after-effect,
 a digestion curve, a bladder that grows taut, richer liquid, stretch that buys room, recovery tied to soothing.
 

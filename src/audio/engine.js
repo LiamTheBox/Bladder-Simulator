@@ -172,7 +172,10 @@ export function updateSlosh(dt, val, vel, fill) {
   const T = TUNING;
   const turned = (vel > 0) !== (sloshLastVel > 0);
   sloshLastVel = vel; sloshGap -= dt;
-  const peak = Math.abs(val);
+  // a taut bladder sloshes in smaller, quicker swings (sim/step.js): the same knock moves as much liquid, so it is
+  // heard as loud (a spring's swing shrinks with the square root of its stiffness)
+  const taut = Math.max(0, Math.min(1, (fill * 100 - T.tautFrom) / (100 - T.tautFrom)));
+  const peak = Math.abs(val) * Math.sqrt(1 + taut * T.tautSloshStiffen);
   if (!audioCtxReady || !turned || sloshGap > 0 || peak < T.sloshSoundMinPeak || fill < T.sloshSoundMinFill) return;
   sloshGap = T.sloshSoundMinGapSec;
   const loud = Math.sqrt(Math.min(1, peak / T.sloshSoundFullPeak)); // square root: a small slosh must still be heard under the poke's thump

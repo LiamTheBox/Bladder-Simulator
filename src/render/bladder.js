@@ -1,6 +1,7 @@
 // The bladder's outline: a pear that bulges with fill, squeeze, stretch, tilt, slosh and pokes.
 import { st } from '../sim/state.js';
 import { TUNING } from '../config/tuning.js';
+import { tautness } from '../sim/geometry.js';
 
 export function drawSmoothPath(ctx, points) {
   ctx.beginPath();
@@ -50,7 +51,7 @@ export function getPearPoints(cx, cy, baseR, t, fillPerc) {
 
     r += Math.cos(th) * st.gravity.x * baseR * 0.25 * fillPerc;
     let wobble = Math.sin(th * 4 + t * 5) * 0.02 * baseR + Math.sin(th * 2 + st.slosh.val * 3) * 0.06 * baseR; 
-    r += wobble * ((fillPerc > 0.5 ? 1 : 0.5) + Math.abs(st.slosh.vel) * 0.2);
+    r += wobble * ((fillPerc > 0.5 ? 1 : 0.5) + Math.abs(st.slosh.vel) * 0.2) * (1 - tautness() * TUNING.tautWobbleCut); // taut: it barely wobbles
 
     if (st.pokeTimer > 0) {
        let pDiff = th - (Math.PI/2); 

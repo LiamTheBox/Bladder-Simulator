@@ -102,9 +102,11 @@ test('dances, squeezes and pokes can be triggered; the switches stop stamina dra
   expect(await ev('[st.stamina, st.minigame.active]')).toEqual([70, false]);
   await open();
   await ev(`document.querySelector('[data-dev="holdStamina"]').click(); document.querySelector('[data-dev="noSpikes"]').click()`);
+  await ev('window.__spikes=0; onSimEvent("minigameStarted", () => { window.__spikes++; })');
   await press('poke'); await wait(1200);
   expect(await ev('st.stamina'), 'switched off again: it drains').toBeLessThan(70);
-  expect(await ev('st.minigame.active'), 'and a spike arrives').toBe(true);
+  // (counted rather than looked at: on a busy machine a quick game may already be over)
+  await expect.poll(() => ev('window.__spikes'), { message: 'and a spike arrives' }).toBeGreaterThan(0);
   expect(errors).toEqual([]);
   await context.close();
 });

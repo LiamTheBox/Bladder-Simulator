@@ -6,7 +6,8 @@ function initialState() {
   return {
   volume: TUNING.startVolume, pendingFluid: 0,
   drinks: [],          // drinks on their way in: { amount, left, age, tau } (sim/actions.js queueDrink)
-  relaxedTimer: 0,     // seconds a relaxing drink (beer) still makes holding harder
+  relaxedTimer: 0,
+  strain: 0,           // seconds of holding not yet recovered from: recovery is slower while it lasts     // seconds a relaxing drink (beer) still makes holding harder
   isClosed: true, isSpeedingUp: false, isVoiding: false,
   stamina: 100, failureEvent: false,
   prevVolume: TUNING.startVolume, prevStamina: 100, // last frame's values, for the thresholdCrossed event

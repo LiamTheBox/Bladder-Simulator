@@ -3,7 +3,7 @@
 // and matches the prototype.
 import { TUNING as T } from '../config/tuning.js';
 import { st } from './state.js';
-import { bladderGeom } from './geometry.js';
+import { bladderGeom, tautness } from './geometry.js';
 import { emit } from './events.js';
 import { setSphincter, triggerAccident } from './actions.js';
 
@@ -58,7 +58,9 @@ export function stepSim(dt, pointerCount) {
     if (st.viscoelasticCreep < T.creepFloor) st.viscoelasticCreep = 0;
   }
   st.gravity.x += (st.gravity.targetX - st.gravity.x) * T.gravityFollowRate * dt;
-  st.slosh.vel += (-T.sloshSpring * st.slosh.val - T.sloshDamping * st.slosh.vel) * dt;
+  // a taut bladder is stiffer: the liquid swings in smaller, quicker sloshes
+  const stiff = 1 + tautness() * T.tautSloshStiffen;
+  st.slosh.vel += (-T.sloshSpring * stiff * st.slosh.val - T.sloshDamping * stiff * st.slosh.vel) * dt;
   st.slosh.val += st.slosh.vel * dt;
 
   // Digestion
@@ -140,7 +142,10 @@ export function stepSim(dt, pointerCount) {
 
         // a rising wave makes holding harder (not during the minigame itself: that has its own stakes)
         const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct) * (1 + (st.minigame.active ? 0 : st.urge) * T.urgeDrainBoost)
-          * (st.relaxedTimer > 0 ? 1 + T.relaxedDrainBoost : 1); // a relaxing drink (beer) makes holding harder
+          * (st.relaxedTimer > 0 ? 1 + T.relaxedDrainBoost : 1)  // a relaxing drink (beer) makes holding harder
+          * (1 - Math.min(1, st.drag.dist / T.stretchMax) * T.stretchRelief) // stretched out: a little more room
+          * (st.soothe.timer > 0 ? 1 - T.sootheDrainCut : 1);               // being soothed
+        st.strain += dt;
         if (!st.dev.holdStamina) st.stamina = Math.max(0, st.stamina - drainRate * dt);
 
         if (st.stamina <= 0) triggerAccident();
@@ -153,7 +158,10 @@ export function stepSim(dt, pointerCount) {
 
     } else {
         if (st.minigame.active && !st.minigame.practice) emit('spikeCancelled'); // bladder dropped below 50% or was opened: no unfair failure
-        if (!st.squeeze.forcing) st.stamina = Math.min(100, st.stamina + T.staminaRegenPerSec * dt); // no recovering while liquid is squeezed out
+        // Recovery: slower after a long hold (strain), faster while soothed; none while liquid is squeezed out
+        const regen = T.staminaRegenPerSec * (st.soothe.timer > 0 ? T.sootheRegenBoost : 1) / (1 + st.strain / T.strainHalfSec);
+        if (!st.squeeze.forcing) st.stamina = Math.min(100, st.stamina + regen * dt);
+        st.strain = Math.max(0, st.strain - T.strainFadePerSec * dt);
         st.staminaDraining = false;
     }
   } else st.staminaDraining = false;

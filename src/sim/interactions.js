@@ -3,7 +3,7 @@
 // the rules for stretch, squeeze, soothe and poke live here.
 import { TUNING as T } from '../config/tuning.js';
 import { st } from './state.js';
-import { bladderGeom } from './geometry.js';
+import { bladderGeom, tautness } from './geometry.js';
 import { emit } from './events.js';
 
 function squeezeSpeaks() {
@@ -13,7 +13,8 @@ function squeezeSpeaks() {
 // Scroll wheel over the bladder squeezes it
 export function wheelSqueeze(deltaY) {
   st.squeeze.active = true; st.squeeze.wheelTimer = T.wheelHoldSec;
-  st.squeeze.tension = Math.min(T.squeezeMax, Math.max(0, st.squeeze.tension + deltaY * T.wheelToTension));
+  // a taut bladder gives less under the same push
+  st.squeeze.tension = Math.min(T.squeezeMax, Math.max(0, st.squeeze.tension + deltaY * T.wheelToTension * (1 - tautness() * T.tautSqueezeCut)));
   st.slosh.vel += deltaY * T.wheelToSlosh;
   squeezeSpeaks();
 }
@@ -23,7 +24,7 @@ export function touchDown(mx, my, count, pinchDist) {
   const { cx, cy, Rr } = bladderGeom();
   if (count === 2) {
     st.drag.active = false; st.drag.targetDist = 0;
-    st.squeeze.initialDist = pinchDist + st.squeeze.tension;
+    st.squeeze.initialDist = pinchDist + st.squeeze.tension / (1 - tautness() * T.tautSqueezeCut); // carries on from the tension it has
     st.squeeze.active = true;
   } else if (count === 1) {
     const dist = Math.hypot(mx - cx, my - cy);
@@ -39,11 +40,12 @@ export function touchDown(mx, my, count, pinchDist) {
 export function touchMove(mx, my, count, pinchDist) {
   const { cx, cy, Rr } = bladderGeom();
   if (count === 2 && st.squeeze.active) {
-    st.squeeze.tension = Math.max(0, Math.min(T.squeezeMax, st.squeeze.initialDist - pinchDist));
+    st.squeeze.tension = Math.max(0, Math.min(T.squeezeMax, (st.squeeze.initialDist - pinchDist) * (1 - tautness() * T.tautSqueezeCut)));
     squeezeSpeaks();
   } else if (count === 1 && !st.minigame.active) {
     if (st.drag.active) {
-      st.drag.targetDist = Math.max(T.stretchMin, Math.min(T.stretchMax, Math.hypot(mx - cx, my - cy) - Rr));
+      // a taut bladder stretches less for the same pull
+      st.drag.targetDist = Math.max(T.stretchMin, Math.min(T.stretchMax, (Math.hypot(mx - cx, my - cy) - Rr) * (1 - tautness() * T.tautStretchCut)));
       if (st.drag.targetDist > st.drag.peakDist) st.drag.peakDist = st.drag.targetDist;
       st.slosh.vel += Math.cos(st.drag.angle) * T.stretchSloshKick;
       if (st.drag.targetDist > T.creepFromStretch) st.viscoelasticCreep = Math.min(T.creepMax, st.viscoelasticCreep + T.creepGain);
@@ -73,6 +75,8 @@ export function touchUp({ tracked, lifted, countBefore, countAfter }) {
     const snapForce = st.drag.peakDist || st.drag.dist;
     if (snapForce > T.snapbackMinStretch) {
       st.slosh.vel += -Math.cos(st.drag.angle) * ((snapForce / T.snapbackRefStretch) * T.snapbackSlosh);
+      // a full bladder snapping back hits hard (free play only: a story keeps its own stamina)
+      if (!st.storyMode && st.volume >= T.staminaDrainFrom && !st.dev.holdStamina) st.stamina = Math.max(0, st.stamina - T.snapbackStaminaCost * Math.min(1.5, snapForce / T.snapbackRefStretch));
       emit('interaction', { type: 'snapback', force: snapForce });
     }
     st.drag.active = false; st.drag.peakDist = 0;

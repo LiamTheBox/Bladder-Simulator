@@ -15,3 +15,7 @@ export function bladderGeom(fill = st.volume / 100) {
   const m = Math.min(W, strip ? H * TUNING.storyBodyShare : H);
   return { W, H, cx: W / 2 + st.body.x, cy: H * (strip ? TUNING.storyBodyCy : TUNING.bodyCy) + st.body.y, Rr: m * TUNING.minR + m * (TUNING.maxR - TUNING.minR) * fill };
 }
+
+// How taut the bladder is: 0 up to TUNING.tautFrom % full, 1 when full. Rules (stiffness, stretch, squeeze) and the
+// drawing (wobble, thinning skin) both read it.
+export function tautness(volume = st.volume) { return Math.max(0, Math.min(1, (volume - TUNING.tautFrom) / (100 - TUNING.tautFrom))); }

@@ -173,6 +173,16 @@ export const TUNING = {
   sootheSpeakDist: 60, sootheHoldSec: 0.5,
   pokeMaxRub: 20, pokeSec: 1.0, pokeDecayRate: 1.5, pokeSlosh: 3.0,
 
+  // A full bladder grows taut: from tautFrom % it is stiffer (smaller, quicker sloshes, less wobble), harder to stretch
+  // and squeeze, and its skin thins. At 100% each of these reaches the share given here.
+  tautFrom: 60, tautSloshStiffen: 1.5, tautWobbleCut: 0.6, tautStretchCut: 0.5, tautSqueezeCut: 0.4,
+  // Stretching buys room: while pulled out, holding costs up to stretchRelief less stamina. The price: letting go
+  // of a full bladder snaps it back hard, costing up to snapbackStaminaCost stamina (at snapbackRefStretch).
+  stretchRelief: 0.4, snapbackStaminaCost: 8,
+  // Recovery: soothing (rubbing) eases holding by sootheDrainCut and speeds recovery by sootheRegenBoost. A long hold
+  // leaves strain: recovery runs at 1 / (1 + strain / strainHalfSec) of its speed, and strain fades strainFadePerSec.
+  sootheDrainCut: 0.25, sootheRegenBoost: 2, strainHalfSec: 60, strainFadePerSec: 3,
+
   // Slosh spring and tilt
   sloshSpring: 180, sloshDamping: 10,
   gravityFollowRate: 6, tiltFullDeg: 45,

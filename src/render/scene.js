@@ -1,7 +1,7 @@
 // Draws one frame from the current state. Reads state only; all motion is advanced in sim/.
 import { TUNING } from '../config/tuning.js';
 import { st } from '../sim/state.js';
-import { bladderGeom } from '../sim/geometry.js';
+import { bladderGeom, tautness } from '../sim/geometry.js';
 import { canvasContainer, canvas, ctx } from './canvas.js';
 import { drawSmoothPath, getPearPoints, squeezeAmount } from './bladder.js';
 import { drawCuteFace } from './face.js';
@@ -33,7 +33,9 @@ export function renderCanvas(t, fillPerc) {
   ctx.save();
   drawSmoothPath(ctx, pearPoints);
   const bgGrad = ctx.createRadialGradient(cx, cy - baseR*0.5, baseR*0.1, cx, cy, baseR*1.5);
-  bgGrad.addColorStop(0, '#fbcfe8'); bgGrad.addColorStop(1, '#be185d');
+  // the skin thins as it grows taut: paler and more see-through
+  const taut = tautness(fillPerc * 100);
+  bgGrad.addColorStop(0, `rgba(251, 207, 232, ${1 - taut * 0.35})`); bgGrad.addColorStop(1, `rgba(190, 24, 93, ${1 - taut * 0.45})`);
   ctx.fillStyle = bgGrad; ctx.fill();
 
   ctx.clip(); 
@@ -71,7 +73,7 @@ export function renderCanvas(t, fillPerc) {
 
   // Outline
   drawSmoothPath(ctx, pearPoints);
-  ctx.lineWidth = Math.max(3, baseR * 0.025); ctx.strokeStyle = 'rgba(244, 114, 182, 0.5)'; ctx.stroke();
+  ctx.lineWidth = Math.max(2, baseR * 0.025 * (1 - taut * 0.4)); ctx.strokeStyle = `rgba(244, 114, 182, ${0.5 + taut * 0.3})`; ctx.stroke();
 
   drawCuteFace(ctx, cx, cy, baseR, t, fillPerc, st.isClosed, st.gravity.x);
 

@@ -8,6 +8,10 @@ import { drawCuteFace } from './face.js';
 import { drawPottyDanceLegs } from './legs.js';
 import { drawMinigame } from '../minigames/index.js';
 
+// How high the liquid stands in the outline, 0 (empty) to 1 (to the top), for a fill of 0..1 and a squeeze
+// (squeezeAmount(): 1 = hardest, below zero on the rebound)
+export function fluidLevel(fillPerc, sq) { return Math.max(0, Math.min(1, fillPerc * (1 + TUNING.squeezeLevelRise * sq))); }
+
 export function renderCanvas(t, fillPerc) {
   if(!canvasContainer) return;
   const W = canvasContainer.clientWidth, H = canvasContainer.clientHeight;
@@ -34,7 +38,12 @@ export function renderCanvas(t, fillPerc) {
 
   ctx.clip(); 
 
-  const topY = cy - baseR * 1.3, botY = cy + baseR * 1.3, fluidY = botY - (botY - topY) * fillPerc;
+  // The surface sits between the lowest and highest point of the outline, so the little a nearly empty bladder
+  // holds is still seen at the bottom. (It used to be measured from below the outline, which hid the first 15%.)
+  // A squeeze leaves less room, so the same liquid stands higher.
+  const sq = squeezeAmount();
+  const { topY, botY } = pearPoints.reduce((b, p) => ({ topY: Math.min(b.topY, p.y), botY: Math.max(b.botY, p.y) }), { topY: Infinity, botY: -Infinity });
+  const fluidY = botY - (botY - topY) * fluidLevel(fillPerc, sq);
   const sloshTilt = st.gravity.x * 0.5 + Math.sin(t * 2.5) * 0.05 + (st.slosh.val * 0.015);
   const waveAmp = 4 + Math.abs(st.slosh.val * 4);
 
@@ -68,7 +77,6 @@ export function renderCanvas(t, fillPerc) {
 
   // The rubber band that does the squeezing: the front half of a loop around the waist, from the outline's
   // rightmost point (pearPoints[0]) to its leftmost (pearPoints[32]). It fades in as the squeeze takes hold.
-  const sq = squeezeAmount();
   if (sq > 0.02) {
     const right = pearPoints[0], left = pearPoints[32];
     const bandX = (left.x + right.x) / 2, bandY = (left.y + right.y) / 2, half = (right.x - left.x) / 2 + baseR * 0.02;

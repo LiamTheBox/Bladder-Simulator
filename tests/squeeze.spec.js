@@ -121,3 +121,36 @@ test('the band creaks as the squeeze tightens, on a different note each time', a
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test('a squeeze makes the liquid stand higher, shows the sphincter forced open, and never leaks from an empty bladder', async ({ browser }) => {
+  const { context, errors, ev, squeeze, letGo, seen, wait } = await started(browser);
+  const level = (fill, sq) => ev(`import('/src/render/scene.js').then((m) => m.fluidLevel(${fill}, ${sq}))`);
+  expect(await level(0.4, 0)).toBeCloseTo(0.4, 5);
+  expect(await level(0.4, 1), 'less room: the same liquid stands half again as high').toBeCloseTo(0.6, 5);
+  expect(await level(0.9, 1), 'never above the top').toBe(1);
+  expect(await level(0, 1), 'nothing to raise').toBe(0);
+
+  // the colour of the canvas where the sphincter is drawn, just under the body
+  const sphincter = () => ev(`(() => { const g = bladderGeom(), c = document.querySelector('#canvas-wrapper canvas'), k = c.width / c.clientWidth;
+    return [...c.getContext('2d').getImageData(Math.round(g.cx * k), Math.round((g.cy + g.Rr + 5) * k), 1, 1).data].slice(0, 3); })()`);
+  const DARK = [76, 5, 25]; // #4c0519, the open sphincter
+  await ev('st.volume=40; st.isClosed=true; st.stamina=100');
+  await squeeze(35); await wait(300);
+  expect(await sphincter(), 'a firm squeeze: still shut').not.toEqual(DARK);
+  await squeeze(60); await wait(300);
+  expect(await sphincter(), 'a hard squeeze forces it open').toEqual(DARK);
+  expect(await ev('st.isClosed'), 'though it counts as locked').toBe(true);
+  await letGo(); await wait(500);
+  expect(await sphincter(), 'shut again').not.toEqual(DARK);
+
+  // squeezed until nothing is left: the leak stops with the liquid
+  await ev('st.volume=3; st.stamina=100; st.particles.length=0');
+  await squeeze(60); await wait(900);
+  expect(await ev('st.volume')).toBe(0);
+  await ev('window.__ev.length=0'); await wait(1300); // drops in the air live for a second
+  expect(await ev('[st.particles.length, st.squeeze.forcing]'), 'empty: no more drops').toEqual([0, false]);
+  expect(await seen('squirt')).toEqual([]);
+  expect(await sphincter(), 'and the sphincter is shut').not.toEqual(DARK);
+  expect(errors).toEqual([]);
+  await context.close();
+});

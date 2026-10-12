@@ -210,7 +210,11 @@ A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.s
 - Not in story mode: there a squeeze changes the shape and sound only, because the story decides the fullness.
 - Look: a pinched waist with bulging ends and a rubber band drawn around it (`render/bladder.js`,
   `render/scene.js`). Letting go of a firm squeeze raises `interaction` type `squeezeRelease` and the waist
-  wobbles back like a spring (`st.squeeze.wobble`). `tests/squeeze.spec.js` covers all of it.
+  wobbles back like a spring (`st.squeeze.wobble`). A squeeze leaves less room, so the liquid is drawn higher
+  (`fluidLevel()` in `render/scene.js`), and the sphincter is drawn forced open while liquid is squeezed out.
+  `tests/squeeze.spec.js` covers all of it.
+- The liquid's surface is measured between the outline's lowest and highest point. The prototype measured from
+  below the outline, which hid the first 15% or so: a bladder at the starting volume looked empty.
 
 ## Developer mode (`TUNING.developerMode`, **on: switch it off before publishing**)
 While it is `true` the start button reads DEVELOPER MODE and free play has a 🛠️ button that opens the tools

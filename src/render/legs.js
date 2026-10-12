@@ -28,8 +28,10 @@ export function drawPottyDanceLegs(ctx, cx, cy, baseR) {
   if (st.legs.xl > 0) { drawTubeLeg(st.legs.ar, st.legs.xr, st.legs.br); drawTubeLeg(st.legs.al, st.legs.xl, st.legs.bl); }
   else { drawTubeLeg(st.legs.al, st.legs.xl, st.legs.bl); drawTubeLeg(st.legs.ar, st.legs.xr, st.legs.br); }
 
-  if (!isClosed || st.failureEvent) {
-     ctx.beginPath(); ctx.ellipse(cx, sy + 5, baseR * 0.15, baseR * 0.08, 0, 0, Math.PI*2);
+  // The sphincter shows when it is open, and smaller when a hard squeeze is forcing liquid past it
+  if (!isClosed || st.failureEvent || st.squeeze.forcing) {
+     const open = (!isClosed || st.failureEvent) ? 1 : 0.6;
+     ctx.beginPath(); ctx.ellipse(cx, sy + 5, baseR * 0.15 * open, baseR * 0.08 * open, 0, 0, Math.PI*2);
      ctx.fillStyle = '#4c0519'; ctx.fill();
   }
   ctx.restore();

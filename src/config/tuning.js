@@ -137,6 +137,7 @@ export const TUNING = {
   // Letting go: the waist springs back past its rest shape and wobbles, like a rubber band
   squeezeSnapFrom: 15,           // a squeeze at least this strong snaps back when released
   squeezeWobbleKick: 7, squeezeWobbleSpring: 420, squeezeWobbleDamping: 7, squeezeReleaseSlosh: 0.12,
+  squeezeLevelRise: 0.5,         // drawing: the hardest squeeze makes the liquid stand this much higher (0.5 = half again)
   squeezeCreakStep: 6,           // the band creaks each time the squeeze tightens by this much
   wheelHoldSec: 0.5, wheelToTension: 0.1, wheelToSlosh: -0.01,
 

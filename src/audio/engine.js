@@ -173,7 +173,7 @@ const danceSlosh = Object.fromEntries(DANCE_MOVES.map((m) => [m.id, m.slosh]));
 export function playDanceSlosh(move, fill) {
   if (!audioCtxReady) return;
   const lower = lerp(1.15, 0.85, fill); // fuller sounds lower, as in updateSlosh()
-  for (const [kind, low, high, loud] of danceSlosh[move] ?? []) sloshKinds[kind](nextPitch(move + kind, low, high) * lower, loud);
+  for (const [kind, low, high, loud] of danceSlosh[move] ?? []) sloshKinds[kind](nextPitch(move + kind, low, high) * lower, loud * TUNING.danceSloshLoudness);
 }
 // Plays a short tune on the shared jingle synth. notes: [pitch, seconds after now, length in seconds]; loud: 0..1
 function jingle(label, notes, loud = 1) {
@@ -206,11 +206,11 @@ export function updateCreak(stretching, dist) {
   if (audioCtxReady && dist > creakAt) creakSynth.triggerAttackRelease(110 + dist * 1.5, 0.04, startTime(creakSynth));
   creakAt = dist;
 }
-// Hop landing: a springy upward slide
+// Hop landing: a springy upward slide (a potty-dance sound, so it shares their loudness)
 export function playBoing() {
   if (!audioCtxReady) return;
   const t = startTime(boingSynth);
-  boingSynth.triggerAttackRelease(170, 0.18, t); boingSynth.frequency.rampTo(360, 0.16, t);
+  boingSynth.triggerAttackRelease(170, 0.18, t, TUNING.danceSloshLoudness); boingSynth.frequency.rampTo(360, 0.16, t);
 }
 // A drink on its way down: a few low bubbles now and then (the fill sound covers it while speeding up)
 export function updateGurgle(dt, digesting) {
@@ -240,7 +240,7 @@ export function playSnap(closing) { if (!audioCtxReady) return; snapSynth.trigge
 export function playPoke() { if (audioCtxReady) pokeSynth.triggerAttackRelease("G2", "8n"); }
 export function playStretch(amt) { if (audioCtxReady) stretchSynth.triggerAttackRelease(150 + Math.min(600, amt * 6), "16n"); }
 export function playSnapback(int) { if (audioCtxReady) snapbackSynth.triggerAttackRelease(Math.min(400, 80 + int * 4), "8n"); }
-export function playHeartbeat() { if (audioCtxReady) heartBeat.triggerAttackRelease("C1", "8n"); }
+export function playHeartbeat() { if (audioCtxReady) heartBeat.triggerAttackRelease("C1", "8n", undefined, TUNING.heartbeatLoudness); }
 // A drink going down. How it sounds depends on the drink (config/content.js): its size sets the number of gulps,
 // its "feel" the rest. low / high: the gulps' pitch range in Hz; every: seconds from one gulp to the next.
 const GULP_FEEL = {

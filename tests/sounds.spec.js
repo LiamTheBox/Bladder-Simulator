@@ -243,6 +243,16 @@ test('each potty dance has its own slosh, with pitches dealt like a shuffled dec
   expect(new Set(moves.map((m) => m.row)).size, 'no two dances share a slosh').toBe(moves.length);
   for (const m of moves) expect(kinds(await dance(m.id, 1400)), m.id).toEqual(m.kinds);
 
+  // dance sounds are kept in the background (TUNING.danceSloshLoudness), and so is the heartbeat that runs under them
+  const march = await pg.evaluate('DANCE_MOVES.find((m) => m.id === "march").slosh.map((l) => l[3] * 0.2)');
+  expect([...new Set((await dance('march', 1200)).map((n) => n.loud))].sort()).toEqual(march.sort());
+  await pg.evaluate("st.dance.id='hop'; st.dance.beat=null; window.__notes.length=0"); await pg.waitForTimeout(1500);
+  const notes = await pg.evaluate('window.__notes');
+  expect(notes.filter((n) => n.sound === 'boing').every((n) => n.loud === 0.2)).toBe(true);
+  const beats = notes.filter((n) => n.sound === 'Membrane' && n.pitch === 'C1');
+  expect(beats.length, 'the heart beats above half full').toBeGreaterThanOrEqual(1);
+  expect(beats.every((n) => n.loud === 0.1), 'quietly').toBe(true);
+
   // tap plays plips fast enough to see two full decks of TUNING.pitchSteps (6) notes
   const pitches = (await dance('tap', 4500)).map((n) => Math.round(n.pitch));
   expect(pitches.length).toBeGreaterThanOrEqual(13);

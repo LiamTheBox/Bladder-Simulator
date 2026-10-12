@@ -140,6 +140,7 @@ export const TUNING = {
   gurgleEveryMin: 4, gurgleEverySpread: 5,   // seconds between tummy gurgles while a drink digests
   babbleMaxBlips: 8, babbleCharsPerBlip: 6,  // "talking" blips for a line when the spoken voice is off
   gulpPerAmount: 0.11, gulpMax: 5,           // gulps heard per percent of a drink (15% -> 2, 35% -> 4), and the most
+  danceSloshLoudness: 0.2,       // every potty-dance sound (sloshes and the hop's boing), as a share of the table in config/dance.js
   pitchSteps: 6,                 // notes a varied sound chooses from; each is used once before any comes back
   sloshSoundTightFrom: 0.85,                          // from this fill up there is no room to splash: glugs only
 
@@ -153,4 +154,5 @@ export const TUNING = {
 
   // Heartbeat: starts above this volume and speeds up toward 100%
   heartbeatFrom: 50, heartbeatSpeedup: 0.7, heartbeatSlosh: 0.5,
+  heartbeatLoudness: 0.1,        // the thump of each beat, as a share of the prototype's (which drowned everything else)
 };

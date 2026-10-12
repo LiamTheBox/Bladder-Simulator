@@ -209,7 +209,10 @@ a recorded clip can replace any one of them inside its `play…` / `update…` f
   fuller bladder, silent when nearly empty or for ripples under `TUNING.sloshSoundMinPeak`.
 - Slosh per potty dance: `sim/dance.js` raises `danceBeat { move }` on every beat of the current move, and
   `playDanceSlosh()` plays that move's row from `src/config/dance.js` (`beat` = its rhythm, `slosh` = layers of
-  kind, pitch range, loudness). Four kinds: glug, splash, plip, swish. Edit that table to change a dance's sound.
+  kind, pitch range, loudness). Four kinds: glug, splash, plip, swish. Edit that table to change a dance's sound;
+  `TUNING.danceSloshLoudness` (0.2) turns all dance sounds, boing included, up or down together.
+- The prototype's heartbeat (above 50% full) was the loudest sound in the game; it now plays at
+  `TUNING.heartbeatLoudness` (0.1). Its vibration and the red pulse are unchanged.
 - Varied pitch never repeats back to back: `nextPitch()` deals `TUNING.pitchSteps` notes like a shuffled deck
   (all used before any returns). Used by the wave slosh, the dance sloshes and the gulps.
 - Drinks: `playGulp(drink)` plays more gulps for a bigger `amt`, and the drink's `feel` in `config/content.js`

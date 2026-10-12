@@ -81,10 +81,13 @@
   
   .btn-empty { background: linear-gradient(180deg, #10b981, #059669); box-shadow: 0 6px 0 #047857; }
   
+  #clench-row { display: flex; align-items: center; justify-content: center; gap: 14px; padding-bottom: 6px; }
   #btn-clench {
     background: linear-gradient(180deg, #f43f5e, #e11d48); box-shadow: 0 6px 0 #be123c;
-    padding: 16px 20px;
+    flex: none; width: 64px; height: 64px; padding: 0; border-radius: 50%; font-size: 1.7rem;
   }
+  #clench-label { display: flex; flex-direction: column; pointer-events: none; color: white; font-weight: 800; text-transform: uppercase; min-width: 11.5em; }
+  #clench-label .sub-text { margin-top: 2px; }
   #btn-clench.open-state { background: linear-gradient(180deg, #34d399, #059669); box-shadow: 0 6px 0 #047857; }
   #btn-clench:active:not(:disabled) { transform: translateY(6px); box-shadow: 0 0 0 transparent; }
 
@@ -265,7 +268,7 @@
   }
   /* The bladder keeps the top third; the sim's own controls only appear while a minigame runs */
   .story-mode #canvas-wrapper { flex: 0 0 34%; }
-  .story-mode #btn-shop, .story-mode #pending-lbl, .story-mode #stamina-row, .story-mode #btn-clench, .story-mode #btn-row { display: none !important; }
+  .story-mode #btn-shop, .story-mode #pending-lbl, .story-mode #stamina-row, .story-mode #clench-row, .story-mode #btn-row { display: none !important; }
   .story-mode #controls { display: none; }
   .story-mode.mg-active #controls { display: flex; border-radius: 0; }
   .story-mode.mg-active #story-panel { border-radius: 0; }
@@ -388,7 +391,6 @@
       grid-column: 1; grid-row: 1; justify-content: center; padding: 24px;
       border-top: 0; border-right: 1px solid var(--panel-border); border-radius: 0;
     }
-    #btn-clench { flex: none; padding: 26px 20px; } /* in a column it would otherwise stretch to fill the height */
     /* The buttons are centred in a tall column: the popups keep to a band around them, so they still crowd the lock */
     #mg-popups-layer { top: 50%; bottom: auto; height: 340px; max-height: 100%; transform: translateY(-50%); }
     .story-mode #mg-popups-layer { top: 0; bottom: 0; height: auto; transform: none; }

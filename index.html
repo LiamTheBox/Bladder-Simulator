@@ -215,12 +215,15 @@
     </div>
     </div>
     
-    <button class="action-btn" id="btn-clench">
-      <div style="display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 1.15rem;">
-        <span id="clench-icon">🔒</span> <span id="clench-title">SPHINCTER LOCKED</span>
+    <!-- The lock: a small round button, so a stray tap on the panel does not open the bladder. Only the
+         circle reacts; the words beside it are a label. -->
+    <div id="clench-row">
+      <button class="action-btn" id="btn-clench" aria-labelledby="clench-title clench-subtext"><span id="clench-icon">🔒</span></button>
+      <div id="clench-label">
+        <span id="clench-title">SPHINCTER LOCKED</span>
+        <span class="sub-text" id="clench-subtext">Tap to Unlock (Open)</span>
       </div>
-      <span class="sub-text" id="clench-subtext">Tap to Unlock (Open)</span>
-    </button>
+    </div>
 
     <!-- distraction_popups: bubbles land anywhere on the control panel, over the buttons -->
     <div id="mg-popups-layer"></div>

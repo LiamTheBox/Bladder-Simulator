@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 import { openGame, GEOM_JS } from './helpers.js';
 
 const RECORDED = ['thresholdCrossed', 'sphincterChanged', 'voidStarted', 'voidEnded', 'accident', 'drinkQueued',
-  'gameReset', 'spikeStarted', 'spikeCancelled', 'minigameStarted', 'minigameEnded', 'interaction', 'heartbeat'];
+  'gameReset', 'spikeStarted', 'spikeCancelled', 'minigameStarted', 'minigameEnded', 'interaction', 'heartbeat', 'danceBeat'];
 
 async function started(browser) {
   const game = await openGame(browser, 390, 844);
@@ -127,5 +127,19 @@ test('stamina thresholds, and gameReset when the difficulty changes', async ({ b
   await pg.locator('#btn-settings').dispatchEvent('pointerdown');
   await pg.locator('#difficulty-select').selectOption('3');
   expect(names(await events('gameReset'))).toEqual(['gameReset']);
+  await context.close();
+});
+
+test('danceBeat: one per landing while the bladder hops, none during another move', async ({ browser }) => {
+  const { context, ev, events, clear, wait } = await started(browser);
+  await ev("st.volume=90; st.isClosed=true; st.stamina=100; st.dance.id='sway'; st.dance.timer=30"); await wait(1000);
+  expect(await events('danceBeat')).toEqual([]);
+  await clear();
+  await ev("st.stamina=100; st.dance.id='hop'; st.dance.hopBeat=null; st.dance.timer=30"); await wait(2000);
+  const beats = await events('danceBeat');
+  expect(beats.every(([, p]) => p.move === 'hop')).toBe(true);
+  // a landing every PI / 5.5 = 0.57 s: three in two seconds, give or take one for where the hop began
+  expect(beats.length).toBeGreaterThanOrEqual(2);
+  expect(beats.length).toBeLessThanOrEqual(4);
   await context.close();
 });

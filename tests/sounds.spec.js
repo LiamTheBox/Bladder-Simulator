@@ -143,3 +143,83 @@ test('a minigame has an alarm, ticks for its last seconds, and a win or lose tun
   expect(errors).toEqual([]);
   await context.close();
 });
+
+const GEOM = '(()=>{const r=canvasContainer.getBoundingClientRect(); const g=bladderGeom(); return {x:r.left+g.cx, y:r.top+g.cy, R:g.Rr}})()';
+
+test('the bladder squeaks when poked, creaks as it is stretched further, and boings when a hop lands', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  const heard = async (name) => count(await pg.evaluate('window.__audio'), name);
+  await pg.evaluate('st.volume=40; st.isClosed=true; window.__audio.length=0');
+  const g = await pg.evaluate(GEOM);
+
+  await pg.mouse.click(g.x, g.y); await pg.waitForTimeout(100);
+  expect(await heard('squeak')).toBe(1);
+
+  // grab the rim and pull outward in steps, then ease back in
+  await pg.evaluate('window.__audio.length=0');
+  await pg.mouse.move(g.x + g.R, g.y); await pg.mouse.down();
+  for (let d = 10; d <= 90; d += 10) { await pg.mouse.move(g.x + g.R + d, g.y); await pg.waitForTimeout(60); }
+  await pg.waitForTimeout(300);
+  const pulling = await heard('creak');
+  expect(pulling, 'several creaks on the way out').toBeGreaterThanOrEqual(3);
+  for (let d = 80; d >= 20; d -= 10) { await pg.mouse.move(g.x + g.R + d, g.y); await pg.waitForTimeout(60); }
+  await pg.waitForTimeout(300);
+  expect(await heard('creak'), 'easing back is silent').toBe(pulling);
+  await pg.mouse.up(); await pg.waitForTimeout(300);
+
+  await pg.evaluate("window.__audio.length=0; st.volume=90; st.stamina=100; st.dance.id='hop'; st.dance.hopBeat=null; st.dance.timer=30");
+  await pg.waitForTimeout(2000);
+  expect(await heard('boing')).toBeGreaterThanOrEqual(2);
+  expect(await heard('boing')).toBeLessThanOrEqual(4);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('a digesting drink gurgles now and then; a finished void sighs, an accident does not', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  const heard = async (name) => count(await pg.evaluate('window.__audio'), name);
+  await pg.evaluate('TUNING.gurgleEveryMin=0.4; TUNING.gurgleEverySpread=0; st.volume=20; st.isClosed=true; window.__audio.length=0');
+  await pg.waitForTimeout(700);
+  expect(await heard('gurgle'), 'nothing to digest: quiet').toBe(0);
+  await pg.evaluate('st.pendingFluid=60'); await pg.waitForTimeout(1100);
+  const gurgles = await heard('gurgle');
+  expect(gurgles, 'three bubbles at a time').toBeGreaterThanOrEqual(3);
+  expect(gurgles % 3).toBe(0);
+
+  await pg.evaluate('st.pendingFluid=0; st.volume=1; window.__audio.length=0; st.isClosed=false; updateClenchUI()');
+  await pg.waitForTimeout(600);
+  expect(await pg.evaluate('st.isClosed'), 'ran empty and closed again').toBe(true);
+  expect(await heard('sigh')).toBe(1);
+
+  await pg.evaluate('st.volume=2; st.stamina=100; window.__audio.length=0; triggerAccident()');
+  await pg.waitForTimeout(800);
+  expect(await pg.evaluate('st.volume')).toBe(0);
+  expect(await heard('sigh'), 'no relief after an accident').toBe(0);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('with the spoken voice off, lines are babbled instead; with it on, they are not', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  const heard = async (name) => count(await pg.evaluate('window.__audio'), name);
+  await pg.evaluate("window.__audio.length=0; window.__spoken.length=0; speakDirect('Eighteen letters ok')"); // 18 letters / 6 = 3 blips
+  expect(await heard('babble')).toBe(0);
+  expect(await pg.evaluate('window.__spoken')).toContain('Eighteen letters ok');
+
+  await openSettings(pg);
+  await pg.locator('#settings-comfort input[type=checkbox]').first().uncheck();
+  await pg.locator('.close-modal[data-target=settings-overlay]').dispatchEvent('pointerdown');
+  await pg.evaluate("window.__audio.length=0; window.__spoken.length=0; prioritySpeechUntil=0; speakDirect('Eighteen letters ok')");
+  expect(await heard('babble')).toBe(3);
+  expect(await pg.evaluate("window.__spoken.filter((x) => x !== '<<cancel>>')"), 'nothing spoken aloud').toEqual([]);
+  await expect(pg.locator('#bladder-bubble')).toContainText('Eighteen letters ok');
+
+  // a long line is capped, so the babble never drags on
+  await pg.evaluate(`window.__audio.length=0; speakDirect('${'word '.repeat(40)}')`);
+  expect(await heard('babble')).toBe(await pg.evaluate('TUNING.babbleMaxBlips'));
+  expect(errors).toEqual([]);
+  await context.close();
+});

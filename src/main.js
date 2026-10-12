@@ -26,7 +26,7 @@ import { pickDanceMove, updateDance } from './sim/dance.js';
 import { updateParticles } from './sim/particles.js';
 import { canvasContainer } from './render/canvas.js';
 import { renderCanvas } from './render/scene.js';
-import { waterState, playWater, stopWater, stopAllWater, updateBubbles, updateSlosh, playHeartbeat, playPoke, playStretch, playSnapback, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
+import { waterState, playWater, stopWater, stopAllWater, updateBubbles, updateSlosh, updateCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
 import { startMinigame, endMinigame, updateMinigame } from './minigames/index.js';
@@ -51,7 +51,7 @@ on('fillFlow', (flowing) => { if (flowing) playWater(true); else stopWater(true)
 on('drainFlow', (flowing) => { if (flowing) playWater(false); else stopWater(false); });
 on('sphincterChanged', () => { updateClenchUI(); });
 on('voidStarted', () => { lockClenchButton(); vibe([50, 100, 50, 100, 50]); speak('voiding', true); });
-on('voidEnded', () => { stopWater(false); });
+on('voidEnded', ({ accident }) => { stopWater(false); if (!accident) playSigh(); });
 on('voidButtonChanged', (disabled) => { btnVoid.disabled = disabled; });
 on('voiceCue', (category) => speak(category)); // true if the line was actually spoken
 on('accident', () => {
@@ -63,8 +63,9 @@ on('spikeCancelled', () => { endMinigame(false, true); });
 on('minigameStarted', () => { playSpikeAlarm(); });
 on('minigameEnded', ({ success, cancelled }) => { if (!cancelled) (success ? playWin : playLose)(); }); // a cancelled game ends silently
 on('heartbeat', () => { playHeartbeat(); vibe(45); });
+on('danceBeat', () => { playBoing(); });
 on('interaction', ({ type, force }) => {
-  if (type === 'poke') { playPoke(); vibe(20); speak('poke'); }
+  if (type === 'poke') { playPoke(); playSqueak(); vibe(20); speak('poke'); }
   else if (type === 'stretchStart') { playStretch(20); vibe(15); speak('stretch'); }
   else if (type === 'snapback') { playSnapback(force); vibe([20, 30, 40]); }
   else if (type === 'soothe' || type === 'squeeze') speak(type);
@@ -97,6 +98,8 @@ function gameLoop(now) {
 
   updateBubbles(dt);
   updateSlosh(dt, st.slosh.val, st.slosh.vel, st.volume / 100);
+  updateCreak(st.drag.active, st.drag.dist);
+  updateGurgle(dt, st.pendingFluid > 0);
   updateDance(now / 1000, dt, st.volume / 100);
   updateParticles(dt);
   renderCanvas(now / 1000, st.volume / 100);

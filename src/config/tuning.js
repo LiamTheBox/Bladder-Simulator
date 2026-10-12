@@ -135,6 +135,9 @@ export const TUNING = {
   // a hard snapback near 0.5; the trickle of a drain or a heartbeat stays under the minimum and is silent.
   sloshSoundMinPeak: 0.05, sloshSoundFullPeak: 0.4,   // quietest wave that is heard / wave played at full loudness
   sloshSoundMinGapSec: 0.1, sloshSoundMinFill: 0.04,  // (fill is 0..1) a nearly empty bladder has nothing to slosh
+  creakStepPx: 14,               // a stretch creaks each time it is pulled this much further
+  gurgleEveryMin: 4, gurgleEverySpread: 5,   // seconds between tummy gurgles while a drink digests
+  babbleMaxBlips: 8, babbleCharsPerBlip: 6,  // "talking" blips for a line when the spoken voice is off
   sloshSoundTightFrom: 0.85,                          // from this fill up there is no room to splash: glugs only
 
   // Voice

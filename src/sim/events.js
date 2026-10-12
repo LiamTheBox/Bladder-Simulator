@@ -23,9 +23,10 @@
 //   Touching the bladder (sim/interactions.js)
 //     interaction      { type: 'poke'|'stretchStart'|'snapback'|'soothe'|'squeeze', force? }
 //
-//   Presentation cues (sim/step.js): the sim asks, audio/haptics answer
+//   Presentation cues (sim/step.js, sim/dance.js): the sim asks, audio/haptics answer
 //     voiceCue (category)                a good moment for a voice line; a listener returns true if it was spoken
 //     heartbeat                          one beat
+//     danceBeat        { move }          a potty-dance move hit the floor (only 'hop' so far: each landing)
 //     haptic (pattern)                   a vibration
 //     fillFlow (bool) / drainFlow (bool) every frame: whether fluid is rushing in / out right now
 const listeners = {};

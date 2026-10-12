@@ -2,6 +2,7 @@
 // Picks a move by urgency and eases the legs and body toward its pose. Pure state: drawing is in render/legs.js.
 import { DANCE_MOVES, LIVELY_MOVES } from '../config/dance.js';
 import { st } from './state.js';
+import { emit } from './events.js';
 import { bladderGeom } from './geometry.js';
 
 export function pickDanceMove(u, last) {
@@ -25,6 +26,7 @@ export function updateDance(t, dt, fill) {
     st.dance.timer -= dt;
     if (st.dance.timer <= 0) {
       st.dance.id = pickDanceMove(u, st.dance.id);
+      st.dance.hopBeat = null;
       st.dance.timer = LIVELY_MOVES.includes(st.dance.id) ? 1.5 + Math.random() : 2.0 + Math.random() * 2.0;
     }
     const amp = 0.5 + 0.5 * u;
@@ -93,6 +95,10 @@ export function updateDance(t, dt, fill) {
         break; }
       case 'hop': {
         const h = Math.abs(Math.sin(t * 5.5));          // 0 = on the floor, 1 = top of the jump
+        // h touches 0 once every PI / 5.5 seconds: announce each landing (the first frame of a hop only takes note)
+        const beat = Math.floor(t * 5.5 / PI);
+        if (st.dance.hopBeat !== null && beat !== st.dance.hopBeat) emit('danceBeat', { move: 'hop' });
+        st.dance.hopBeat = beat;
         by = -h * 0.11 * R * amp;
         bl = br = -h * 20 * k;                           // feet tuck up in the air
         al = PI * 0.64; ar = PI * 0.36;

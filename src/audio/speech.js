@@ -4,7 +4,7 @@ import { voiceLines } from '../config/content.js';
 import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { subtitle } from '../ui/bubble.js';
-import { isAudioReady } from './engine.js';
+import { isAudioReady, playBabble } from './engine.js';
 
 // Timestamp: important lines (accident/void) can't be cut off by drink chatter before this
 let prioritySpeechUntil = 0;
@@ -18,14 +18,14 @@ export function speakLine(text, force = false) {
   if (!force && ((synth && synth.speaking) || st.voiceCooldown > 0)) return false;
   st.voiceCooldown = TUNING.voiceCooldownSec; // set up front: onend is unreliable on some mobile browsers
   subtitle(text);
-  // with the voice switched off the line still counts as said: the subtitle carries it
+  // with the voice switched off the line still counts as said: the subtitle carries it, with babble for a voice
   if (synth && settings.voice) {
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.pitch = 1.2 + (st.volume / 100) * 0.3; utterance.rate = 1.0;
     utterance.onend = () => { st.voiceCooldown = TUNING.voiceCooldownAfterEndSec; };
     if (force) { synth.cancel(); prioritySpeechUntil = performance.now() + TUNING.prioritySpeechMs; }
     synth.speak(utterance);
-  }
+  } else playBabble(text);
   return true;
 }
 
@@ -41,7 +41,7 @@ export function speakDirect(text) {
   if (performance.now() < prioritySpeechUntil) return;
   subtitle(text);
   const synth = window.speechSynthesis;
-  if (!synth || !settings.voice) return;
+  if (!synth || !settings.voice) { playBabble(text); return; }
   synth.cancel();
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.pitch = 1.2; utterance.rate = 1.0;

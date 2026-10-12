@@ -5,7 +5,7 @@ const log = (...a) => window.__audio.push(a.join(':'));
 
 function mk(name) {
   return class {
-    constructor() { this.name = name; this.volume = { value: 0 }; this.frequency = { value: 0, rampTo() {} }; this.state = 'stopped'; }
+    constructor() { this.name = name; this.volume = { value: 0 }; this.frequency = { value: 0, rampTo() {}, setValueAtTime() {} }; this.state = 'stopped'; }
     connect() { return this; } toDestination() { return this; } start() { return this; } stop() { return this; } set() { return this; }
     triggerAttack() { log(this.label ?? name, 'attack'); } triggerRelease() { log(this.label ?? name, 'release'); }
     triggerAttackRelease() { log(this.label ?? name, 'ar'); }

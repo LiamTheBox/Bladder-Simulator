@@ -11,6 +11,8 @@ let bubbleTimer = 0;
 let glugSynth, splashSynth, splashFilter;
 let sloshLastVel = 0, sloshGap = 0;
 let jingleSynth, wompSynth;
+let squeakSynth, creakSynth, boingSynth, gurgleSynth, sighSynth, sighFilter, babbleSynth;
+let creakAt = 0, gurgleTimer = 0;
 
 // Tags a synth with the name of its sound, so the test mock can log which one played (Tone ignores the tag)
 function named(label, synth) { synth.label = label; return synth; }
@@ -53,6 +55,17 @@ function initAudio() {
   jingleSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.12, sustain: 0.15, release: 0.15 } }).toDestination(); jingleSynth.volume.value = -12;
   wompSynth = named('lose', new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.8, release: 0.12 } }));
   wompSynth.connect(new Tone.Filter({ frequency: 700, type: "lowpass", rolloff: -24 }).toDestination()); wompSynth.volume.value = -9;
+
+  // The bladder as a character: rubbery and a bit silly. All quiet, because they play often.
+  squeakSynth = named('squeak', new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.08, sustain: 0, release: 0.05 } })).toDestination(); squeakSynth.volume.value = -14;
+  creakSynth = named('creak', new Tone.Synth({ oscillator: { type: "sawtooth" }, envelope: { attack: 0.002, decay: 0.035, sustain: 0, release: 0.02 } }));
+  creakSynth.connect(new Tone.Filter({ frequency: 500, type: "bandpass", Q: 1.5 }).toDestination()); creakSynth.volume.value = 0;
+  boingSynth = named('boing', new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.2, sustain: 0, release: 0.05 } })).toDestination(); boingSynth.volume.value = -18;
+  gurgleSynth = named('gurgle', new Tone.MembraneSynth({ pitchDecay: 0.06, octaves: 2, oscillator: { type: "sine" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0, release: 0.05 } })).toDestination(); gurgleSynth.volume.value = -14;
+  sighSynth = named('sigh', new Tone.NoiseSynth({ noise: { type: "pink" }, envelope: { attack: 0.15, decay: 0.7, sustain: 0, release: 0.1 } }));
+  sighFilter = new Tone.Filter({ frequency: 1000, type: "bandpass", Q: 0.8 }).toDestination(); sighSynth.connect(sighFilter); sighSynth.volume.value = 2;
+  babbleSynth = named('babble', new Tone.Synth({ oscillator: { type: "square" }, envelope: { attack: 0.005, decay: 0.05, sustain: 0, release: 0.02 } }));
+  babbleSynth.connect(new Tone.Filter({ frequency: 1400, type: "lowpass" }).toDestination()); babbleSynth.volume.value = -20;
 
   audioCtxReady = true;
   setSoundVolume(settings.sound);
@@ -100,7 +113,7 @@ export function updateSlosh(dt, val, vel, fill) {
   const peak = Math.abs(val);
   if (!audioCtxReady || !turned || sloshGap > 0 || peak < T.sloshSoundMinPeak || fill < T.sloshSoundMinFill) return;
   sloshGap = T.sloshSoundMinGapSec;
-  const loud = Math.min(1, peak / T.sloshSoundFullPeak);
+  const loud = Math.sqrt(Math.min(1, peak / T.sloshSoundFullPeak)); // square root: a small slosh must still be heard under the poke's thump
   // a fuller bladder sounds lower and more muffled, and near the top has no air left to splash in
   glugSynth.triggerAttackRelease(lerp(170, 95, fill) * (0.92 + Math.random() * 0.16), 0.15, undefined, loud);
   if (fill < T.sloshSoundTightFrom) {
@@ -124,6 +137,50 @@ export function playLose() {
   const t = Tone.now();
   wompSynth.triggerAttackRelease(233, 0.3, t); wompSynth.frequency.rampTo(196, 0.28, t);
   wompSynth.triggerAttackRelease(185, 0.5, t + 0.4); wompSynth.frequency.rampTo(123, 0.48, t + 0.4);
+}
+// Poke: a quick upward chirp, on top of the thump of playPoke()
+export function playSqueak() {
+  if (!audioCtxReady) return;
+  const t = Tone.now();
+  squeakSynth.triggerAttackRelease(700, 0.08, t); squeakSynth.frequency.rampTo(1300, 0.07, t);
+}
+// Stretch: a rubbery creak each time the pull grows by another step (dist = st.drag.dist, in pixels).
+// Easing back is silent; it only moves the mark the next creak is measured from.
+export function updateCreak(stretching, dist) {
+  if (!stretching) { creakAt = 0; return; }
+  if (Math.abs(dist - creakAt) < TUNING.creakStepPx) return;
+  if (audioCtxReady && dist > creakAt) creakSynth.triggerAttackRelease(110 + dist * 1.5, 0.04);
+  creakAt = dist;
+}
+// Hop landing: a springy upward slide
+export function playBoing() {
+  if (!audioCtxReady) return;
+  const t = Tone.now();
+  boingSynth.triggerAttackRelease(170, 0.18, t); boingSynth.frequency.rampTo(360, 0.16, t);
+}
+// A drink on its way down: a few low bubbles now and then (the fill sound covers it while speeding up)
+export function updateGurgle(dt, digesting) {
+  if (!digesting) { gurgleTimer = TUNING.gurgleEveryMin; return; } // the first one comes a while after the drink
+  gurgleTimer -= dt;
+  if (gurgleTimer > 0) return;
+  gurgleTimer = TUNING.gurgleEveryMin + Math.random() * TUNING.gurgleEverySpread;
+  if (!audioCtxReady || waterState.fill) return;
+  const t = Tone.now();
+  for (let i = 0; i < 3; i++) gurgleSynth.triggerAttackRelease(70 + Math.random() * 70, 0.08, t + i * 0.11);
+}
+// Relief after a void: a breath out, sinking in tone
+export function playSigh() {
+  if (!audioCtxReady) return;
+  const t = Tone.now();
+  sighFilter.frequency.setValueAtTime(1000, t); sighFilter.frequency.rampTo(380, 0.8, t);
+  sighSynth.triggerAttackRelease(0.85, t);
+}
+// Stands in for the spoken voice when it is switched off: a blip per few letters, pitched at random
+export function playBabble(text) {
+  if (!audioCtxReady) return;
+  const blips = Math.max(1, Math.min(TUNING.babbleMaxBlips, Math.round(text.length / TUNING.babbleCharsPerBlip)));
+  const t = Tone.now();
+  for (let i = 0; i < blips; i++) babbleSynth.triggerAttackRelease(380 + Math.random() * 260, 0.045, t + i * 0.075);
 }
 export function playSnap(closing) { if (!audioCtxReady) return; snapSynth.triggerAttackRelease(closing ? ["C3", "E3"] : ["E2", "G2"], "16n"); }
 export function playPoke() { if (audioCtxReady) pokeSynth.triggerAttackRelease("G2", "8n"); }

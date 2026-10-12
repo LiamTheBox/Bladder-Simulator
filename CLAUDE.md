@@ -195,11 +195,28 @@ suspicion" style meters. Stories choose which blocks they use via `stats` in the
 
 ## Player controls (step 7, built)
 - 18+ gate on a first visit (`src/ui/settings_panel.js`); asked again whenever storage could not remember it.
-- Settings (`src/config/settings.js`, all in `localStorage`, guarded): difficulty, speak lines aloud,
-  vibration, a switch per minigame, hide stories by tag, back to the start screen.
+- Settings (`src/config/settings.js`, all in `localStorage`, guarded): difficulty, sound effects volume, speak
+  lines aloud, vibration, a switch per minigame, hide stories by tag, back to the start screen.
 - A switched-off minigame never appears: free play skips it, a story gets another enabled game, and with
   every game off a story treats its minigames as passed.
 - Modder guide: `public/modding-guide.md` (ships with the site, linked from the story list).
+
+## Sound effects (code-generated placeholders, **not yet listened to by the owner**)
+Every sound is made by Tone.js synths in `src/audio/engine.js`; there are no audio files. They are placeholders:
+a recorded clip can replace any one of them inside its `play…` / `update…` function without touching callers.
+- Slosh: `updateSlosh()` runs every frame from `src/main.js` and plays a "glug" (plus a splash while there is
+  room) each time the wave in `st.slosh` turns around. Louder for a bigger wave, lower and more muffled for a
+  fuller bladder, silent when nearly empty or for ripples under `TUNING.sloshSoundMinPeak`.
+- Minigames: alarm on `minigameStarted`, win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
+  and a tick for each of the last `TUNING.minigameTickLastSec` seconds (from the runner, which owns the countdown).
+- Character: squeak on a poke, creak as a stretch is pulled further, boing on each hop landing (the `danceBeat`
+  event from `sim/dance.js`), gurgle while a drink digests, sigh after a void that was not an accident, and
+  babble blips in place of the spoken voice when it is switched off.
+- Settings has a sound effects volume slider (`settings.sound`, 0 to 100, 0 mutes) that sets Tone's master output.
+- Not built yet: story-mode sounds (text, choices, meters, chapters), one signature sound per minigame, music.
+- `tests/sounds.spec.js` checks *when* each sound plays, through the recording mock. The mock accepts calls the
+  real Tone.js rejects (two triggers of one synth at the same instant throw), so after changing `engine.js` also
+  play the sounds once in `npm run dev`.
 
 ## Desktop and phone layouts
 One page, two layouts, chosen by window size alone (the media query at the end of `src/styles/main.css`, no
@@ -229,7 +246,7 @@ Publishing is the owner's decision; do not deploy without being asked.
   overrides (`tests/new-minigames.spec.js` and `tests/sneak-a-pee.spec.js` do the same for the later games);
   `tests/rules.spec.js` covers rule fixes made after the refactor.
 - `tests/events.spec.js` has a test per event (payload and order); `tests/settings.spec.js` covers the
-  difficulty setting and blocked storage.
+  difficulty setting and blocked storage; `tests/sounds.spec.js` covers the volume slider and when each sound plays.
 - `tests/story-validator.spec.js` and `tests/story-runner.spec.js` cover the validator, loader and runner (they
   run in Node, no browser); the runner test also random-walks every bundled story to check it can always finish.
   `tests/story-mode.spec.js` covers the story screen in the browser, including that story text is never HTML.

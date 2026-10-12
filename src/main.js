@@ -26,7 +26,7 @@ import { pickDanceMove, updateDance } from './sim/dance.js';
 import { updateParticles } from './sim/particles.js';
 import { canvasContainer } from './render/canvas.js';
 import { renderCanvas } from './render/scene.js';
-import { waterState, playWater, stopWater, stopAllWater, updateBubbles, updateSlosh, updateCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
+import { waterState, playWater, stopWater, stopAllWater, updateBubbles, updateSlosh, updateCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playDanceSlosh, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
 import { startMinigame, endMinigame, updateMinigame } from './minigames/index.js';
@@ -63,7 +63,7 @@ on('spikeCancelled', () => { endMinigame(false, true); });
 on('minigameStarted', () => { playSpikeAlarm(); });
 on('minigameEnded', ({ success, cancelled }) => { if (!cancelled) (success ? playWin : playLose)(); }); // a cancelled game ends silently
 on('heartbeat', () => { playHeartbeat(); vibe(45); });
-on('danceBeat', () => { playBoing(); });
+on('danceBeat', ({ move }) => { playDanceSlosh(move, st.volume / 100); if (move === 'hop') playBoing(); });
 on('interaction', ({ type, force }) => {
   if (type === 'poke') { playPoke(); playSqueak(); vibe(20); speak('poke'); }
   else if (type === 'stretchStart') { playStretch(20); vibe(15); speak('stretch'); }

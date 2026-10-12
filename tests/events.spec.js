@@ -130,16 +130,22 @@ test('stamina thresholds, and gameReset when the difficulty changes', async ({ b
   await context.close();
 });
 
-test('danceBeat: one per landing while the bladder hops, none during another move', async ({ browser }) => {
+test('danceBeat: the beats of the current potty-dance move, at that move\'s own pace; none below half full', async ({ browser }) => {
   const { context, ev, events, clear, wait } = await started(browser);
-  await ev("st.volume=90; st.isClosed=true; st.stamina=100; st.dance.id='sway'; st.dance.timer=30"); await wait(1000);
-  expect(await events('danceBeat')).toEqual([]);
-  await clear();
-  await ev("st.stamina=100; st.dance.id='hop'; st.dance.hopBeat=null; st.dance.timer=30"); await wait(2000);
-  const beats = await events('danceBeat');
-  expect(beats.every(([, p]) => p.move === 'hop')).toBe(true);
-  // a landing every PI / 5.5 = 0.57 s: three in two seconds, give or take one for where the hop began
-  expect(beats.length).toBeGreaterThanOrEqual(2);
-  expect(beats.length).toBeLessThanOrEqual(4);
+  await ev('st.volume=30; st.isClosed=true'); await wait(800);
+  expect(await events('danceBeat'), 'no dancing, no beats').toEqual([]);
+
+  const beatsOf = async (move) => {
+    await ev(`st.volume=90; st.stamina=100; st.dance.id='${move}'; st.dance.beat=null; st.dance.timer=30`);
+    await clear(); await wait(2000);
+    const beats = await events('danceBeat');
+    expect(beats.every(([, p]) => p.move === move), `every beat names ${move}`).toBe(true);
+    return beats.length;
+  };
+  // a beat every PI / beat seconds (config/dance.js): sway 3 -> about 2 in two seconds, hop 5.5 -> 3 or 4, march 13 -> 8
+  const sway = await beatsOf('sway'), hop = await beatsOf('hop'), march = await beatsOf('march');
+  expect(sway).toBeGreaterThanOrEqual(1); expect(sway).toBeLessThanOrEqual(3);
+  expect(hop).toBeGreaterThanOrEqual(2); expect(hop).toBeLessThanOrEqual(5);
+  expect(march).toBeGreaterThanOrEqual(6); expect(march).toBeLessThanOrEqual(10);
   await context.close();
 });

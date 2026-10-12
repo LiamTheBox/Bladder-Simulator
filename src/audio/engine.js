@@ -2,13 +2,14 @@
 import * as Tone from 'tone';
 import { settings } from '../config/settings.js';
 import { TUNING } from '../config/tuning.js';
+import { DANCE_MOVES } from '../config/dance.js';
 
 let audioCtxReady = false;
 let waterSynth, waterFilter, waterLfo, fillSynth, fillFilter, fillLfo;
 let heartBeat, snapSynth, pokeSynth, bubbleSynth, stretchSynth, snapbackSynth;
 export const waterState = { fill: false, drain: false }; // which water sounds are currently playing
 let bubbleTimer = 0;
-let glugSynth, splashSynth, splashFilter;
+let glugSynth, splashSynth, splashFilter, plipSynth, swishSynth, swishFilter;
 let sloshLastVel = 0, sloshGap = 0;
 let jingleSynth, wompSynth;
 let squeakSynth, creakSynth, boingSynth, gurgleSynth, sighSynth, sighFilter, babbleSynth;
@@ -17,6 +18,31 @@ let creakAt = 0, gurgleTimer = 0;
 // Tags a synth with the name of its sound, so the test mock can log which one played (Tone ignores the tag)
 function named(label, synth) { synth.label = label; return synth; }
 const lerp = (a, b, k) => a + (b - a) * k;
+
+// A synth has one voice, and Tone throws when a note is asked to start at or before one it already has queued.
+// So every sound asks here when it may start: now, or just behind whatever that synth is still due to play.
+// span: for a run of notes, how long after its start the last one begins.
+function startTime(synth, span = 0) {
+  const t = Math.max(Tone.now(), (synth.queuedAt ?? -1) + 0.03);
+  synth.queuedAt = t + span;
+  return t;
+}
+
+// Varied pitch without repeats: the steps between low and high come like cards from a shuffled deck. Every card
+// is played once before the deck is shuffled again, and a new deck never opens with the card just played.
+// One deck per sound (key), so two sounds do not use up each other's cards.
+const decks = {};
+function nextPitch(key, low, high) {
+  const deck = decks[key] ||= { cards: [], last: -1 };
+  if (deck.cards.length === 0) {
+    const cards = Array.from({ length: TUNING.pitchSteps }, (_, i) => i);
+    for (let i = cards.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [cards[i], cards[j]] = [cards[j], cards[i]]; }
+    if (cards.at(-1) === deck.last) [cards[0], cards[cards.length - 1]] = [cards.at(-1), cards[0]]; // cards are dealt from the end
+    deck.cards = cards;
+  }
+  deck.last = deck.cards.pop();
+  return lerp(low, high, deck.last / (TUNING.pitchSteps - 1));
+}
 
 export function isAudioReady() { return audioCtxReady; }
 
@@ -50,6 +76,9 @@ function initAudio() {
   glugSynth = named('glug', new Tone.MembraneSynth({ pitchDecay: 0.09, octaves: 1.2, oscillator: { type: "sine" }, envelope: { attack: 0.004, decay: 0.16, sustain: 0, release: 0.05 } })).toDestination(); glugSynth.volume.value = -8;
   splashSynth = named('splash', new Tone.NoiseSynth({ noise: { type: "brown" }, envelope: { attack: 0.02, decay: 0.2, sustain: 0, release: 0.05 } }));
   splashFilter = new Tone.Filter({ frequency: 800, type: "lowpass", rolloff: -24 }).toDestination(); splashSynth.connect(splashFilter); splashSynth.volume.value = -6;
+  plipSynth = named('plip', new Tone.Synth({ oscillator: { type: "sine" }, envelope: { attack: 0.002, decay: 0.06, sustain: 0, release: 0.03 } })).toDestination(); plipSynth.volume.value = -14;
+  swishSynth = named('swish', new Tone.NoiseSynth({ noise: { type: "pink" }, envelope: { attack: 0.07, decay: 0.18, sustain: 0, release: 0.05 } }));
+  swishFilter = new Tone.Filter({ frequency: 600, type: "bandpass", Q: 2 }).toDestination(); swishSynth.connect(swishFilter); swishSynth.volume.value = -2;
 
   // Minigame cues: one small synth plays every short tune (see jingle()); the losing "womp-womp" slides in pitch
   jingleSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.12, sustain: 0.15, release: 0.15 } }).toDestination(); jingleSynth.volume.value = -12;
@@ -104,7 +133,19 @@ export function updateBubbles(dt) {
     if (Math.random() > 0.3) bubbleSynth.triggerAttackRelease(400 + Math.random() * 600, "32n");
   }
 }
-// Slosh, driven from the game loop with the wave's position and speed (st.slosh) and the fill (0..1).
+// The four kinds of slosh. pitch is in Hz: the note of a glug or plip, the tone of a splash's or swish's noise.
+const sloshKinds = {
+  glug(pitch, loud) { glugSynth.triggerAttackRelease(pitch, 0.15, startTime(glugSynth), loud); },
+  splash(pitch, loud) { const t = startTime(splashSynth); splashFilter.frequency.setValueAtTime(pitch, t); splashSynth.triggerAttackRelease(0.18, t, loud); },
+  plip(pitch, loud) { const t = startTime(plipSynth); plipSynth.triggerAttackRelease(pitch, 0.05, t, loud); plipSynth.frequency.rampTo(pitch * 1.5, 0.04, t); },
+  swish(pitch, loud) {
+    const t = startTime(swishSynth);
+    swishFilter.frequency.setValueAtTime(pitch, t); swishFilter.frequency.rampTo(pitch * 1.8, 0.22, t);
+    swishSynth.triggerAttackRelease(0.24, t, loud);
+  },
+};
+
+// Slosh from the wave, driven from the game loop with the wave's position and speed (st.slosh) and the fill (0..1).
 // The wave turns around where its speed changes sign: that is the moment the liquid hits a side.
 export function updateSlosh(dt, val, vel, fill) {
   const T = TUNING;
@@ -115,11 +156,16 @@ export function updateSlosh(dt, val, vel, fill) {
   sloshGap = T.sloshSoundMinGapSec;
   const loud = Math.sqrt(Math.min(1, peak / T.sloshSoundFullPeak)); // square root: a small slosh must still be heard under the poke's thump
   // a fuller bladder sounds lower and more muffled, and near the top has no air left to splash in
-  glugSynth.triggerAttackRelease(lerp(170, 95, fill) * (0.92 + Math.random() * 0.16), 0.15, undefined, loud);
-  if (fill < T.sloshSoundTightFrom) {
-    splashFilter.frequency.value = lerp(1100, 380, fill);
-    splashSynth.triggerAttackRelease(0.18, undefined, loud * (1 - fill / T.sloshSoundTightFrom * 0.6));
-  }
+  const note = lerp(170, 95, fill);
+  sloshKinds.glug(nextPitch('wave', note * 0.85, note * 1.15), loud);
+  if (fill < T.sloshSoundTightFrom) sloshKinds.splash(lerp(1100, 380, fill), loud * (1 - fill / T.sloshSoundTightFrom * 0.6));
+}
+// Slosh from a potty dance: each move has its own mix of kinds and pitches (config/dance.js), played on its beat
+const danceSlosh = Object.fromEntries(DANCE_MOVES.map((m) => [m.id, m.slosh]));
+export function playDanceSlosh(move, fill) {
+  if (!audioCtxReady) return;
+  const lower = lerp(1.15, 0.85, fill); // fuller sounds lower, as in updateSlosh()
+  for (const [kind, low, high, loud] of danceSlosh[move] ?? []) sloshKinds[kind](nextPitch(move + kind, low, high) * lower, loud);
 }
 // Plays a short tune on the shared jingle synth. notes: [pitch, seconds after now, length in seconds]; loud: 0..1
 function jingle(label, notes, loud = 1) {
@@ -134,14 +180,14 @@ export function playWin() { jingle('win', [["C5", 0, 0.09], ["E5", 0.09, 0.09], 
 // "Womp-womp": two sagging notes, the second lower and longer
 export function playLose() {
   if (!audioCtxReady) return;
-  const t = Tone.now();
+  const t = startTime(wompSynth, 0.4);
   wompSynth.triggerAttackRelease(233, 0.3, t); wompSynth.frequency.rampTo(196, 0.28, t);
   wompSynth.triggerAttackRelease(185, 0.5, t + 0.4); wompSynth.frequency.rampTo(123, 0.48, t + 0.4);
 }
 // Poke: a quick upward chirp, on top of the thump of playPoke()
 export function playSqueak() {
   if (!audioCtxReady) return;
-  const t = Tone.now();
+  const t = startTime(squeakSynth);
   squeakSynth.triggerAttackRelease(700, 0.08, t); squeakSynth.frequency.rampTo(1300, 0.07, t);
 }
 // Stretch: a rubbery creak each time the pull grows by another step (dist = st.drag.dist, in pixels).
@@ -149,13 +195,13 @@ export function playSqueak() {
 export function updateCreak(stretching, dist) {
   if (!stretching) { creakAt = 0; return; }
   if (Math.abs(dist - creakAt) < TUNING.creakStepPx) return;
-  if (audioCtxReady && dist > creakAt) creakSynth.triggerAttackRelease(110 + dist * 1.5, 0.04);
+  if (audioCtxReady && dist > creakAt) creakSynth.triggerAttackRelease(110 + dist * 1.5, 0.04, startTime(creakSynth));
   creakAt = dist;
 }
 // Hop landing: a springy upward slide
 export function playBoing() {
   if (!audioCtxReady) return;
-  const t = Tone.now();
+  const t = startTime(boingSynth);
   boingSynth.triggerAttackRelease(170, 0.18, t); boingSynth.frequency.rampTo(360, 0.16, t);
 }
 // A drink on its way down: a few low bubbles now and then (the fill sound covers it while speeding up)
@@ -165,13 +211,13 @@ export function updateGurgle(dt, digesting) {
   if (gurgleTimer > 0) return;
   gurgleTimer = TUNING.gurgleEveryMin + Math.random() * TUNING.gurgleEverySpread;
   if (!audioCtxReady || waterState.fill) return;
-  const t = Tone.now();
+  const t = startTime(gurgleSynth, 0.22);
   for (let i = 0; i < 3; i++) gurgleSynth.triggerAttackRelease(70 + Math.random() * 70, 0.08, t + i * 0.11);
 }
 // Relief after a void: a breath out, sinking in tone
 export function playSigh() {
   if (!audioCtxReady) return;
-  const t = Tone.now();
+  const t = startTime(sighSynth);
   sighFilter.frequency.setValueAtTime(1000, t); sighFilter.frequency.rampTo(380, 0.8, t);
   sighSynth.triggerAttackRelease(0.85, t);
 }
@@ -179,7 +225,7 @@ export function playSigh() {
 export function playBabble(text) {
   if (!audioCtxReady) return;
   const blips = Math.max(1, Math.min(TUNING.babbleMaxBlips, Math.round(text.length / TUNING.babbleCharsPerBlip)));
-  const t = Tone.now();
+  const t = startTime(babbleSynth, (blips - 1) * 0.075);
   for (let i = 0; i < blips; i++) babbleSynth.triggerAttackRelease(380 + Math.random() * 260, 0.045, t + i * 0.075);
 }
 export function playSnap(closing) { if (!audioCtxReady) return; snapSynth.triggerAttackRelease(closing ? ["C3", "E3"] : ["E2", "G2"], "16n"); }

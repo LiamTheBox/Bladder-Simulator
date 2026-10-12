@@ -5,6 +5,8 @@ import { st } from './state.js';
 import { emit } from './events.js';
 import { bladderGeom } from './geometry.js';
 
+const BEAT = Object.fromEntries(DANCE_MOVES.map((m) => [m.id, m.beat]));
+
 export function pickDanceMove(u, last) {
   const pool = DANCE_MOVES.filter(m => m.min <= u && m.id !== last);
   return pool[Math.floor(Math.random() * pool.length)].id;
@@ -26,7 +28,7 @@ export function updateDance(t, dt, fill) {
     st.dance.timer -= dt;
     if (st.dance.timer <= 0) {
       st.dance.id = pickDanceMove(u, st.dance.id);
-      st.dance.hopBeat = null;
+      st.dance.beat = null;
       st.dance.timer = LIVELY_MOVES.includes(st.dance.id) ? 1.5 + Math.random() : 2.0 + Math.random() * 2.0;
     }
     const amp = 0.5 + 0.5 * u;
@@ -95,10 +97,6 @@ export function updateDance(t, dt, fill) {
         break; }
       case 'hop': {
         const h = Math.abs(Math.sin(t * 5.5));          // 0 = on the floor, 1 = top of the jump
-        // h touches 0 once every PI / 5.5 seconds: announce each landing (the first frame of a hop only takes note)
-        const beat = Math.floor(t * 5.5 / PI);
-        if (st.dance.hopBeat !== null && beat !== st.dance.hopBeat) emit('danceBeat', { move: 'hop' });
-        st.dance.hopBeat = beat;
         by = -h * 0.11 * R * amp;
         bl = br = -h * 20 * k;                           // feet tuck up in the air
         al = PI * 0.64; ar = PI * 0.36;
@@ -117,6 +115,12 @@ export function updateDance(t, dt, fill) {
         bx = Math.sin(t * 6.5) * 0.012 * R;
         break; }
     }
+
+    // A cue for sound on each beat of the move. The beat counts half waves of the move's own sine, so it lands
+    // where the sine is zero: for a hop, the moment it touches the floor. A move's first frame only takes note.
+    const beat = Math.floor(t * BEAT[st.dance.id] / PI);
+    if (st.dance.beat !== null && beat !== st.dance.beat) emit('danceBeat', { move: st.dance.id });
+    st.dance.beat = beat;
   }
 
   // Keep the body still while a minigame played on the bladder is running (e.g. tapping cracks)

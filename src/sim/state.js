@@ -24,7 +24,7 @@ function initialState() {
   particles: [], sweatDrops: [],
   pokeTimer: 0, heartTimer: 0, faceTimer: 0, voiceCooldown: 0,
   faceState: { e: 'open', m: 'neutral' }, blinkTimer: 2.0,
-  dance: { id: 'sway', timer: 0, hopBeat: null }, body: { x: 0, y: 0 }, bubbleTimer: 0,
+  dance: { id: 'sway', timer: 0, beat: null }, body: { x: 0, y: 0 }, bubbleTimer: 0,
   legs: { al: Math.PI * 0.65, ar: Math.PI * 0.35, bl: 0, br: 0, xl: -0.15, xr: 0.15 },
   drag: { active: false, angle: 0, dist: 0, targetDist: 0, vel: 0, peakDist: 0 },
   soothe: { active: false, lastX: 0, lastY: 0, acc: 0, timer: 0 },

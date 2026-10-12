@@ -170,7 +170,7 @@ test('the bladder squeaks when poked, creaks as it is stretched further, and boi
   expect(await heard('creak'), 'easing back is silent').toBe(pulling);
   await pg.mouse.up(); await pg.waitForTimeout(300);
 
-  await pg.evaluate("window.__audio.length=0; st.volume=90; st.stamina=100; st.dance.id='hop'; st.dance.hopBeat=null; st.dance.timer=30");
+  await pg.evaluate("window.__audio.length=0; st.volume=90; st.stamina=100; st.dance.id='hop'; st.dance.beat=null; st.dance.timer=30");
   await pg.waitForTimeout(2000);
   expect(await heard('boing')).toBeGreaterThanOrEqual(2);
   expect(await heard('boing')).toBeLessThanOrEqual(4);
@@ -222,6 +222,36 @@ test('with the spoken voice off, lines are babbled instead; with it on, they are
   // a long line is capped, so the babble never drags on
   await pg.evaluate(`window.__audio.length=0; speakDirect('${'word '.repeat(40)}')`);
   expect(await heard('babble')).toBe(await pg.evaluate('TUNING.babbleMaxBlips'));
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('each potty dance has its own slosh, with pitches dealt like a shuffled deck: none twice running, all before any repeats', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  const SLOSH = ['glug', 'splash', 'plip', 'swish'];
+  // holds one move for a while and returns the slosh notes it played
+  const dance = async (move, ms) => {
+    await pg.evaluate(`st.volume=90; st.isClosed=true; st.stamina=100; st.dance.id='${move}'; st.dance.beat=null; st.dance.timer=30; window.__notes.length=0`);
+    await pg.waitForTimeout(ms);
+    return (await pg.evaluate('window.__notes')).filter((n) => SLOSH.includes(n.sound));
+  };
+  const kinds = (notes) => [...new Set(notes.map((n) => n.sound))].sort();
+
+  // every move plays exactly the kinds its row in config/dance.js lists
+  const moves = await pg.evaluate('DANCE_MOVES.map((m) => ({ id: m.id, kinds: [...new Set(m.slosh.map((l) => l[0]))].sort(), row: JSON.stringify(m.slosh) }))');
+  expect(new Set(moves.map((m) => m.row)).size, 'no two dances share a slosh').toBe(moves.length);
+  for (const m of moves) expect(kinds(await dance(m.id, 1400)), m.id).toEqual(m.kinds);
+
+  // tap plays plips fast enough to see two full decks of TUNING.pitchSteps (6) notes
+  const pitches = (await dance('tap', 4500)).map((n) => Math.round(n.pitch));
+  expect(pitches.length).toBeGreaterThanOrEqual(13);
+  for (let i = 1; i < pitches.length; i++) expect(pitches[i], `note ${i} differs from the one before`).not.toBe(pitches[i - 1]);
+  // the deck was part-way through when this run began, so look at whole decks: any 6 in a row hold at most
+  // one pair of equal notes (across a shuffle), and some run of 6 has all six different
+  const windows = pitches.slice(0, -5).map((_, i) => new Set(pitches.slice(i, i + 6)).size);
+  expect(Math.max(...windows)).toBe(6);
+  expect(new Set(pitches).size, 'six notes in all').toBe(6);
   expect(errors).toEqual([]);
   await context.close();
 });

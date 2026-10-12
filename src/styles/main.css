@@ -148,6 +148,7 @@
   
   .drink-icon { font-size: 2.2rem; margin-bottom: 8px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
   .drink-name { font-weight: 800; font-size: 0.95rem; color: #f8fafc; }
+  .drink-hint { margin-top: 4px; font-size: 0.68rem; color: #c4b5fd; font-weight: 700; }
   .drink-amt { font-size: 0.75rem; color: var(--accent); font-weight: 700; margin-top: 4px; background: rgba(56, 189, 248, 0.15); padding: 2px 8px; border-radius: 99px; }
 
   /* STAMINA: lives at the top of the control panel so it never covers the bladder */
@@ -444,6 +445,7 @@
     #desk-drink-grid .drink-btn { padding: 6px 2px; border-radius: 10px; }
     #desk-drink-grid .drink-icon { font-size: 1.3rem; margin-bottom: 2px; }
     #desk-drink-grid .drink-name { font-size: 0.62rem; line-height: 1.1; text-align: center; }
+    #desk-drink-grid .drink-hint { display: none; }
     #desk-drink-grid .drink-amt { font-size: 0.6rem; margin-top: 2px; padding: 1px 6px; }
     #canvas-wrapper { grid-column: 2; grid-row: 1 / -1; }
     #controls {

@@ -53,9 +53,9 @@ document.getElementById('tts-add').addEventListener('click', () => {
 // innerHTML is fine here: the drink list is our own config, never user or story data.
 function drinkButton(d) {
   const btn = document.createElement('div'); btn.className = 'drink-btn';
-  btn.innerHTML = `<div class="drink-icon">${d.icon}</div><div class="drink-name">${d.name}</div><div class="drink-amt">+${d.amt}%</div>`;
+  btn.innerHTML = `<div class="drink-icon">${d.icon}</div><div class="drink-name">${d.name}</div><div class="drink-amt">+${d.amt}%</div><div class="drink-hint">${d.hint ?? ''}</div>`;
   btn.addEventListener('pointerdown', (e) => {
-    e.stopPropagation(); queueDrink(d.amt, d.name); speakDirect(d.reaction);
+    e.stopPropagation(); queueDrink(d.amt, d.name, d); speakDirect(d.reaction);
     shopOverlayEl.style.display = 'none'; vibe(20);
     playGulp(d);
   });

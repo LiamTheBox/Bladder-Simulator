@@ -2,19 +2,22 @@
 
 // feel: how the drink sounds going down (audio/engine.js): "plain", "fizzy" (a fizz after the gulps),
 // "thick" (lower, slower gulps) or "hot" (a slurp first). A bigger amt means more gulps.
+// speed: how fast it reaches the bladder (1 = water, higher = sooner; sim/actions.js queueDrink). effect: "diuretic"
+// (an extra share arrives over the following minute) or "relaxing" (holding costs more stamina for a while).
+// hint: the few words the drink menu shows about it.
 export const drinks = [
-  { name: "Water", icon: "💧", amt: 15, feel: "plain", reaction: "Refreshing and clear." },
-  { name: "Coffee", icon: "☕", amt: 20, feel: "hot", reaction: "Whoa, caffeine makes me process so fast!" },
-  { name: "Soda", icon: "🥤", amt: 25, feel: "fizzy", reaction: "Fizzy! I feel bubbly inside." },
-  { name: "Beer", icon: "🍺", amt: 35, feel: "fizzy", reaction: "Oh no, alcohol goes straight through!" },
-  { name: "Tea", icon: "🍵", amt: 15, feel: "hot", reaction: "Warm and herbal. Very relaxing." },
-  { name: "Energy Drink", icon: "⚡", amt: 25, feel: "fizzy", reaction: "So much sugar and energy! It's intense!" },
-  { name: "Milk", icon: "🥛", amt: 20, feel: "thick", reaction: "Coating and smooth, a bit heavy." },
-  { name: "Lemonade", icon: "🍋", amt: 20, feel: "plain", reaction: "Sour! Makes me pucker up!" },
-  { name: "Sports Drink", icon: "🧪", amt: 30, feel: "plain", reaction: "Electrolytes! So salty and sweet." },
-  { name: "Boba Tea", icon: "🧋", amt: 25, feel: "thick", reaction: "Wait, are those tapioca pearls? Feels weird." },
-  { name: "Hot Cocoa", icon: "🍫", amt: 20, feel: "thick", reaction: "Warm, thick, and chocolatey. Cozy." },
-  { name: "Apple Juice", icon: "🧃", amt: 15, feel: "plain", reaction: "Sweet and tart, very refreshing." }
+  { name: "Water", icon: "💧", amt: 15, feel: "plain", speed: 1, hint: "Steady", reaction: "Refreshing and clear." },
+  { name: "Coffee", icon: "☕", amt: 20, feel: "hot", speed: 1.4, effect: "diuretic", hint: "Fast, keeps coming", reaction: "Whoa, caffeine makes me process so fast!" },
+  { name: "Soda", icon: "🥤", amt: 25, feel: "fizzy", speed: 1.1, hint: "Fizzy", reaction: "Fizzy! I feel bubbly inside." },
+  { name: "Beer", icon: "🍺", amt: 35, feel: "fizzy", speed: 1.3, effect: "relaxing", hint: "Harder to hold", reaction: "Oh no, alcohol goes straight through!" },
+  { name: "Tea", icon: "🍵", amt: 15, feel: "hot", speed: 1.2, effect: "diuretic", hint: "Keeps coming", reaction: "Warm and herbal. Very relaxing." },
+  { name: "Energy Drink", icon: "⚡", amt: 25, feel: "fizzy", speed: 1.4, effect: "diuretic", hint: "Fast, keeps coming", reaction: "So much sugar and energy! It's intense!" },
+  { name: "Milk", icon: "🥛", amt: 20, feel: "thick", speed: 0.6, hint: "Slow", reaction: "Coating and smooth, a bit heavy." },
+  { name: "Lemonade", icon: "🍋", amt: 20, feel: "plain", speed: 1, hint: "Steady", reaction: "Sour! Makes me pucker up!" },
+  { name: "Sports Drink", icon: "🧪", amt: 30, feel: "plain", speed: 0.8, hint: "Slow, steady", reaction: "Electrolytes! So salty and sweet." },
+  { name: "Boba Tea", icon: "🧋", amt: 25, feel: "thick", speed: 0.6, hint: "Slow", reaction: "Wait, are those tapioca pearls? Feels weird." },
+  { name: "Hot Cocoa", icon: "🍫", amt: 20, feel: "thick", speed: 0.7, hint: "Slow", reaction: "Warm, thick, and chocolatey. Cozy." },
+  { name: "Apple Juice", icon: "🧃", amt: 15, feel: "plain", speed: 1, hint: "Steady", reaction: "Sweet and tart, very refreshing." }
 ];
 
 export const voiceLines = {

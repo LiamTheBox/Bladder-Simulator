@@ -30,7 +30,13 @@ export const TUNING = {
   storyVolumeEase: 3,            // story mode: how fast the bladder on screen catches up with the story's fullness
 
   // Fluid, in percent of capacity per second
-  digestPerSec: 1.0 / 15.0,      // queued drinks trickle in
+  digestPerSec: 1.0 / 15.0,      // fluid added without a drink behind it (a test, a story) trickles in at this pace
+  // A drink arrives on a curve: slowly at first, at its fastest digestTau seconds after it was drunk (divided by the
+  // drink's speed), then tailing off. Past its peak it never slows below digestTailRate (a share of the drink per
+  // digestTau), so the tail does not drag on for ever: a drink is in after about five digestTau.
+  digestTau: 15, digestTailRate: 0.15,
+  diureticShare: 0.3, diureticDelay: 3,     // coffee, tea...: an extra 30% of the drink, on a curve three times as slow
+  relaxedSec: 60, relaxedDrainBoost: 0.3,  // beer: for a minute, holding costs 30% more stamina
   digestFastPerSec: 25.0,        // while SPEED UP is held
   leakPerSec: 20,                // sphincter open
   voidPerSec: 40,                // VOID pressed, or an accident

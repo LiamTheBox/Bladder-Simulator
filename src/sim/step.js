@@ -62,10 +62,12 @@ export function stepSim(dt, pointerCount) {
   st.slosh.val += st.slosh.vel * dt;
 
   // Digestion
+  if (st.pendingFluid <= 0) st.drinks.length = 0; // emptied from outside (a reset, a test)
+  if (st.relaxedTimer > 0) st.relaxedTimer = Math.max(0, st.relaxedTimer - dt);
   if (st.pendingFluid > 0) {
-    let digestRate = st.isSpeedingUp ? T.digestFastPerSec : T.digestPerSec;
-    const transfer = Math.min(digestRate * dt, st.pendingFluid);
     if (st.volume < 100 || !st.isClosed) {
+       const transfer = Math.min(st.isSpeedingUp ? T.digestFastPerSec * dt : digestDue(dt), st.pendingFluid);
+       takeFromDrinks(transfer);
        st.pendingFluid -= transfer;
        st.volume = Math.min(100, st.volume + transfer);
     }
@@ -137,7 +139,8 @@ export function stepSim(dt, pointerCount) {
         st.staminaDraining = true;
 
         // a rising wave makes holding harder (not during the minigame itself: that has its own stakes)
-        const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct) * (1 + (st.minigame.active ? 0 : st.urge) * T.urgeDrainBoost);
+        const drainRate = ((st.volume - T.staminaDrainFrom) * T.staminaDrainPerPct) * (1 + (st.minigame.active ? 0 : st.urge) * T.urgeDrainBoost)
+          * (st.relaxedTimer > 0 ? 1 + T.relaxedDrainBoost : 1); // a relaxing drink (beer) makes holding harder
         if (!st.dev.holdStamina) st.stamina = Math.max(0, st.stamina - drainRate * dt);
 
         if (st.stamina <= 0) triggerAccident();
@@ -165,6 +168,31 @@ export function stepSim(dt, pointerCount) {
   announceThresholds('volume', st.prevVolume, st.volume, T.volumeThresholds);
   announceThresholds('stamina', st.prevStamina, st.stamina, T.staminaThresholds);
   st.prevVolume = st.volume; st.prevStamina = st.stamina;
+}
+
+// How much of the drinks on their way arrives in this frame. Each follows the curve amount * (age / tau^2) * e^(-age/tau):
+// slow at first, fastest at age = tau, then tailing off, never below digestTailRate after the peak so it finishes.
+// Fluid with no drink behind it (set directly) trickles in at the old flat pace.
+function digestDue(dt) {
+  if (st.drinks.length === 0) return T.digestPerSec * dt;
+  let due = 0;
+  for (const d of st.drinks) {
+    d.age += dt;
+    const curve = d.amount * (d.age / (d.tau * d.tau)) * Math.exp(-d.age / d.tau);
+    const rate = d.age > d.tau ? Math.max(curve, (d.amount * T.digestTailRate) / d.tau) : curve;
+    d.due = Math.min(d.left, rate * dt);
+    due += d.due;
+  }
+  return due;
+}
+// Takes what arrived out of the drinks: their own due first (or, while SPEED UP rushes them, oldest first)
+function takeFromDrinks(amount) {
+  for (const d of st.drinks) {
+    const take = Math.min(d.left, amount, st.isSpeedingUp ? Infinity : d.due ?? 0);
+    d.left -= take; amount -= take;
+  }
+  for (const d of st.drinks) { if (amount <= 0) break; const take = Math.min(d.left, amount); d.left -= take; amount -= take; }
+  st.drinks = st.drinks.filter((d) => d.left > 1e-6);
 }
 
 // 0 at the fullness where spikes begin, 1 at a full bladder

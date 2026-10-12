@@ -257,7 +257,7 @@ A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.s
 - The liquid's surface is measured between the outline's lowest and highest point. The prototype measured from
   below the outline, which hid the first 15% or so: a bladder at the starting volume looked empty.
 
-## Developer mode (`TUNING.developerMode`, **on: switch it off before publishing**)
+## Developer mode (`TUNING.developerMode`, **on, also in the published site: the owner's choice**)
 While it is `true` the start button reads DEVELOPER MODE and a 🛠️ button (free play and stories) opens the
 tools panel (`src/ui/dev_panel.js`) in tabs: Bladder (fullness and stamina sliders, "stamina never drains" / "no
 random spikes" switches in `st.dev`, "urge wave now"), Minigames (every game at any difficulty, as a practice
@@ -310,8 +310,14 @@ area is a short strip (`H < W`), so it needs no knowledge of the layout. `tests/
 `npm run build` writes a self-contained static site to `dist/` (relative paths, no server, no CDN): upload
 that folder to any static host. Netlify / Cloudflare Pages: build command `npm run build`, output `dist`.
 GitHub Pages: `.github/workflows/deploy-pages.yml`, which only runs when started by hand.
-Publishing is the owner's decision; do not deploy without being asked. Before publishing, set
-`TUNING.developerMode` to `false` (see Developer mode).
+Publishing is the owner's decision; do not deploy without being asked.
+**Status (12 Oct 2026):** the owner asked to publish. `main` was fast-forwarded to `feature/sound-effects` and
+pushed (over SSH: the https remote has no saved login). The owner keeps `developerMode` **on** in the published
+site so the tools work on their phone; switch it off only when they say so. Left to the owner in GitHub's web
+UI: Settings → Pages → Source "GitHub Actions", then run "Deploy to GitHub Pages" on `main`
+(https://github.com/LiamTheBox/Bladder-Simulator/actions/workflows/deploy-pages.yml). The site will be
+https://liamthebox.github.io/Bladder-Simulator/. GitHub's default branch is still `feature/approve-minigames`;
+switching it to `main` was suggested. To update the site: push `main`, run the workflow again.
 
 ## Testing
 - `tests_reference/v11_regression.py` (38 checks) and `tests_reference/v12_suite.py` (128 checks) are

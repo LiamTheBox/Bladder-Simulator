@@ -226,8 +226,20 @@ The owner approved a review of 15 layout items and 9 rules. Built so far:
 - Desktop free play keeps the drinks open at the top of the left column (`#desk-drinks`, built by `drinkButton()`
   in `ui/menus.js`, which the pop-up shop shares) and hides the drink button; the frame may grow to 1400 x 1100.
 - `tests/new-touch.spec.js` covers the lock, the bubble, the tablet width, the HUD and the start screen.
-Still to do: (5) rules: drinks with their own speed and after-effect,
-a digestion curve, a bladder that grows taut, richer liquid, stretch that buys room, recovery tied to soothing.
+- Digestion: each drink is its own entry in `st.drinks` and arrives on a curve (slow, fastest after
+  `TUNING.digestTau` / its speed, tailing off, never slower than `digestTailRate` after the peak); SPEED UP still
+  rushes everything in at `digestFastPerSec`. Drinks carry `speed`, `effect` ("diuretic": an extra 30% arrives
+  later; "relaxing": holding costs 30% more for a minute) and a `hint` for the menu (`config/content.js`).
+  Fluid set straight into `st.pendingFluid` with no drink behind it trickles in at the old flat `digestPerSec`.
+  `tests/drinks.spec.js`.
+- Feel: `tautness()` (`sim/geometry.js`) is 0 up to 60% and 1 when full; a taut bladder sloshes in smaller quicker
+  swings, wobbles less, stretches and squeezes less, and its skin is drawn paler. Holding costs less while
+  stretched out (`stretchRelief`) or soothed (`sootheDrainCut`); a full bladder's snapback costs stamina; recovery
+  is faster while soothed and slower after a long hold (`st.strain`). `tests/feel.spec.js`.
+- Liquid: two waves on the surface, bubbles for a while after a fizzy drink (`st.fizz`), spray up the wall on a
+  hard slosh (`render/scene.js`).
+- The heartbeat already speeds up with an urge wave and calms as it passes (the review's last rule).
+The approved list is done. Everything above is tested headless only, **not yet playtested**.
 
 ## Squeeze (reworked at the owner's request; **not yet playtested**)
 A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.squeezeMax`). Rules in `sim/step.js`:

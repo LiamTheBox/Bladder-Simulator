@@ -52,7 +52,9 @@ export function renderCanvas(t, fillPerc) {
   if (fillPerc > 0) {
     const drawWave = (lv, tilt, wAmp) => {
       const L = cx - maxR * 1.5, Rt = cx + maxR * 1.5; ctx.beginPath(); ctx.moveTo(L, lv + (L - cx) * tilt);
-      for (let x = L; x <= Rt; x += 15) ctx.lineTo(x, lv + (x - cx) * tilt + Math.sin((x - cx) * 0.04 + t * 3) * wAmp);
+      // two waves on top of each other, the second shorter and running the other way, so the surface never looks
+      // like one rigid ripple
+      for (let x = L; x <= Rt; x += 12) ctx.lineTo(x, lv + (x - cx) * tilt + Math.sin((x - cx) * 0.04 + t * 3) * wAmp + Math.sin((x - cx) * 0.09 - t * 4.3) * wAmp * 0.4);
       ctx.lineTo(Rt, botY); ctx.lineTo(L, botY); ctx.closePath();
     };
 
@@ -64,6 +66,27 @@ export function renderCanvas(t, fillPerc) {
     const gF = ctx.createLinearGradient(cx, fluidY, cx, botY); gF.addColorStop(0, 'rgba(253, 224, 71, 0.9)'); gF.addColorStop(0.3, 'rgba(234, 179, 8, 0.95)'); gF.addColorStop(1, 'rgba(161, 98, 7, 1.0)');
     ctx.fillStyle = gF; ctx.fill();
     ctx.strokeStyle = 'rgba(254, 240, 138, 0.9)'; ctx.lineWidth = 5; ctx.stroke();
+
+    // Bubbles after a fizzy drink: rising from the bottom, fewer as the fizz wears off
+    if (st.fizz > 0) {
+      ctx.fillStyle = 'rgba(255, 251, 235, 0.55)';
+      const count = Math.ceil(14 * Math.min(1, st.fizz / TUNING.fizzSec));
+      for (let i = 0; i < count; i++) {
+        const lane = (i * 0.618) % 1, rise = (t * (0.25 + lane * 0.2) + lane) % 1; // each bubble its own lane and pace
+        const by = botY - (botY - fluidY) * rise, bx = cx + (lane - 0.5) * baseR * 1.4 + Math.sin(t * 3 + i) * 3;
+        ctx.beginPath(); ctx.arc(bx, by, 1.5 + lane * 2.5, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+    // A hard slosh throws spray up the wall on the side the liquid is running to
+    const spray = Math.abs(st.slosh.vel) - TUNING.sprayFromVel;
+    if (spray > 0) {
+      const side = Math.sign(st.slosh.vel) || 1, wallX = cx + side * baseR * 0.8;
+      ctx.fillStyle = 'rgba(253, 224, 71, 0.8)';
+      for (let i = 0; i < Math.min(10, Math.ceil(spray * 3)); i++) {
+        const k = (i * 0.37 + t * 2.1) % 1;
+        ctx.beginPath(); ctx.arc(wallX - side * k * baseR * 0.25, fluidY - k * (1 - k) * baseR * 0.5 * Math.min(1.5, spray / 3), 2 + (1 - k) * 2, 0, Math.PI * 2); ctx.fill();
+      }
+    }
   }
 
   const innerShadowGrad = ctx.createRadialGradient(cx, cy, baseR * 0.5, cx, cy, baseR * 1.1);

@@ -70,11 +70,12 @@ export function setSpeedUp(on) { st.isSpeedingUp = on; }
 
 // amount is in percent of bladder capacity. kind: the drink's { speed, effect } from config/content.js.
 // Each drink is digested on its own curve (sim/step.js); st.pendingFluid is what is still to arrive in all.
-export function queueDrink(amount, name, { speed = 1, effect = null } = {}) {
+export function queueDrink(amount, name, { speed = 1, effect = null, feel = null } = {}) {
   addToDigest(amount, T.digestTau / speed);
   // a diuretic draws out more than was drunk, later: a second, slower drink on the way
   if (effect === 'diuretic') addToDigest(amount * T.diureticShare, (T.digestTau * T.diureticDelay) / speed);
   if (effect === 'relaxing') st.relaxedTimer = T.relaxedSec;
+  if (feel === 'fizzy') st.fizz = T.fizzSec;
   emit('drinkQueued', { name, amount });
 }
 function addToDigest(amount, tau) {

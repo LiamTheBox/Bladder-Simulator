@@ -48,7 +48,7 @@ test('drinks differ: a slow one (milk) arrives later than water; coffee keeps co
 
   await ev('st.pendingFluid=0; st.volume=10'); await wait(50);
   await drink('Coffee');
-  expect(await ev('st.pendingFluid'), 'coffee brings 30% more than was drunk').toBeCloseTo(26, 5);
+  expect(await ev('st.pendingFluid'), 'coffee brings 30% more than was drunk').toBeCloseTo(26, 1); // (a frame may already have digested a sip)
   await expect.poll(() => ev('st.drinks.length'), { timeout: 6000 }).toBe(1); // the main cup has arrived...
   expect(await ev('st.pendingFluid'), '...and the extra is still on its way').toBeGreaterThan(1);
   await expect.poll(() => ev('st.pendingFluid'), { timeout: 15000 }).toBe(0);
@@ -75,6 +75,19 @@ test('SPEED UP still rushes every drink in, and the shop shows what each drink d
   await pg.locator('#btn-shop').dispatchEvent('pointerdown');
   await expect(pg.locator('#drink-grid .drink-btn', { hasText: 'Coffee' }).locator('.drink-hint')).toHaveText('Fast, keeps coming');
   await expect(pg.locator('#drink-grid .drink-btn', { hasText: 'Milk' }).locator('.drink-hint')).toHaveText('Slow');
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('a fizzy drink sends bubbles up through the liquid for a while; a still one does not', async ({ browser }) => {
+  const { context, errors, ev, drink, wait } = await started(browser);
+  await drink('Water');
+  expect(await ev('st.fizz')).toBe(0);
+  await drink('Soda');
+  expect(await ev('st.fizz')).toBeGreaterThan(24);
+  await wait(1000);
+  expect(await ev('st.fizz'), 'wearing off').toBeLessThan(24.5);
+  await ev('st.slosh.vel=8'); await wait(200); // a hard slosh: spray is drawn; nothing breaks
   expect(errors).toEqual([]);
   await context.close();
 });

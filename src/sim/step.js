@@ -66,6 +66,7 @@ export function stepSim(dt, pointerCount) {
   // Digestion
   if (st.pendingFluid <= 0) st.drinks.length = 0; // emptied from outside (a reset, a test)
   if (st.relaxedTimer > 0) st.relaxedTimer = Math.max(0, st.relaxedTimer - dt);
+  if (st.fizz > 0) st.fizz = Math.max(0, st.fizz - dt);
   if (st.pendingFluid > 0) {
     if (st.volume < 100 || !st.isClosed) {
        const transfer = Math.min(st.isSpeedingUp ? T.digestFastPerSec * dt : digestDue(dt), st.pendingFluid);

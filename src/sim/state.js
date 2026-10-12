@@ -7,6 +7,7 @@ function initialState() {
   volume: TUNING.startVolume, pendingFluid: 0,
   drinks: [],          // drinks on their way in: { amount, left, age, tau } (sim/actions.js queueDrink)
   relaxedTimer: 0,
+  fizz: 0,             // seconds of bubbles left from a fizzy drink (drawn rising through the liquid)
   strain: 0,           // seconds of holding not yet recovered from: recovery is slower while it lasts     // seconds a relaxing drink (beer) still makes holding harder
   isClosed: true, isSpeedingUp: false, isVoiding: false,
   stamina: 100, failureEvent: false,

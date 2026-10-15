@@ -346,7 +346,8 @@ pushed (over SSH: the https remote has no saved login). The owner keeps `develop
 site so the tools work on their phone; switch it off only when they say so. Left to the owner in GitHub's web
 UI: Settings → Pages → Source "GitHub Actions", then run "Deploy to GitHub Pages" on `main`
 (https://github.com/LiamTheBox/Bladder-Simulator/actions/workflows/deploy-pages.yml). The site will be
-https://liamthebox.github.io/Bladder-Simulator/. GitHub's default branch is still `feature/approve-minigames`;
+https://liamthebox.github.io/Bladder-Simulator/. **15 Oct 2026:** `main` pushed again with the endurance run, story sounds, moods, the five trial games and the Day Two
+rebalance; the workflow has to be run again for the site to show them. GitHub's default branch is still `feature/approve-minigames`;
 switching it to `main` was suggested. To update the site: push `main`, run the workflow again.
 
 ## Testing

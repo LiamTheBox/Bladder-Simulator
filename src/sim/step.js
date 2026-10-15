@@ -6,6 +6,9 @@ import { st } from './state.js';
 import { bladderGeom, tautness } from './geometry.js';
 import { emit } from './events.js';
 import { setSphincter, triggerAccident } from './actions.js';
+import { updateMood, moodFace, withExtras } from './mood.js';
+
+const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
 // pointerCount: how many fingers are on the play area right now (a two-finger squeeze holds its tension)
 export function stepSim(dt, pointerCount) {
@@ -38,17 +41,20 @@ export function stepSim(dt, pointerCount) {
   st.blinkTimer -= dt;
   if (st.blinkTimer < -0.15) { st.blinkTimer = 2.0 + Math.random() * 4; }
 
-  // Expressions
+  // Expressions: a lasting mood picks first (sim/mood.js), then touch, then fullness
+  updateMood(dt);
   st.faceTimer -= dt;
   const fill = st.volume / 100;
   if (st.faceTimer <= 0 && !st.failureEvent) {
     st.faceTimer = (st.soothe.timer > 0 || st.pokeTimer > 0 || st.drag.active) ? 0.4 : 5.0; // re-check quickly during interactions
-    if (st.soothe.timer > 0 || (!st.isClosed && fill > 0)) st.faceState = { e: 'happy_closed', m: 'smile' };
+    const mood = moodFace(fill);
+    if (mood) st.faceState = mood;
+    else if (st.soothe.timer > 0 || (!st.isClosed && fill > 0)) st.faceState = { e: 'happy_closed', m: 'smile' };
     else if (st.pokeTimer > 0) st.faceState = { e: 'wide_shake', m: 'zigzag' };
     else if (st.drag.active) st.faceState = { e: 'x_eyes', m: 'small_o' };
-    else if (fill > 0.8 && st.isClosed) st.faceState = [{ e: 'shut_tight', m: 'zigzag' }, { e: 'squint', m: 'nervous' }, { e: 'wide_shake', m: 'zigzag' }][Math.floor(Math.random()*3)];
-    else if (fill > 0.5) st.faceState = [{ e: 'open', m: 'nervous' }, { e: 'squint', m: 'wavy' }, { e: 'happy_closed', m: 'wavy' }][Math.floor(Math.random()*3)];
-    else st.faceState = [{ e: 'open', m: 'neutral' }, { e: 'open', m: 'smile' }][Math.floor(Math.random()*2)];
+    else if (fill > 0.8 && st.isClosed) st.faceState = pick(withExtras([{ e: 'shut_tight', m: 'zigzag' }, { e: 'squint', m: 'nervous' }, { e: 'wide_shake', m: 'zigzag' }], 'strained'));
+    else if (fill > 0.5) st.faceState = pick(withExtras([{ e: 'open', m: 'nervous' }, { e: 'squint', m: 'wavy' }, { e: 'happy_closed', m: 'wavy' }], 'uneasy'));
+    else st.faceState = pick(withExtras([{ e: 'open', m: 'neutral' }, { e: 'open', m: 'smile' }], 'calm'));
   }
 
   // After a stretch is let go, the lingering "creep" relaxes exponentially: fully back to normal in about 1 second.

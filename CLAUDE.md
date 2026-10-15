@@ -266,6 +266,17 @@ game: time held, best time (`settings.bestRunSec`), fullest, time above `TUNING.
 "Runs never end" (`st.dev.endlessRun`) and "End run now". Tests that play on after a void set `st.dev.endlessRun`
 (the prototype's behaviour). `tests/run.spec.js`.
 
+## Moods and faces (**not yet playtested**)
+A mood is a feeling that lasts after its cause and picks the faces until it fades (`src/sim/mood.js`, numbers and
+face lists in `src/config/moods.js`): grumpy (about four pokes / stretches in a few seconds), grateful (soothed, or
+a void in a story), smug / sulky (a spike won / lost), sheepish (giving in with VOID in free play), mortified
+(after an accident's shock), frazzled (an urge wave on a bladder 85%+ full). Above 90% and locked, straining
+shows through any mood but frazzled. The owner wants the old eyes kept (they make the bladder unique); the newer
+shapes in `render/face.js` are Kaomoji-inspired, drawn in the same strokes: eyes chevron `>_<`, arch `^^`,
+tearful `T_T`, shock, flat (side-eye), sparkle, heavy `-_-`; mouths cat `ω`, square, grin, pout, wobble; extras
+(`x`) sweat, hatch (blush lines), vein. A few also join the ordinary faces by fullness. Developer panel, Dances &
+touch: a button per mood. `tests/moods.spec.js`.
+
 ## Developer mode (`TUNING.developerMode`, **on, also in the published site: the owner's choice**)
 While it is `true` the start button reads DEVELOPER MODE and a 🛠️ button (free play and stories) opens the
 tools panel (`src/ui/dev_panel.js`) in tabs: Bladder (fullness and stamina sliders, "stamina never drains" / "no

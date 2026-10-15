@@ -9,6 +9,7 @@ import { TUNING } from '../config/tuning.js';
 import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { emit, on } from '../sim/events.js';
+import { setMood } from '../sim/actions.js';
 import { vibe } from '../audio/haptics.js';
 import { playTick } from '../audio/engine.js';
 import { speak, speakLine } from '../audio/speech.js';
@@ -120,11 +121,11 @@ export function endMinigame(success, cancelled = false, quality, noise) {
   if (!cancelled) {
     if (success) {
       if (!info?.practice) st.stamina = Math.min(100, st.stamina + TUNING.minigameWinStamina);
-      st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0;
+      st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0; setMood('smug', false);
       speak('success_hold', true); vibe([50, 50]);
     } else {
       if (!info?.practice) st.stamina = Math.max(0, st.stamina - (info?.failStamina ?? TUNING.minigameFailStamina));
-      st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0;
+      st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0; setMood('sulky', false);
       speak('fail', true); vibe(200);
     }
   }

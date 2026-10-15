@@ -4,6 +4,9 @@ import { TUNING as T } from '../config/tuning.js';
 import { st } from './state.js';
 import { emit } from './events.js';
 import { bladderGeom } from './geometry.js';
+import { setMood } from './mood.js';
+
+export { setMood };
 
 // Opens or closes the sphincter. The fluid jolts each time, except during an accident (it is already pouring).
 export function setSphincter(closed, reason) {
@@ -25,7 +28,7 @@ export function startVoid() {
   if (st.minigame.active) emit('spikeCancelled'); // giving in ends the spike without a penalty
   st.isVoiding = true;
   setSphincter(false, 'void');
-  st.faceTimer = 0;
+  setMood(st.storyMode ? 'grateful' : 'sheepish'); // free play: emptying on purpose is giving in (ui/run.js)
   emit('voidStarted', { volume: st.volume });
   return true;
 }
@@ -36,6 +39,7 @@ export function triggerAccident() {
   st.failureEvent = true; st.isVoiding = true;
   setSphincter(false, 'accident');
   st.faceState = { e: 'wide_shake', m: 'small_o' }; st.faceTimer = 10.0;
+  setMood('mortified', false); // after the shock: tears
   emit('accident');
 }
 

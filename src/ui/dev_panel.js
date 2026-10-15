@@ -8,7 +8,8 @@ import { DANCE_MOVES } from '../config/dance.js';
 import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { on } from '../sim/events.js';
-import { setVolume, setStamina, setDevSwitch, forceDance, holdSqueeze, hurrySpike, toggleSphincter, startVoid, triggerAccident } from '../sim/actions.js';
+import { MOODS, MOOD_RULES } from '../config/moods.js';
+import { setMood, setVolume, setStamina, setDevSwitch, forceDance, holdSqueeze, hurrySpike, toggleSphincter, startVoid, triggerAccident } from '../sim/actions.js';
 import { poke } from '../sim/interactions.js';
 import { minigameIds } from '../minigames/registry.js';
 import { startMinigame } from '../minigames/index.js';
@@ -138,6 +139,9 @@ if (TUNING.developerMode) {
 
   section(movesPage, 'Potty dances', `Holds the move for ${TUNING.devDanceSec} seconds (fills the bladder to ${TUNING.devDanceVolume}% if it is under half full).`,
     grid(...DANCE_MOVES.map((m) => button(m.id, `dance-${m.id}`, () => forceDance(m.id)))));
+
+  section(movesPage, 'Moods and faces', `Sets the mood: its faces take turns every few seconds until it fades. Above ${MOOD_RULES.yieldAbove * 100}% full and locked, straining shows instead (except frazzled).`,
+    grid(...Object.keys(MOODS).map((id) => button(id, `mood-${id}`, () => setMood(id)))));
 
   section(movesPage, 'Touch', `For testing without two fingers or a scroll wheel. A squeeze is held for ${TUNING.devSqueezeSec} seconds, then let go.`,
     grid(button('Poke', 'poke', poke),

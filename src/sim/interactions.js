@@ -5,6 +5,7 @@ import { TUNING as T } from '../config/tuning.js';
 import { st } from './state.js';
 import { bladderGeom, tautness } from './geometry.js';
 import { emit } from './events.js';
+import { setMood, annoy } from './mood.js';
 
 function squeezeSpeaks() {
   if (st.squeeze.tension > T.squeezeSpeakAt && !st.squeeze.spoke) { st.squeeze.spoke = true; emit('interaction', { type: 'squeeze' }); }
@@ -30,7 +31,7 @@ export function touchDown(mx, my, count, pinchDist) {
     const dist = Math.hypot(mx - cx, my - cy);
     if (Math.abs(dist - Rr) < T.stretchGrabBand) {
       st.drag.active = true; st.drag.angle = Math.atan2(my - cy, mx - cx); st.drag.targetDist = 0; st.drag.peakDist = 0;
-      st.faceTimer = 0; emit('interaction', { type: 'stretchStart' });
+      st.faceTimer = 0; annoy(); emit('interaction', { type: 'stretchStart' });
     } else if (dist < Rr) {
       st.soothe.lastX = mx; st.soothe.lastY = my; st.soothe.acc = 0;
     }
@@ -53,13 +54,14 @@ export function touchMove(mx, my, count, pinchDist) {
     else if (st.soothe.lastX !== 0) {
       st.soothe.acc += Math.hypot(mx - st.soothe.lastX, my - st.soothe.lastY);
       st.soothe.lastX = mx; st.soothe.lastY = my;
-      if (st.soothe.acc > T.sootheSpeakDist) { if (st.soothe.timer <= 0) emit('interaction', { type: 'soothe' }); st.soothe.timer = T.sootheHoldSec; st.faceTimer = 0; }
+      if (st.soothe.acc > T.sootheSpeakDist) { if (st.soothe.timer <= 0) { emit('interaction', { type: 'soothe' }); setMood('grateful'); } st.soothe.timer = T.sootheHoldSec; st.faceTimer = 0; }
     }
   }
 }
 
 export function poke() {
   st.pokeTimer = T.pokeSec; st.faceTimer = 0; st.slosh.vel += (Math.random() > 0.5 ? 1 : -1) * T.pokeSlosh;
+  annoy();
   emit('interaction', { type: 'poke' });
 }
 

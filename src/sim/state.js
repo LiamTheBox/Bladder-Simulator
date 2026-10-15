@@ -28,6 +28,7 @@ function initialState() {
   particles: [], sweatDrops: [],
   pokeTimer: 0, heartTimer: 0, faceTimer: 0, voiceCooldown: 0,
   faceState: { e: 'open', m: 'neutral' }, blinkTimer: 2.0,
+  mood: { id: null, timer: 0, annoy: 0 }, // a lasting feeling that picks the faces (sim/mood.js, config/moods.js)
   dance: { id: 'sway', timer: 0, beat: null }, body: { x: 0, y: 0 }, bubbleTimer: 0,
   legs: { al: Math.PI * 0.65, ar: Math.PI * 0.35, bl: 0, br: 0, xl: -0.15, xr: 0.15 },
   drag: { active: false, angle: 0, dist: 0, targetDist: 0, vel: 0, peakDist: 0 },

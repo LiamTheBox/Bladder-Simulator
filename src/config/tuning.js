@@ -24,6 +24,9 @@ export const TUNING = {
   bubbleTail: 12, bubbleBelowHud: 66, bubbleEdgeMargin: 8,
 
   startVolume: 15,
+  runHighFill: 80,               // free play's scorecard counts the time spent at or above this fullness (%)
+  runCardDelaySec: 2.5,          // ...and comes up this long after the run ends, once the face and the line have shown
+  storySoundLoudness: 0.35,      // story mode: text, choice, meter, chapter and ending cues (audio/engine.js), 0..1
   storyStripSize: 5,             // story mode: chapters shown at once in the progress strip; the rest is a number
   thoughtsTypeCharsPerSec: 22,   // story mode: how fast a thought over a choice writes itself out
   thoughtsOvertimeEverySec: 5,   // ...and, once the free time is used up, how often story time is charged
@@ -141,9 +144,47 @@ export const TUNING = {
     listenSecByDifficulty: [1.0, 1.2, 1.4, 1.6, 1.8],
     heardPerSecByDifficulty: [0.5, 0.6, 0.75, 0.9, 1.1],      // heard meter (0..1) per second of going while they listen
   },
+  pressureValve: {
+    duration: 8.0,
+    growSecByDifficulty: [1.6, 1.4, 1.2, 1.0, 0.85],         // seconds for the ring to grow from nothing to bursting
+    bandByDifficulty: [0.3, 0.25, 0.2, 0.16, 0.13],           // width of the green band, as a share of the ring
+    releasesByDifficulty: [2, 3, 3, 4, 4],                    // good releases needed
+    centreMin: 0.5, centreMax: 0.85,                          // where the band may sit (it moves after each release)
+    ringPx: 50, flashSec: 0.18,
+  },
+  clenchSlider: {
+    duration: 7.0,
+    pullByDifficulty: [0.3, 0.4, 0.5, 0.62, 0.75],            // drift away from the middle, in track halves per second
+    bandByDifficulty: [0.3, 0.26, 0.22, 0.19, 0.16],          // the centre band, as a share of the whole track
+    zipSecByDifficulty: [2.0, 2.5, 3.0, 3.5, 4.0],            // seconds in the band that zip it shut
+    runaway: 1.5,                                             // the further out, the harder it pulls
+    weight: 0.8,                                              // the knob is heavy: it moves this share of the finger's move
+    startOffset: 0.35, burstSlosh: 6,
+  },
+  brace: {
+    durationByDifficulty: [9, 9, 10, 10, 11],
+    windowSecByDifficulty: [1.2, 1.0, 0.85, 0.7, 0.6],        // time to tap after the arrow flashes
+    bracesByDifficulty: [4, 5, 6, 7, 8],                      // jolts braced for to win
+    bothFromDifficulty: 2,                                    // from here on a jolt can come both ways
+    maxMisses: 3, firstGapSec: 0.6, gapSec: 0.4, joltSlosh: 5,
+  },
+  volley: {
+    durationByDifficulty: [14, 14, 15, 15, 16],
+    answerSecByDifficulty: [3.2, 2.7, 2.3, 1.9, 1.6],         // seconds to answer each question
+    roundsByDifficulty: [3, 3, 4, 4, 5],                      // sensible answers needed
+    maxMisses: 2,
+  },
+  onTheSpot: {
+    durationByDifficulty: [14, 14, 15, 15, 16],
+    drainPerSecByDifficulty: [0.12, 0.15, 0.18, 0.22, 0.26],  // composure lost per second of dithering (full = 1)
+    choicesByDifficulty: [2, 2, 3, 3, 4],
+    refundPerChoice: 0.1,                                     // a decision steadies the nerves a little
+  },
   // Games on trial: registered but not in simSpikePool, and offered under "Try a new minigame" in Settings.
   // Approving one = moving its id to simSpikePool. Empty = the Settings section is hidden.
-  practiceMinigames: ['sneak_a_pee'],
+  minigameSignatureLoudness: 0.15, // each game's own short sound (config/minigame_sounds.js), quiet like the alarm
+  minigameSignatureDelay: 0.4,     // ...played this long after the alarm starts, so the two do not overlap
+  practiceMinigames: ['sneak_a_pee', 'pressure_valve', 'clench_slider', 'brace', 'volley', 'on_the_spot'],
 
   // Stretch (pixels)
   stretchGrabBand: 55,           // how close to the edge a touch must land to grab it

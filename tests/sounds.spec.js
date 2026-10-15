@@ -305,3 +305,50 @@ test('every poke sounds a little different: thump and squeak never on the same n
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test('story mode: a blip for each new line, a click for a choice, notes for meters, a sting for a chapter and an ending', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await pg.locator('#btn-story-mode').dispatchEvent('pointerdown');
+  await pg.locator('.story-card', { hasText: /Bonnie/ }).locator('.story-play').click();
+  await expect(pg.locator('#toy-container')).toHaveClass(/story-mode/);
+  const heard = async (name) => count(await pg.evaluate('window.__audio'), name);
+  const clear = () => pg.evaluate('window.__audio.length=0');
+
+  await clear();
+  await pg.locator('.story-continue').click();
+  expect(await heard('storyText'), 'a new line').toBe(1);
+  expect(await pg.evaluate("window.__notes.filter((n) => n.sound === 'storyText').every((n) => n.loud < 0.5)"), 'quietly').toBe(true);
+  for (let i = 0; i < 30 && await pg.locator('.story-continue', { hasText: 'Continue' }).count(); i++) await pg.locator('.story-continue').click();
+  await clear();
+  await pg.locator('.story-choice').first().click();
+  expect(await heard('choice'), 'a click for the choice').toBe(2);
+  expect(await heard('meterUp') + await heard('meterDown'), 'the choice moved a meter').toBeGreaterThan(0);
+
+  const tool = async (id) => {
+    await pg.locator('#btn-dev').dispatchEvent('pointerdown');
+    await pg.locator('[data-dev-tab="story"]').click();
+    await clear(); await pg.locator(`[data-dev="${id}"]`).click();
+  };
+  await tool('chapter-2');
+  expect(await heard('chapter'), 'a new chapter').toBe(3);
+  await tool(await pg.evaluate("document.querySelector('[data-dev^=\"ending-\"]').dataset.dev"));
+  expect((await pg.evaluate('window.__audio')).some((a) => a.startsWith('ending-')), 'an ending').toBe(true);
+  expect(await heard('storyText'), 'no line blip over the ending').toBe(0);
+  expect(errors).toEqual([]);
+  await context.close();
+});
+
+test('every minigame has its own short signature after the alarm, quiet like the alarm', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  await pg.evaluate('st.volume=75; st.isClosed=true');
+  const ids = await pg.evaluate('minigameIds()');
+  for (const id of ids) {
+    await pg.evaluate(`window.__audio.length=0; window.__notes.length=0; startMinigame({ id: '${id}', practice: true })`);
+    expect(count(await pg.evaluate('window.__audio'), `sig-${id}`), `${id} has a signature`).toBeGreaterThan(0);
+    expect(await pg.evaluate(`window.__notes.filter((n) => n.sound === 'sig-${id}').every((n) => n.loud === TUNING.minigameSignatureLoudness)`)).toBe(true);
+    await pg.evaluate('endMinigame(false, true)');
+  }
+  expect(errors).toEqual([]);
+  await context.close();
+});

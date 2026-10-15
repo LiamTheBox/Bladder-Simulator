@@ -90,6 +90,13 @@ go, stop while someone outside listens. It is the one game that drains the bladd
 `sim/actions.js`) and reports `noise` (how much was overheard) next to `quality` (the share drained). It is
 meant for stories, which give it `relief`, `heard` and `lines`; it does not belong in the random pool, because
 free play cancels a spike when the bladder is opened.
+Also on trial (built 15 Oct, **not yet playtested**): `pressure_valve` (hold, let go when the ring is in the
+green band), `clench_slider` (drag a drifting knob back into the centre band until the zip bar fills),
+`brace` (an arrow flashes left / right / both; tap the matching button before the jolt), `volley` (quick small
+talk: pick the sensible answer, not the blurt) and `on_the_spot` (a choice with no wrong answer while a meter
+drains). A story may give `volley` its own `questions` [{q, good, odd}] and `on_the_spot` its own `dilemmas`
+[{q, a, b}]. Games with two rows of controls set `tall: true` and the panel grows while they run
+(`#action-zone.tall`). `tests/trial-minigames.spec.js`.
 Trying a new game before approving it: register it, list its id in `TUNING.practiceMinigames` instead of the
 pool, and it appears under "Try a new minigame" at the bottom of Settings (hidden while the list is empty). It
 runs as `startMinigame({ id, practice: true })`: no stamina at stake, not cancelled by the spike rules. In sim mode the
@@ -257,7 +264,27 @@ A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.s
 - The liquid's surface is measured between the outline's lowest and highest point. The prototype measured from
   below the outline, which hid the first 15% or so: a bladder at the starting volume looked empty.
 
-## Developer mode (`TUNING.developerMode`, **on: switch it off before publishing**)
+## Endurance run (free play; **not yet playtested**)
+A free-play run lasts until the bladder is empty (`src/ui/run.js`, which only listens to events). An accident is
+"Accident — game over"; emptying it on purpose (VOID, or opening the lock) is "You gave in": the bladder says a
+`gave_in` line (a voice category in Settings). `TUNING.runCardDelaySec` later the scorecard covers and pauses the
+game: time held, best time (`settings.bestRunSec`), fullest, time above `TUNING.runHighFill`, spikes won / lost
+(practice runs not counted), drinks; Play again or Start screen. Story mode is never counted. Developer mode:
+"Runs never end" (`st.dev.endlessRun`) and "End run now". Tests that play on after a void set `st.dev.endlessRun`
+(the prototype's behaviour). `tests/run.spec.js`.
+
+## Moods and faces (**not yet playtested**)
+A mood is a feeling that lasts after its cause and picks the faces until it fades (`src/sim/mood.js`, numbers and
+face lists in `src/config/moods.js`): grumpy (about four pokes / stretches in a few seconds), grateful (soothed, or
+a void in a story), smug / sulky (a spike won / lost), sheepish (giving in with VOID in free play), mortified
+(after an accident's shock), frazzled (an urge wave on a bladder 85%+ full). Above 90% and locked, straining
+shows through any mood but frazzled. The owner wants the old eyes kept (they make the bladder unique); the newer
+shapes in `render/face.js` are Kaomoji-inspired, drawn in the same strokes: eyes chevron `>_<`, arch `^^`,
+tearful `T_T`, shock, flat (side-eye), sparkle, heavy `-_-`; mouths cat `ω`, square, grin, pout, wobble; extras
+(`x`) sweat, hatch (blush lines), vein. A few also join the ordinary faces by fullness. Developer panel, Dances &
+touch: a button per mood. `tests/moods.spec.js`.
+
+## Developer mode (`TUNING.developerMode`, **on, also in the published site: the owner's choice**)
 While it is `true` the start button reads DEVELOPER MODE and a 🛠️ button (free play and stories) opens the
 tools panel (`src/ui/dev_panel.js`) in tabs: Bladder (fullness and stamina sliders, "stamina never drains" / "no
 random spikes" switches in `st.dev`, "urge wave now"), Minigames (every game at any difficulty, as a practice
@@ -269,7 +296,7 @@ running (over the left column in free play, over the bladder's side in a story).
 `sim/interactions.js` (`poke`). Set the flag to `false` to get TAP TO START back and hide
 the tools. `tests/dev-mode.spec.js` covers it. When a new feature needs testing by hand, add a button there.
 
-## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance and drink sounds)
+## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance, drink, story or signature sounds)
 Every sound is made by Tone.js synths in `src/audio/engine.js`; there are no audio files. They are placeholders:
 a recorded clip can replace any one of them inside its `play…` / `update…` function without touching callers.
 - Slosh: `updateSlosh()` runs every frame from `src/main.js` and plays a "glug" (plus a splash while there is
@@ -287,14 +314,17 @@ a recorded clip can replace any one of them inside its `play…` / `update…` f
   ("plain", "fizzy", "thick", "hot") adds a fizz, lower slower gulps, or a slurp first.
 - Each synth has one voice and real Tone.js throws if a note starts at or before one already queued on it, so
   every new sound takes its start from `startTime(synth)`, which queues it just behind.
-- Minigames: quiet alarm (`TUNING.spikeAlarmLoudness`) on `minigameStarted`, win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
+- Minigames: quiet alarm (`TUNING.spikeAlarmLoudness`) on `minigameStarted`, then the game's own short signature
+  (`src/config/minigame_sounds.js`: a tune or filtered-noise bursts, `TUNING.minigameSignatureLoudness`), win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
   and a tick for each of the last `TUNING.minigameTickLastSec` seconds (from the runner, which owns the countdown).
 - Squeeze: a creak as the band tightens, a squirt per `squirt` cue, a twang on `squeezeRelease`.
 - Character: squeak on a poke (thump and squeak on a different note each time), creak as a stretch is pulled further, boing on each hop landing, gurgle while a drink digests, sigh after a void that was not an accident, and
   babble blips in place of the spoken voice when it is switched off.
 - Settings has a sound effects volume slider (`settings.sound`, 0 to 100, 0 mutes) that sets Tone's master output.
-- Not built yet: story-mode sounds (text, choices, meters, chapters), one signature sound per minigame, music,
-  and a developer mode for trying sounds (the owner's idea, to be asked for later).
+- Story mode (`playChanges()` in `story_screen.js`, quiet: `TUNING.storySoundLoudness`): a blip per new line, a click per
+  choice, a rising / falling note when meters move, a sting for a new chapter, a chord per ending kind (good, bad, other).
+  The developer panel's Sounds tab plays every sound.
+- Not built yet: music.
 - `tests/sounds.spec.js` checks *when* each sound plays, through the recording mock. The mock accepts calls the
   real Tone.js rejects (two triggers of one synth at the same instant throw), so after changing `engine.js` also
   play the sounds once in `npm run dev`.
@@ -310,8 +340,15 @@ area is a short strip (`H < W`), so it needs no knowledge of the layout. `tests/
 `npm run build` writes a self-contained static site to `dist/` (relative paths, no server, no CDN): upload
 that folder to any static host. Netlify / Cloudflare Pages: build command `npm run build`, output `dist`.
 GitHub Pages: `.github/workflows/deploy-pages.yml`, which only runs when started by hand.
-Publishing is the owner's decision; do not deploy without being asked. Before publishing, set
-`TUNING.developerMode` to `false` (see Developer mode).
+Publishing is the owner's decision; do not deploy without being asked.
+**Status (12 Oct 2026):** the owner asked to publish. `main` was fast-forwarded to `feature/sound-effects` and
+pushed (over SSH: the https remote has no saved login). The owner keeps `developerMode` **on** in the published
+site so the tools work on their phone; switch it off only when they say so. Left to the owner in GitHub's web
+UI: Settings → Pages → Source "GitHub Actions", then run "Deploy to GitHub Pages" on `main`
+(https://github.com/LiamTheBox/Bladder-Simulator/actions/workflows/deploy-pages.yml). The site will be
+https://liamthebox.github.io/Bladder-Simulator/. **15 Oct 2026:** `main` pushed again with the endurance run, story sounds, moods, the five trial games and the Day Two
+rebalance; the workflow has to be run again for the site to show them. GitHub's default branch is still `feature/approve-minigames`;
+switching it to `main` was suggested. To update the site: push `main`, run the workflow again.
 
 ## Testing
 - `tests_reference/v11_regression.py` (38 checks) and `tests_reference/v12_suite.py` (128 checks) are

@@ -8,6 +8,7 @@ import { on } from '../sim/events.js';
 import { st } from '../sim/state.js';
 import { setStoryMode, setVolume, easeVolumeToward, startVoid, triggerAccident, spasmLeak } from '../sim/actions.js';
 import { speakLine } from '../audio/speech.js';
+import { playStoryText, playChoice, playMeter, playChapter, playEnding } from '../audio/engine.js';
 import { startMinigame, endMinigame } from '../minigames/index.js';
 import { saveProgress, clearProgress } from '../story/library.js';
 import { showBubble, hideBubble, bubbleEl } from './bubble.js';
@@ -37,6 +38,8 @@ let onExit = () => {};
 let slot = null;        // { key, hash }: where this story's progress is saved automatically (null = not saved)
 // The bladder's thoughts over the current choices (null = none): { key, texts, taps, buttons, elapsed, charge }
 let thoughts = null;
+// What the last render showed, so its sounds play only for what changed (null = nothing drawn yet: no sounds)
+let shown = null;
 
 // Small helper: an element with a class and plain text
 function el(tag, className, text) {
@@ -62,8 +65,9 @@ export function startStory(validStory, options = {}) {
   resetting = true; resetGame(); resetting = false;
   story = validStory; runner = createRunner(story, options.saved ?? null);
   names = Object.fromEntries(story.characters.map((c) => [c.id, c.name]));
+  bladderSpeakers = new Set(story.characters.filter((c) => c.kind === 'bladder').map((c) => c.id));
   const first = runner.view();
-  thoughts = null;
+  thoughts = null; shown = null;
   spokenKey = ''; voidsSeen = first.voided; accidentSeen = false; leaksSeen = first.leaks; // a void that happened before the save is not replayed
   setStoryMode(true);
   setVolume(first.fullness);
@@ -101,6 +105,12 @@ export function storyDevTools() {
     skip() { runner.devSkip(); render(); },
   };
 }
+
+// What the bladder says with a line, if anything. Two ways to write it: a "bladder" reply alongside someone else's
+// line (the double dialogue), or a whole line spoken by the bladder character itself ("speaker": its id). Both
+// go in the bladder's bubble, are spoken aloud, and join the text in the bladder's colour.
+let bladderSpeakers = new Set();
+const bladderSays = (line) => line?.bladder ?? (bladderSpeakers.has(line?.speaker) ? line.text : null);
 
 // The newest bladder reply waits out of the text while its bubble shows it; once the bubble is gone (or shows
 // something else) it takes its place in the text, and the text scrolls to keep the end in view
@@ -157,7 +167,7 @@ function renderChoices(v) {
   v.choices.forEach((text, i) => {
     if (!thoughts || !v.thoughts.covered[i]) {
       if (thoughts) thoughts.buttons[i] = null;
-      elChoices.append(button('story-choice', text, () => { thoughts = null; runner.choose(i); render(); }));
+      elChoices.append(button('story-choice', text, () => { thoughts = null; playChoice(); runner.choose(i); render(); }));
       return;
     }
     const b = button('story-choice thought', '', () => {
@@ -180,7 +190,8 @@ function beginMinigame(request) {
   const playing = runner;
   const started = startMinigame({
     id: request.id, difficulty: request.difficulty, relief: request.relief,
-    text: { ...(request.prompt ? { prompt: request.prompt } : {}), ...(request.lines ? { lines: request.lines } : {}) },
+    text: { ...(request.prompt ? { prompt: request.prompt } : {}), ...(request.lines ? { lines: request.lines } : {}),
+      ...(request.questions ? { questions: request.questions } : {}), ...(request.dilemmas ? { dilemmas: request.dilemmas } : {}) },
     onResult: (result) => {
       toy.classList.remove('mg-active');
       if (result.cancelled || runner !== playing) return; // the story was left or reset mid-game
@@ -216,6 +227,20 @@ function renderStrip({ list, current }) {
   }
 }
 
+// One cue for the biggest change since the last render (an ending, a new chapter, a new line), plus one for the
+// meters: a rising note if any went up, a falling one if any went down
+function playChanges(v) {
+  const now = { phase: v.phase, chapter: v.chapters.current, lines: `${runner.state.sceneId}:${v.lines.length}`, stats: Object.fromEntries(v.stats.map((s) => [s.id, s.value])) };
+  const before = shown; shown = now;
+  if (!before) return;
+  if (v.phase === 'ended') { if (before.phase !== 'ended') playEnding(v.ending.kind); return; }
+  if (now.chapter > before.chapter) playChapter();
+  else if (now.lines !== before.lines && v.lines.length) playStoryText();
+  const moved = v.stats.map((s) => s.value - (before.stats[s.id] ?? s.value));
+  if (moved.some((d) => d > 0)) playMeter(true);
+  if (moved.some((d) => d < 0)) playMeter(false);
+}
+
 function render() {
   const v = runner.view();
 
@@ -225,6 +250,7 @@ function render() {
     if (v.phase === 'ended') clearProgress(slot.key); else if (snapshot) saveProgress(slot.key, slot.hash, snapshot);
   }
 
+  playChanges(v);
   renderStrip(v.chapters);
   elChapter.textContent = [v.chapter, v.title].filter(Boolean).join(' · ');
   elClock.textContent = v.clock ?? '';
@@ -251,14 +277,18 @@ function render() {
     }
   } else {
     for (const line of v.lines) {
-      const p = el('p', line.speaker === NARRATOR ? 'story-line narration' : 'story-line');
-      if (line.speaker !== NARRATOR) p.append(el('span', 'story-speaker', `${names[line.speaker] ?? line.speaker}${line.mood ? ` (${line.mood})` : ''}: `));
-      p.append(document.createTextNode(line.text));
-      elLog.append(p);
-      if (line.bladder) {
+      // a line the bladder speaks itself is not printed as "Bladder: ...": it is shown as its reply, below
+      if (!bladderSpeakers.has(line.speaker)) {
+        const p = el('p', line.speaker === NARRATOR ? 'story-line narration' : 'story-line');
+        if (line.speaker !== NARRATOR) p.append(el('span', 'story-speaker', `${names[line.speaker] ?? line.speaker}${line.mood ? ` (${line.mood})` : ''}: `));
+        p.append(document.createTextNode(line.text));
+        elLog.append(p);
+      }
+      const says = bladderSays(line);
+      if (says) {
         // The newest reply is in the bladder's bubble: it joins the text only once the bubble has gone, so the
         // same words are never on screen twice (see revealBubbleLine)
-        const reply = el('p', 'story-line bladder-voice', `“${line.bladder}”`);
+        const reply = el('p', 'story-line bladder-voice', `“${says}”`);
         if (line === v.lines[v.lines.length - 1] && v.phase !== 'ended') reply.classList.add('in-bubble');
         elLog.append(reply);
       }
@@ -286,10 +316,10 @@ function render() {
   // Double dialogue: the newest line's bladder reply goes in the bladder's bubble and is spoken
   const last = v.lines[v.lines.length - 1];
   const key = `${runner.state.sceneId}:${v.lines.length}`;
-  if (v.phase !== 'ended' && last?.bladder && key !== spokenKey) {
+  if (v.phase !== 'ended' && bladderSays(last) && key !== spokenKey) {
     spokenKey = key;
-    speakLine(last.bladder, true);
-    showBubble(last.bladder, BUBBLE_SEC);
+    speakLine(bladderSays(last), true);
+    showBubble(bladderSays(last), BUBBLE_SEC);
   }
   revealBubbleLine();
   if (v.voided > voidsSeen) { voidsSeen = v.voided; startVoid(); }

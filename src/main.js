@@ -26,7 +26,7 @@ import { pickDanceMove, updateDance } from './sim/dance.js';
 import { updateParticles } from './sim/particles.js';
 import { canvasContainer } from './render/canvas.js';
 import { renderCanvas } from './render/scene.js';
-import { waterState, playWater, stopWater, stopAllWater, updateBubbles, setDrainStrength, updateSlosh, updateCreak, updateSqueezeCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playDanceSlosh, playSquirt, playTwang, playSigh, playSpikeAlarm, playWin, playLose } from './audio/engine.js';
+import { waterState, playWater, stopWater, stopAllWater, updateBubbles, setDrainStrength, updateSlosh, updateCreak, updateSqueezeCreak, updateGurgle, playHeartbeat, playPoke, playSqueak, playStretch, playSnapback, playBoing, playDanceSlosh, playSquirt, playTwang, playSigh, playSpikeAlarm, playWin, playLose, playMinigameSignature } from './audio/engine.js';
 import { vibe } from './audio/haptics.js';
 import { speak, speakDirect, updateSpeech, getPrioritySpeechUntil, setPrioritySpeechUntil } from './audio/speech.js';
 import { startMinigame, endMinigame, updateMinigame } from './minigames/index.js';
@@ -42,6 +42,9 @@ import { pointerCount } from './ui/input.js';
 import { isPaused } from './ui/menus.js';
 import { updateStory, startStory, exitStory, storyView, isStoryActive } from './ui/story_screen.js';
 import { parseStory } from './story/loader.js';
+import { updateRun } from './ui/run.js';
+import { MOODS } from './config/moods.js';
+import { setMood } from './sim/actions.js';
 
 setPlayAreaSize(() => ({ W: canvasContainer.clientWidth, H: canvasContainer.clientHeight }));
 
@@ -60,7 +63,7 @@ on('accident', () => {
 });
 on('spikeStarted', () => { startMinigame(); }); // sim mode: random game from TUNING.simSpikePool, at the Settings difficulty
 on('spikeCancelled', () => { endMinigame(false, true); });
-on('minigameStarted', () => { playSpikeAlarm(); });
+on('minigameStarted', ({ id }) => { playSpikeAlarm(); playMinigameSignature(id); });
 on('minigameEnded', ({ success, cancelled }) => { if (!cancelled) (success ? playWin : playLose)(); }); // a cancelled game ends silently
 on('heartbeat', () => { playHeartbeat(); vibe(45); });
 on('danceBeat', ({ move }) => { playDanceSlosh(move, st.volume / 100); if (move === 'hop') playBoing(); });
@@ -93,6 +96,7 @@ function gameLoop(now) {
   updateSpeech(dt);
   updateBubble(dt);
   updateStory(dt);
+  updateRun(dt);
   stepSim(dt, pointerCount());
   updateMinigame(dt);
   updateHud();
@@ -118,7 +122,8 @@ if (import.meta.env.MODE === 'test') {
     st, canvasContainer, bladderGeom, waterState, updateClenchUI, voiceLines, triggerAccident, speakDirect,
     startMinigame, endMinigame, bubbleEl, minigameLines, mgPanel, btnRow, mgBtnMash, mgBreatheArea, mgLeaksArea,
     subtitle, DANCE_MOVES, pickDanceMove, showMgPanel, minigameIds, onSimEvent: on, offSimEvent: off, TUNING, swipeCardTexts,
-    startStory, exitStory, storyView, isStoryActive, parseStory, hideBubble
+    startStory, exitStory, storyView, isStoryActive, parseStory, hideBubble,
+    __moods: MOODS, __setMood: setMood
   });
   Object.defineProperty(window, 'prioritySpeechUntil', { get: getPrioritySpeechUntil, set: setPrioritySpeechUntil });
 }

@@ -3,6 +3,7 @@ import * as Tone from 'tone';
 import { settings } from '../config/settings.js';
 import { TUNING } from '../config/tuning.js';
 import { DANCE_MOVES } from '../config/dance.js';
+import { MINIGAME_SOUNDS } from '../config/minigame_sounds.js';
 
 let audioCtxReady = false;
 let waterSynth, waterFilter, waterLfo, fillSynth, fillFilter, fillLfo;
@@ -17,6 +18,7 @@ let creakAt = 0, gurgleTimer = 0;
 let gulpSynth, slurpSynth, slurpFilter, fizzSynth;
 let squirtSynth, squirtFilter, twangSynth;
 let squeezeCreakAt = 0;
+let sigToneSynth, sigNoiseSynth, sigNoiseFilter;
 
 // Tags a synth with the name of its sound, so the test mock can log which one played (Tone ignores the tag)
 function named(label, synth) { synth.label = label; return synth; }
@@ -111,6 +113,11 @@ function initAudio() {
   squirtFilter = new Tone.Filter({ frequency: 2200, type: "bandpass", Q: 2.5 }).toDestination(); squirtSynth.connect(squirtFilter); squirtSynth.volume.value = 2;
   twangSynth = named('twang', new Tone.Synth({ oscillator: { type: "triangle" }, envelope: { attack: 0.003, decay: 0.35, sustain: 0, release: 0.1 } })).toDestination(); twangSynth.volume.value = -10;
 
+  // Minigame signatures (config/minigame_sounds.js): a soft synth for tunes, filtered noise for hisses and clicks
+  sigToneSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "triangle" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.1 } }).toDestination(); sigToneSynth.volume.value = -10;
+  sigNoiseSynth = new Tone.NoiseSynth({ noise: { type: "white" }, envelope: { attack: 0.02, decay: 0.1, sustain: 0.6, release: 0.08 } });
+  sigNoiseFilter = new Tone.Filter({ frequency: 1000, type: "bandpass", Q: 1.5 }).toDestination(); sigNoiseSynth.connect(sigNoiseFilter); sigNoiseSynth.volume.value = -4;
+
   audioCtxReady = true;
   setSoundVolume(settings.sound);
 }
@@ -201,6 +208,40 @@ function jingle(label, notes, loud = 1) {
 export function playSpikeAlarm() { jingle('alarm', [["E5", 0, 0.06], ["E5", 0.11, 0.06], ["A5", 0.22, 0.12]], TUNING.spikeAlarmLoudness); }
 export function playTick() { jingle('tick', [["C6", 0, 0.03]]); }
 export function playWin() { jingle('win', [["C5", 0, 0.09], ["E5", 0.09, 0.09], ["G5", 0.18, 0.09], ["C6", 0.27, 0.25]]); }
+// Story mode: small, quiet cues on the same jingle synth, so reading never gets noisy (TUNING.storySoundLoudness)
+const storyJingle = (label, notes, k = 1) => jingle(label, notes, TUNING.storySoundLoudness * k);
+export function playStoryText() { storyJingle('storyText', [[nextPitch('storyText', 820, 1100), 0, 0.03]], 0.6); }
+export function playChoice() { storyJingle('choice', [["G5", 0, 0.04], ["C6", 0.05, 0.06]]); }
+export function playMeter(up) {
+  storyJingle(up ? 'meterUp' : 'meterDown', up ? [["E5", 0.1, 0.06], ["A5", 0.17, 0.09]] : [["A4", 0.1, 0.06], ["E4", 0.17, 0.12]]);
+}
+export function playChapter() { storyJingle('chapter', [["C5", 0, 0.1], ["G5", 0.1, 0.1], ["E6", 0.2, 0.35]], 1.3); }
+export function playEnding(kind) {
+  const notes = kind === 'good' ? [["C5", 0, 0.12], ["E5", 0.12, 0.12], ["G5", 0.24, 0.12], ["C6", 0.36, 0.6], ["E5", 0.36, 0.6]]
+    : kind === 'bad' ? [["A3", 0, 0.3], ["F3", 0.3, 0.3], ["D3", 0.6, 0.8]]
+    : [["G4", 0, 0.2], ["C5", 0.2, 0.5]];
+  storyJingle(`ending-${kind ?? 'neutral'}`, notes, 1.5);
+}
+// A minigame's own short sound, just after the alarm (TUNING.minigameSignatureDelay), so each game is known by ear
+export function playMinigameSignature(id) {
+  const sig = MINIGAME_SOUNDS[id];
+  if (!audioCtxReady || !sig) return;
+  const loud = TUNING.minigameSignatureLoudness, at = Tone.now() + TUNING.minigameSignatureDelay;
+  if (sig.tone) {
+    sigToneSynth.label = `sig-${id}`; // for the test mock, as in named()
+    for (const [pitch, start, len] of sig.tone) sigToneSynth.triggerAttackRelease(pitch, len, at + start, loud);
+  }
+  if (sig.noise) {
+    sigNoiseSynth.label = `sig-${id}`;
+    const span = sig.noise[sig.noise.length - 1][0];
+    // like startTime(), but from the delayed start: one voice, so never at or before a burst already queued
+    const t = Math.max(at, (sigNoiseSynth.queuedAt ?? -1) + 0.03); sigNoiseSynth.queuedAt = t + span;
+    for (const [start, len, freq] of sig.noise) {
+      sigNoiseFilter.frequency.setValueAtTime(freq, t + start);
+      sigNoiseSynth.triggerAttackRelease(len, t + start, loud);
+    }
+  }
+}
 // "Womp-womp": two sagging notes, the second lower and longer
 export function playLose() {
   if (!audioCtxReady) return;

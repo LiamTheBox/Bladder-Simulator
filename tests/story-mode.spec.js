@@ -485,3 +485,35 @@ for (const [W, H] of [[360, 640], [390, 844], [768, 1024]]) {
     await context.close();
   });
 }
+
+test('a line spoken by the bladder character itself goes in its bubble and is spoken, like a "bladder" reply', async ({ browser }) => {
+  const { context, pg } = await openGame(browser, 390, 844);
+  await pg.mouse.click(195, 300); await pg.waitForTimeout(300);
+  const started = await pg.evaluate(() => {
+    const story = {
+      schemaVersion: 1, meta: { title: 'Own lines', rating: '18+' },
+      characters: [{ id: 'sam', name: 'Sam', age: 30 }, { id: 'bladder', name: 'Bladder', kind: 'bladder' }],
+      start: 'one',
+      scenes: [{ id: 'one', lines: [
+        { speaker: 'narrator', text: 'A long meeting.' },
+        { speaker: 'bladder', text: 'I would like to leave now.' },
+        { speaker: 'sam', text: 'Any questions?' }],
+        choices: [{ text: 'No questions.', next: 'end' }] }],
+      endings: [{ id: 'end', title: 'Done', text: 'Over.' }],
+    };
+    window.__spoken.length = 0;
+    const r = window.parseStory(JSON.stringify(story), { file: 'own.json', minigameIds: window.minigameIds() });
+    if (r.ok) window.startStory(r.story, { slot: null });
+    return r.errors;
+  });
+  expect(started).toEqual([]);
+  await pg.locator('.story-continue').click(); // the bladder's own line
+  await expect(pg.locator('#bladder-bubble')).toHaveText('I would like to leave now.');
+  await expect(pg.locator('#bladder-bubble')).toHaveClass(/show/);
+  expect(await pg.evaluate('window.__spoken')).toContain('I would like to leave now.');
+  await expect(pg.locator('.story-speaker', { hasText: 'Bladder' }), 'not printed as an ordinary speaker').toHaveCount(0);
+  await pg.locator('.story-continue').click(); // the next line: the bladder's words join the text in its colour
+  await expect(pg.locator('.bladder-voice')).toHaveText('“I would like to leave now.”');
+  await expect(pg.locator('.bladder-voice')).toBeVisible();
+  await context.close();
+});

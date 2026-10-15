@@ -97,7 +97,7 @@ test('dances, squeezes and pokes can be triggered; the switches stop stamina dra
   await open();
   await ev(`document.querySelector('[data-dev="holdStamina"]').click(); document.querySelector('[data-dev="noSpikes"]').click()`);
   await press('reset');
-  expect(await ev('st.dev')).toEqual({ holdStamina: true, noSpikes: true });
+  expect(await ev('st.dev')).toEqual({ holdStamina: true, noSpikes: true, endlessRun: false });
   await ev('st.volume=95; st.stamina=70; st.minigame.cooldown=0.1'); await wait(1200);
   expect(await ev('[st.stamina, st.minigame.active]')).toEqual([70, false]);
   await open();

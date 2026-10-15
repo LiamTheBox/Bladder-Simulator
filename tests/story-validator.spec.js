@@ -5,7 +5,7 @@ import { validateStory } from '../src/story/validator.js';
 import { parseStory } from '../src/story/loader.js';
 import { LIMITS } from '../src/story/schema.js';
 
-const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else', 'sneak_a_pee'];
+const MINIGAMES = ['mash', 'leaks', 'breathe', 'swipe_away', 'distraction_popups', 'tremor_lock', 'tiptoe', 'steady_the_slosh', 'think_of_something_else', 'sneak_a_pee', 'pressure_valve', 'clench_slider', 'brace', 'volley', 'on_the_spot'];
 const FILE = 'stories/placeholder.json';
 const TEXT = readFileSync(new URL('../stories/placeholder.json', import.meta.url), 'utf8');
 const fresh = () => JSON.parse(TEXT);
@@ -233,4 +233,13 @@ test('modes, conditional lines and the void effect are checked', () => {
   expect(errorsAfter((s) => { s.scenes[0].choices[1].effects.push({ void: true }); })).toEqual([]);
   const r = check((() => { const s = fresh(); s.modes[0].flag = 'never_set'; return s; })());
   expect(r.warnings.join('\n')).toMatch(/modes\[0\]\.flag: flag "never_set" is checked but never set anywhere/);
+});
+
+test('a minigame may bring its own small talk ("questions") and awkward choices ("dilemmas"), each checked', () => {
+  const firstGame = (s) => s.scenes.flatMap((sc) => sc.choices ?? []).find((c) => c.minigame).minigame;
+  expect(errorsAfter((s) => { Object.assign(firstGame(s), { id: 'volley', questions: [{ q: 'Nice day?', good: 'Lovely.', odd: 'Too wet.' }] }); })).toEqual([]);
+  expect(errorsAfter((s) => { Object.assign(firstGame(s), { id: 'on_the_spot', dilemmas: [{ q: 'Tea?', a: 'Yes', b: 'No' }] }); })).toEqual([]);
+  expectError((s) => { firstGame(s).questions = [{ q: 'Nice day?', good: 'Lovely.' }]; }, /\.questions\[0\]\.odd: is required/);
+  expectError((s) => { firstGame(s).dilemmas = []; }, /\.dilemmas/);
+  expectError((s) => { firstGame(s).dilemmas = [{ q: 'Tea?', a: 'Yes', b: 'No', c: 'Maybe' }]; }, /\.dilemmas\[0\]\.c: unknown field/);
 });

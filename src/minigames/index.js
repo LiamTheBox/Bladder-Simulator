@@ -9,6 +9,7 @@ import { TUNING } from '../config/tuning.js';
 import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { emit, on } from '../sim/events.js';
+import { setMood } from '../sim/actions.js';
 import { vibe } from '../audio/haptics.js';
 import { playTick } from '../audio/engine.js';
 import { speak, speakLine } from '../audio/speech.js';
@@ -25,8 +26,14 @@ import tiptoe from './tiptoe.js';
 import steadyTheSlosh from './steady_the_slosh.js';
 import thinkOfSomethingElse from './think_of_something_else.js';
 import sneakAPee from './sneak_a_pee.js';
+import pressureValve from './pressure_valve.js';
+import clenchSlider from './clench_slider.js';
+import brace from './brace.js';
+import volley from './volley.js';
+import onTheSpot from './on_the_spot.js';
 
-[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock, tiptoe, steadyTheSlosh, thinkOfSomethingElse, sneakAPee].forEach(registerMinigame);
+[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock, tiptoe, steadyTheSlosh, thinkOfSomethingElse, sneakAPee,
+  pressureValve, clenchSlider, brace, volley, onTheSpot].forEach(registerMinigame);
 
 let current = null;      // the game that is running (or was last started and not yet cleaned up)
 let currentInfo = null;  // { id, difficulty, onResult } of that run
@@ -97,7 +104,7 @@ export function startMinigame(request = {}) {
   });
 
   st.minigame.timer = st.minigame.duration;
-  showMgPanel(true);
+  showMgPanel(true, Boolean(game.tall));
 
   const lines = game.prompts ?? [];
   const prompt = config.text.prompt ?? lines[Math.floor(Math.random() * lines.length)] ?? '';
@@ -120,11 +127,11 @@ export function endMinigame(success, cancelled = false, quality, noise) {
   if (!cancelled) {
     if (success) {
       if (!info?.practice) st.stamina = Math.min(100, st.stamina + TUNING.minigameWinStamina);
-      st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0;
+      st.faceState = { e: 'happy_closed', m: 'wavy' }; st.faceTimer = 3.0; setMood('smug', false);
       speak('success_hold', true); vibe([50, 50]);
     } else {
       if (!info?.practice) st.stamina = Math.max(0, st.stamina - (info?.failStamina ?? TUNING.minigameFailStamina));
-      st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0;
+      st.faceState = { e: 'shut_tight', m: 'zigzag' }; st.faceTimer = 2.0; setMood('sulky', false);
       speak('fail', true); vibe(200);
     }
   }

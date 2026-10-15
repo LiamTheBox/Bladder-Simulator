@@ -8,12 +8,14 @@ import { DANCE_MOVES } from '../config/dance.js';
 import { settings } from '../config/settings.js';
 import { st } from '../sim/state.js';
 import { on } from '../sim/events.js';
-import { setVolume, setStamina, setDevSwitch, forceDance, holdSqueeze, hurrySpike, toggleSphincter, startVoid, triggerAccident } from '../sim/actions.js';
+import { MOODS, MOOD_RULES } from '../config/moods.js';
+import { setMood, setVolume, setStamina, setDevSwitch, forceDance, holdSqueeze, hurrySpike, toggleSphincter, startVoid, triggerAccident } from '../sim/actions.js';
 import { poke } from '../sim/interactions.js';
 import { minigameIds } from '../minigames/registry.js';
 import { startMinigame } from '../minigames/index.js';
 import { resetGame } from './reset.js';
 import { storyDevTools } from './story_screen.js';
+import { showCard } from './run.js';
 import * as sound from '../audio/engine.js';
 
 const overlay = document.getElementById('dev-overlay');
@@ -121,8 +123,10 @@ if (TUNING.developerMode) {
   section(bladderPage, 'Bladder', 'Sliders apply at once.',
     fullness, stamina,
     checkbox('Stamina never drains', 'holdStamina'), checkbox('No random urge spikes', 'noSpikes'),
+    checkbox('Runs never end (no scorecard after a void or accident)', 'endlessRun'),
     grid(button('Lock / unlock', 'lock', toggleSphincter), button('Void', 'void', startVoid),
-      button('Accident', 'accident', triggerAccident), button('Urge wave now', 'spike', hurrySpike), button('Start over', 'reset', resetGame)));
+      button('Accident', 'accident', triggerAccident), button('Urge wave now', 'spike', hurrySpike), button('Start over', 'reset', resetGame),
+      button('End run now (scorecard)', 'end-run', showCard)));
 
   // Every registered game, the try-out ones too, as a practice run: no stamina at stake, never cancelled by the spike rules
   const difficulty = el('select'); difficulty.id = 'dev-difficulty';
@@ -135,6 +139,9 @@ if (TUNING.developerMode) {
 
   section(movesPage, 'Potty dances', `Holds the move for ${TUNING.devDanceSec} seconds (fills the bladder to ${TUNING.devDanceVolume}% if it is under half full).`,
     grid(...DANCE_MOVES.map((m) => button(m.id, `dance-${m.id}`, () => forceDance(m.id)))));
+
+  section(movesPage, 'Moods and faces', `Sets the mood: its faces take turns every few seconds until it fades. Above ${MOOD_RULES.yieldAbove * 100}% full and locked, straining shows instead (except frazzled).`,
+    grid(...Object.keys(MOODS).map((id) => button(id, `mood-${id}`, () => setMood(id)))));
 
   section(movesPage, 'Touch', `For testing without two fingers or a scroll wheel. A squeeze is held for ${TUNING.devSqueezeSec} seconds, then let go.`,
     grid(button('Poke', 'poke', poke),
@@ -153,6 +160,13 @@ if (TUNING.developerMode) {
       play('Lock', 'lock', () => sound.playSnap(true)), play('Unlock', 'unlock', () => sound.playSnap(false))),
     el('div', 'dev-note', 'Minigame cues'),
     grid(play('Alarm', 'alarm', sound.playSpikeAlarm), play('Tick', 'tick', sound.playTick), play('Win', 'win', sound.playWin), play('Lose', 'lose', sound.playLose)),
+    el('div', 'dev-note', 'Each minigame\'s own sound (after the alarm)'),
+    grid(...minigameIds().map((id) => play(minigameNames[id]?.split(' (')[0] ?? id, `sig-${id}`, () => sound.playMinigameSignature(id)))),
+    el('div', 'dev-note', 'Story mode cues'),
+    grid(play('Text', 'story-text', sound.playStoryText), play('Choice', 'choice', sound.playChoice),
+      play('Meter up', 'meter-up', () => sound.playMeter(true)), play('Meter down', 'meter-down', () => sound.playMeter(false)),
+      play('Chapter', 'chapter', sound.playChapter), play('Good ending', 'ending-good', () => sound.playEnding('good')),
+      play('Bad ending', 'ending-bad', () => sound.playEnding('bad')), play('Other ending', 'ending-neutral', () => sound.playEnding('neutral'))),
     el('div', 'dev-note', 'Slosh of each potty dance'),
     grid(...DANCE_MOVES.map((m) => play(m.id, `slosh-${m.id}`, () => sound.playDanceSlosh(m.id, st.volume / 100)))),
     el('div', 'dev-note', 'Drinks'),

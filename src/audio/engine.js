@@ -201,6 +201,20 @@ function jingle(label, notes, loud = 1) {
 export function playSpikeAlarm() { jingle('alarm', [["E5", 0, 0.06], ["E5", 0.11, 0.06], ["A5", 0.22, 0.12]], TUNING.spikeAlarmLoudness); }
 export function playTick() { jingle('tick', [["C6", 0, 0.03]]); }
 export function playWin() { jingle('win', [["C5", 0, 0.09], ["E5", 0.09, 0.09], ["G5", 0.18, 0.09], ["C6", 0.27, 0.25]]); }
+// Story mode: small, quiet cues on the same jingle synth, so reading never gets noisy (TUNING.storySoundLoudness)
+const storyJingle = (label, notes, k = 1) => jingle(label, notes, TUNING.storySoundLoudness * k);
+export function playStoryText() { storyJingle('storyText', [[nextPitch('storyText', 820, 1100), 0, 0.03]], 0.6); }
+export function playChoice() { storyJingle('choice', [["G5", 0, 0.04], ["C6", 0.05, 0.06]]); }
+export function playMeter(up) {
+  storyJingle(up ? 'meterUp' : 'meterDown', up ? [["E5", 0.1, 0.06], ["A5", 0.17, 0.09]] : [["A4", 0.1, 0.06], ["E4", 0.17, 0.12]]);
+}
+export function playChapter() { storyJingle('chapter', [["C5", 0, 0.1], ["G5", 0.1, 0.1], ["E6", 0.2, 0.35]], 1.3); }
+export function playEnding(kind) {
+  const notes = kind === 'good' ? [["C5", 0, 0.12], ["E5", 0.12, 0.12], ["G5", 0.24, 0.12], ["C6", 0.36, 0.6], ["E5", 0.36, 0.6]]
+    : kind === 'bad' ? [["A3", 0, 0.3], ["F3", 0.3, 0.3], ["D3", 0.6, 0.8]]
+    : [["G4", 0, 0.2], ["C5", 0.2, 0.5]];
+  storyJingle(`ending-${kind ?? 'neutral'}`, notes, 1.5);
+}
 // "Womp-womp": two sagging notes, the second lower and longer
 export function playLose() {
   if (!audioCtxReady) return;

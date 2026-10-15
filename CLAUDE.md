@@ -302,8 +302,10 @@ a recorded clip can replace any one of them inside its `play…` / `update…` f
 - Character: squeak on a poke (thump and squeak on a different note each time), creak as a stretch is pulled further, boing on each hop landing, gurgle while a drink digests, sigh after a void that was not an accident, and
   babble blips in place of the spoken voice when it is switched off.
 - Settings has a sound effects volume slider (`settings.sound`, 0 to 100, 0 mutes) that sets Tone's master output.
-- Not built yet: story-mode sounds (text, choices, meters, chapters), one signature sound per minigame, music,
-  and a developer mode for trying sounds (the owner's idea, to be asked for later).
+- Story mode (`playChanges()` in `story_screen.js`, quiet: `TUNING.storySoundLoudness`): a blip per new line, a click per
+  choice, a rising / falling note when meters move, a sting for a new chapter, a chord per ending kind (good, bad, other).
+  The developer panel's Sounds tab plays every sound.
+- Not built yet: music.
 - `tests/sounds.spec.js` checks *when* each sound plays, through the recording mock. The mock accepts calls the
   real Tone.js rejects (two triggers of one synth at the same instant throw), so after changing `engine.js` also
   play the sounds once in `npm run dev`.

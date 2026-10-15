@@ -8,6 +8,7 @@ import { on } from '../sim/events.js';
 import { st } from '../sim/state.js';
 import { setStoryMode, setVolume, easeVolumeToward, startVoid, triggerAccident, spasmLeak } from '../sim/actions.js';
 import { speakLine } from '../audio/speech.js';
+import { playStoryText, playChoice, playMeter, playChapter, playEnding } from '../audio/engine.js';
 import { startMinigame, endMinigame } from '../minigames/index.js';
 import { saveProgress, clearProgress } from '../story/library.js';
 import { showBubble, hideBubble, bubbleEl } from './bubble.js';
@@ -37,6 +38,8 @@ let onExit = () => {};
 let slot = null;        // { key, hash }: where this story's progress is saved automatically (null = not saved)
 // The bladder's thoughts over the current choices (null = none): { key, texts, taps, buttons, elapsed, charge }
 let thoughts = null;
+// What the last render showed, so its sounds play only for what changed (null = nothing drawn yet: no sounds)
+let shown = null;
 
 // Small helper: an element with a class and plain text
 function el(tag, className, text) {
@@ -64,7 +67,7 @@ export function startStory(validStory, options = {}) {
   names = Object.fromEntries(story.characters.map((c) => [c.id, c.name]));
   bladderSpeakers = new Set(story.characters.filter((c) => c.kind === 'bladder').map((c) => c.id));
   const first = runner.view();
-  thoughts = null;
+  thoughts = null; shown = null;
   spokenKey = ''; voidsSeen = first.voided; accidentSeen = false; leaksSeen = first.leaks; // a void that happened before the save is not replayed
   setStoryMode(true);
   setVolume(first.fullness);
@@ -164,7 +167,7 @@ function renderChoices(v) {
   v.choices.forEach((text, i) => {
     if (!thoughts || !v.thoughts.covered[i]) {
       if (thoughts) thoughts.buttons[i] = null;
-      elChoices.append(button('story-choice', text, () => { thoughts = null; runner.choose(i); render(); }));
+      elChoices.append(button('story-choice', text, () => { thoughts = null; playChoice(); runner.choose(i); render(); }));
       return;
     }
     const b = button('story-choice thought', '', () => {
@@ -223,6 +226,20 @@ function renderStrip({ list, current }) {
   }
 }
 
+// One cue for the biggest change since the last render (an ending, a new chapter, a new line), plus one for the
+// meters: a rising note if any went up, a falling one if any went down
+function playChanges(v) {
+  const now = { phase: v.phase, chapter: v.chapters.current, lines: `${runner.state.sceneId}:${v.lines.length}`, stats: Object.fromEntries(v.stats.map((s) => [s.id, s.value])) };
+  const before = shown; shown = now;
+  if (!before) return;
+  if (v.phase === 'ended') { if (before.phase !== 'ended') playEnding(v.ending.kind); return; }
+  if (now.chapter > before.chapter) playChapter();
+  else if (now.lines !== before.lines && v.lines.length) playStoryText();
+  const moved = v.stats.map((s) => s.value - (before.stats[s.id] ?? s.value));
+  if (moved.some((d) => d > 0)) playMeter(true);
+  if (moved.some((d) => d < 0)) playMeter(false);
+}
+
 function render() {
   const v = runner.view();
 
@@ -232,6 +249,7 @@ function render() {
     if (v.phase === 'ended') clearProgress(slot.key); else if (snapshot) saveProgress(slot.key, slot.hash, snapshot);
   }
 
+  playChanges(v);
   renderStrip(v.chapters);
   elChapter.textContent = [v.chapter, v.title].filter(Boolean).join(' · ');
   elClock.textContent = v.clock ?? '';

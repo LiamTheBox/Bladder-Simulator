@@ -26,6 +26,7 @@ export const TUNING = {
   startVolume: 15,
   runHighFill: 80,               // free play's scorecard counts the time spent at or above this fullness (%)
   runCardDelaySec: 2.5,          // ...and comes up this long after the run ends, once the face and the line have shown
+  storySoundLoudness: 0.35,      // story mode: text, choice, meter, chapter and ending cues (audio/engine.js), 0..1
   storyStripSize: 5,             // story mode: chapters shown at once in the progress strip; the rest is a number
   thoughtsTypeCharsPerSec: 22,   // story mode: how fast a thought over a choice writes itself out
   thoughtsOvertimeEverySec: 5,   // ...and, once the free time is used up, how often story time is charged

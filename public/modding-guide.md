@@ -60,8 +60,9 @@ The game refuses a story that breaks the first two, and tells you where.
 ## The pieces
 
 **Lines.** `"speaker"` is `"narrator"` or a character's id. Add `"bladder"` to a line and the bladder
-answers it in its own speech bubble: that is the game's double dialogue. Add `"if"` to show a line only
-when a condition holds.
+answers it in its own speech bubble: that is the game's double dialogue. A line whose `"speaker"` is the
+bladder itself (the character with `"kind": "bladder"`) works the same way: it goes in the bubble and is
+spoken, instead of being printed as "Bladder: ...". Add `"if"` to show a line only when a condition holds.
 
 **Choices.** Each needs `"text"` and somewhere to go: a `"next"`, or a `"minigame"` whose `"success"` and
 `"fail"` each say where to go (or what to change before carrying on to the choice's `"next"`). Add `"if"`

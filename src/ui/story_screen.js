@@ -62,6 +62,7 @@ export function startStory(validStory, options = {}) {
   resetting = true; resetGame(); resetting = false;
   story = validStory; runner = createRunner(story, options.saved ?? null);
   names = Object.fromEntries(story.characters.map((c) => [c.id, c.name]));
+  bladderSpeakers = new Set(story.characters.filter((c) => c.kind === 'bladder').map((c) => c.id));
   const first = runner.view();
   thoughts = null;
   spokenKey = ''; voidsSeen = first.voided; accidentSeen = false; leaksSeen = first.leaks; // a void that happened before the save is not replayed
@@ -101,6 +102,12 @@ export function storyDevTools() {
     skip() { runner.devSkip(); render(); },
   };
 }
+
+// What the bladder says with a line, if anything. Two ways to write it: a "bladder" reply alongside someone else's
+// line (the double dialogue), or a whole line spoken by the bladder character itself ("speaker": its id). Both
+// go in the bladder's bubble, are spoken aloud, and join the text in the bladder's colour.
+let bladderSpeakers = new Set();
+const bladderSays = (line) => line?.bladder ?? (bladderSpeakers.has(line?.speaker) ? line.text : null);
 
 // The newest bladder reply waits out of the text while its bubble shows it; once the bubble is gone (or shows
 // something else) it takes its place in the text, and the text scrolls to keep the end in view
@@ -251,14 +258,18 @@ function render() {
     }
   } else {
     for (const line of v.lines) {
-      const p = el('p', line.speaker === NARRATOR ? 'story-line narration' : 'story-line');
-      if (line.speaker !== NARRATOR) p.append(el('span', 'story-speaker', `${names[line.speaker] ?? line.speaker}${line.mood ? ` (${line.mood})` : ''}: `));
-      p.append(document.createTextNode(line.text));
-      elLog.append(p);
-      if (line.bladder) {
+      // a line the bladder speaks itself is not printed as "Bladder: ...": it is shown as its reply, below
+      if (!bladderSpeakers.has(line.speaker)) {
+        const p = el('p', line.speaker === NARRATOR ? 'story-line narration' : 'story-line');
+        if (line.speaker !== NARRATOR) p.append(el('span', 'story-speaker', `${names[line.speaker] ?? line.speaker}${line.mood ? ` (${line.mood})` : ''}: `));
+        p.append(document.createTextNode(line.text));
+        elLog.append(p);
+      }
+      const says = bladderSays(line);
+      if (says) {
         // The newest reply is in the bladder's bubble: it joins the text only once the bubble has gone, so the
         // same words are never on screen twice (see revealBubbleLine)
-        const reply = el('p', 'story-line bladder-voice', `“${line.bladder}”`);
+        const reply = el('p', 'story-line bladder-voice', `“${says}”`);
         if (line === v.lines[v.lines.length - 1] && v.phase !== 'ended') reply.classList.add('in-bubble');
         elLog.append(reply);
       }
@@ -286,10 +297,10 @@ function render() {
   // Double dialogue: the newest line's bladder reply goes in the bladder's bubble and is spoken
   const last = v.lines[v.lines.length - 1];
   const key = `${runner.state.sceneId}:${v.lines.length}`;
-  if (v.phase !== 'ended' && last?.bladder && key !== spokenKey) {
+  if (v.phase !== 'ended' && bladderSays(last) && key !== spokenKey) {
     spokenKey = key;
-    speakLine(last.bladder, true);
-    showBubble(last.bladder, BUBBLE_SEC);
+    speakLine(bladderSays(last), true);
+    showBubble(bladderSays(last), BUBBLE_SEC);
   }
   revealBubbleLine();
   if (v.voided > voidsSeen) { voidsSeen = v.voided; startVoid(); }

@@ -1,4 +1,4 @@
-// Start screen, drink shop, settings and the developer panel. The game is paused while any of them is open.
+// Start screen, drink shop, settings, the run's scorecard and the developer panel. The game is paused while any of them is open.
 import { drinks, voiceLines } from '../config/content.js';
 import { queueDrink } from '../sim/actions.js';
 import { startAudio, stopAllWater, playGulp } from '../audio/engine.js';
@@ -11,6 +11,7 @@ import { startStory } from './story_screen.js';
 import { openStoryMenu, closeStoryMenu } from './story_menu.js';
 import { isAgeGateOpen, onBackToStart } from './settings_panel.js';
 import { devPanelPauses } from './dev_panel.js';
+import { isRunCardOpen } from './run.js';
 
 const startOverlayEl = document.getElementById('start-overlay');
 const shopOverlayEl = document.getElementById('shop-overlay');
@@ -22,7 +23,7 @@ export function isPaused() {
     startOverlayEl.style.display !== 'none' ||
     shopOverlayEl.style.display === 'flex' ||
     settingsOverlayEl.style.display === 'flex' ||
-    devPanelPauses();
+    devPanelPauses() || isRunCardOpen();
 }
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { stopAllWater(); clearPointers(); if (window.speechSynthesis) window.speechSynthesis.cancel(); }

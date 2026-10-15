@@ -42,6 +42,7 @@ import { pointerCount } from './ui/input.js';
 import { isPaused } from './ui/menus.js';
 import { updateStory, startStory, exitStory, storyView, isStoryActive } from './ui/story_screen.js';
 import { parseStory } from './story/loader.js';
+import { updateRun } from './ui/run.js';
 
 setPlayAreaSize(() => ({ W: canvasContainer.clientWidth, H: canvasContainer.clientHeight }));
 
@@ -93,6 +94,7 @@ function gameLoop(now) {
   updateSpeech(dt);
   updateBubble(dt);
   updateStory(dt);
+  updateRun(dt);
   stepSim(dt, pointerCount());
   updateMinigame(dt);
   updateHud();

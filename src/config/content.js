@@ -32,7 +32,8 @@ export const voiceLines = {
   squeeze: ["Agh! Don't squeeze!", "Too much pressure!"],
   accident: ["Oh no! I lost control!", "I couldn't hold it!", "I'm having an accident!", "No no no, it's leaking!"],
   success_hold: ["Phew, fought that urge off.", "I can keep holding it.", "Stay strong, seal!"],
-  fail: ["Ahh, I slipped a little!", "I can't focus!", "Ow, I lost my grip!"]
+  fail: ["Ahh, I slipped a little!", "I can't focus!", "Ow, I lost my grip!"],
+  gave_in: ["...Don't look at me like that.", "We agreed never to speak of this.", "That was not my finest hour.", "I'm blushing. Can bladders blush? I'm blushing."]
 };
 
 // What the bladder says to announce each urge-spike minigame (shown in the bubble and spoken).

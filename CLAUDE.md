@@ -257,6 +257,15 @@ A two-finger pinch or the scroll wheel sets `st.squeeze.tension` (0 to `TUNING.s
 - The liquid's surface is measured between the outline's lowest and highest point. The prototype measured from
   below the outline, which hid the first 15% or so: a bladder at the starting volume looked empty.
 
+## Endurance run (free play; **not yet playtested**)
+A free-play run lasts until the bladder is empty (`src/ui/run.js`, which only listens to events). An accident is
+"Accident — game over"; emptying it on purpose (VOID, or opening the lock) is "You gave in": the bladder says a
+`gave_in` line (a voice category in Settings). `TUNING.runCardDelaySec` later the scorecard covers and pauses the
+game: time held, best time (`settings.bestRunSec`), fullest, time above `TUNING.runHighFill`, spikes won / lost
+(practice runs not counted), drinks; Play again or Start screen. Story mode is never counted. Developer mode:
+"Runs never end" (`st.dev.endlessRun`) and "End run now". Tests that play on after a void set `st.dev.endlessRun`
+(the prototype's behaviour). `tests/run.spec.js`.
+
 ## Developer mode (`TUNING.developerMode`, **on, also in the published site: the owner's choice**)
 While it is `true` the start button reads DEVELOPER MODE and a 🛠️ button (free play and stories) opens the
 tools panel (`src/ui/dev_panel.js`) in tabs: Bladder (fullness and stamina sliders, "stamina never drains" / "no

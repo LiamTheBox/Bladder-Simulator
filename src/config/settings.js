@@ -12,6 +12,7 @@ export const settings = {
   sound: 100,                           // sound effects volume in percent; 0 is muted
   disabledMinigames: [],                // minigame ids the player never wants to see
   blockedTags: [],                      // stories carrying any of these tags are hidden
+  bestRunSec: 0,                        // the longest free-play run so far, in whole seconds (ui/run.js)
 };
 
 export function isValidDifficulty(d) { return Number.isInteger(d) && d >= 1 && d <= 5; }
@@ -28,6 +29,7 @@ try {
     if (isValidSound(saved.sound)) settings.sound = saved.sound;
     if (isTextList(saved.disabledMinigames)) settings.disabledMinigames = saved.disabledMinigames;
     if (isTextList(saved.blockedTags)) settings.blockedTags = saved.blockedTags;
+    if (Number.isInteger(saved.bestRunSec) && saved.bestRunSec >= 0) settings.bestRunSec = saved.bestRunSec;
   }
 } catch (e) { /* keep defaults */ }
 

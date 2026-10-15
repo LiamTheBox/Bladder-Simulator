@@ -344,6 +344,12 @@
   .story-ending-title { font-size: 1.3rem; font-weight: 900; margin-bottom: 10px; color: #f8fafc; }
   .story-ending-title.good { color: #6ee7b7; }
   .story-ending-title.bad { color: #fda4af; }
+  #run-title.accident { color: #fda4af; }
+  #run-title.gave_in { color: #fbbf24; }
+  #run-title { color: #f8fafc; }
+  .run-best-tag { font-size: 0.7rem; font-weight: 800; color: #0f172a; background: #fbbf24; border-radius: 99px; padding: 1px 7px; }
+  #run-overlay { z-index: 160; }
+  #run-close[hidden] { display: none; }
   .story-scorecard { margin-top: 6px; border-top: 1px solid var(--panel-border); }
   .story-score-row { display: flex; justify-content: space-between; padding: 6px 0; font-size: 0.85rem; color: #cbd5e1; border-bottom: 1px solid rgba(255,255,255,0.06); }
 

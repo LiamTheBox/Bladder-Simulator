@@ -35,7 +35,7 @@ function initialState() {
   squeeze: { active: false, tension: 0, wheelTimer: 0, initialDist: 0, spoke: false, peak: 0, wobble: 0, wobbleVel: 0, squirtTimer: 0, forcing: false, heldHard: 0 },
   flow: 0, // how strongly liquid is leaving right now, 0 (shut) to 1 (a full stream); see TUNING.streamCurve
   urge: 0, // the current urge wave, 0 (calm) to 1 (a spike is here); see TUNING.urgeBuildSec
-  dev: { holdStamina: false, noSpikes: false }, // developer-mode switches (sim/actions.js setDevSwitch)
+  dev: { holdStamina: false, noSpikes: false, endlessRun: false }, // developer-mode switches (sim/actions.js setDevSwitch)
   slosh: { val: 0, vel: 0 }, gravity: { x: 0, targetX: 0 },
   viscoelasticCreep: 0,
   desperateTimer: TUNING.desperateFirstSec, beggingTimer: TUNING.beggingFirstSec, lastBand: 0, voidBtnDisabled: false

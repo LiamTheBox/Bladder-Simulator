@@ -14,6 +14,7 @@ import { minigameIds } from '../minigames/registry.js';
 import { startMinigame } from '../minigames/index.js';
 import { resetGame } from './reset.js';
 import { storyDevTools } from './story_screen.js';
+import { showCard } from './run.js';
 import * as sound from '../audio/engine.js';
 
 const overlay = document.getElementById('dev-overlay');
@@ -121,8 +122,10 @@ if (TUNING.developerMode) {
   section(bladderPage, 'Bladder', 'Sliders apply at once.',
     fullness, stamina,
     checkbox('Stamina never drains', 'holdStamina'), checkbox('No random urge spikes', 'noSpikes'),
+    checkbox('Runs never end (no scorecard after a void or accident)', 'endlessRun'),
     grid(button('Lock / unlock', 'lock', toggleSphincter), button('Void', 'void', startVoid),
-      button('Accident', 'accident', triggerAccident), button('Urge wave now', 'spike', hurrySpike), button('Start over', 'reset', resetGame)));
+      button('Accident', 'accident', triggerAccident), button('Urge wave now', 'spike', hurrySpike), button('Start over', 'reset', resetGame),
+      button('End run now (scorecard)', 'end-run', showCard)));
 
   // Every registered game, the try-out ones too, as a practice run: no stamina at stake, never cancelled by the spike rules
   const difficulty = el('select'); difficulty.id = 'dev-difficulty';

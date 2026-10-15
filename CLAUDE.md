@@ -90,6 +90,13 @@ go, stop while someone outside listens. It is the one game that drains the bladd
 `sim/actions.js`) and reports `noise` (how much was overheard) next to `quality` (the share drained). It is
 meant for stories, which give it `relief`, `heard` and `lines`; it does not belong in the random pool, because
 free play cancels a spike when the bladder is opened.
+Also on trial (built 15 Oct, **not yet playtested**): `pressure_valve` (hold, let go when the ring is in the
+green band), `clench_slider` (drag a drifting knob back into the centre band until the zip bar fills),
+`brace` (an arrow flashes left / right / both; tap the matching button before the jolt), `volley` (quick small
+talk: pick the sensible answer, not the blurt) and `on_the_spot` (a choice with no wrong answer while a meter
+drains). A story may give `volley` its own `questions` [{q, good, odd}] and `on_the_spot` its own `dilemmas`
+[{q, a, b}]. Games with two rows of controls set `tall: true` and the panel grows while they run
+(`#action-zone.tall`). `tests/trial-minigames.spec.js`.
 Trying a new game before approving it: register it, list its id in `TUNING.practiceMinigames` instead of the
 pool, and it appears under "Try a new minigame" at the bottom of Settings (hidden while the list is empty). It
 runs as `startMinigame({ id, practice: true })`: no stamina at stake, not cancelled by the spike rules. In sim mode the

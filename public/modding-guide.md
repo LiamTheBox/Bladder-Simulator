@@ -154,7 +154,19 @@ The scorecard still shows how full the bladder was at that moment.
 
 **Minigames.** You name the game and a difficulty from 1 to 5; the game does the rest. Available:
 `mash`, `leaks`, `breathe`, `swipe_away`, `distraction_popups`, `tremor_lock`, `tiptoe`, `steady_the_slosh`,
-`think_of_something_else`, `sneak_a_pee`. `"prompt"` is what the bladder says to announce it. Players can switch individual minigames off; the game then substitutes another.
+`think_of_something_else`, `sneak_a_pee`, and the five on trial: `pressure_valve`, `clench_slider`, `brace`,
+`volley`, `on_the_spot`. `"prompt"` is what the bladder says to announce it. Players can switch individual minigames off; the game then substitutes another.
+
+**Small talk and awkward choices.** `volley` is quick small talk: each question has a sensible answer and one
+the bladder would blurt out. `on_the_spot` is a choice with no wrong answer, where only hesitating costs. Both
+have built-in wording; a story can bring its own (up to 6 of each):
+
+```json
+"minigame": { "id": "volley", "difficulty": 2,
+              "questions": [ { "q": "How was the flight?", "good": "Smooth, thanks!", "odd": "Leaky. I mean, long." } ] }
+"minigame": { "id": "on_the_spot", "difficulty": 2,
+              "dilemmas": [ { "q": "They offer another drink.", "a": "Accept", "b": "Decline politely" } ] }
+```
 
 **A toilet visit.** `sneak_a_pee` is a hurried visit: the player holds a button to go and must stop while
 someone outside the door listens. Three extra keys say what it is worth:

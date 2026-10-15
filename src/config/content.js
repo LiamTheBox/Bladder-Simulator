@@ -47,7 +47,12 @@ export const minigameLines = {
   tiptoe: ["Slowly! Every bump sloshes me!", "Tiptoe... don't you dare rush."],
   steady_the_slosh: ["I'm sloshing! Keep me level!", "It's running to one side! Pull it back!"],
   think_of_something_else: ["Think of anything else! Count: one, two...", "Distract yourself! Tap the numbers in order."],
-  sneak_a_pee: ["Quick, while nobody is listening! Hold to go!", "Now! Go! But stop when they call!"]
+  sneak_a_pee: ["Quick, while nobody is listening! Hold to go!", "Now! Go! But stop when they call!"],
+  pressure_valve: ["Pressure building! Hold, and let go in the green!", "Vent it slowly! Release in the green!"],
+  clench_slider: ["I'm coming apart at the seam! Drag it back to the middle!", "Zip me up! Keep the slider centred!"],
+  brace: ["Jolts coming! Brace the way the arrow points!", "Here comes a lurch! Brace, brace!"],
+  volley: ["Small talk! Answer normally, don't let me talk!", "Act natural! Pick the sensible answer!"],
+  on_the_spot: ["Decide! Any answer, just decide fast!", "No time to think! Pick one, quick!"]
 };
 
 // Names shown in Settings, where each minigame can be switched off
@@ -57,10 +62,30 @@ export const minigameNames = {
   tiptoe: 'Tiptoe (drag slowly)', steady_the_slosh: 'Steady the slosh (keep the wave centred)',
   think_of_something_else: 'Think of something else (tap the numbers in order)',
   sneak_a_pee: 'Sneak a pee (hold to go, stop when they listen)',
+  pressure_valve: 'Pressure valve (hold, release in the green)', clench_slider: 'Clench slider (keep the seam centred)',
+  brace: 'Brace (tap the way the arrow points)', volley: 'Volley (quick small talk)', on_the_spot: 'On the spot (decide fast)',
 };
 
 // What someone outside the door says during sneak_a_pee, unless a story gives its own lines
 export const outsideLines = ["Hello? Anyone in there?", "Everything all right in there?", "Are you nearly done?"];
+// Volley: a question, the sensible answer, and what the bladder would blurt out instead (a story may bring its own)
+export const volleyQuestions = [
+  { q: "How was the trip?", good: "Long, but fine!", odd: "WET. I mean, fine." },
+  { q: "Want some more tea?", good: "I'm good, thanks.", odd: "Pour it straight in, why not." },
+  { q: "You look flushed. Okay?", good: "Just warm in here.", odd: "Flushed? Who said flush?" },
+  { q: "Shall we take the scenic route?", good: "Sounds lovely.", odd: "Is there a toilet on it?" },
+  { q: "What do you do for fun?", good: "Reading, mostly.", odd: "Hold it. Professionally." },
+  { q: "Did you hear the rain last night?", good: "Yes, very cosy.", odd: "Please don't mention rain." },
+  { q: "Sit down, relax!", good: "Thanks, I'll stand a bit.", odd: "Relax?! Are you mad?" },
+];
+// On the spot: two awkward options, neither wrong; only hesitating costs
+export const spotDilemmas = [
+  { q: "They offer a second coffee.", a: "Accept politely", b: "Decline, risk offending" },
+  { q: "The queue is long. A friend waves you over.", a: "Cut in with them", b: "Stay and wait" },
+  { q: "Asked to help carry boxes upstairs.", a: "Help, carefully", b: "Invent a sore back" },
+  { q: "Someone is in the only bathroom.", a: "Knock and ask", b: "Wait and squirm" },
+  { q: "A photo! Everyone squeezes together.", a: "Squeeze in", b: "Offer to take it" },
+];
 // Placeholder wording for the UI-intrusion minigames
 export const swipeCardTexts = ["JUST LET GO", "Nobody would know", "Open up, it's fine", "Give in already"];
 export const popupWords = ["Spasm!", "Ache!", "Twinge!", "Cramp!", "Throb!"];

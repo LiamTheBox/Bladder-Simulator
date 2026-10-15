@@ -38,7 +38,8 @@
 //             scene; a "next" of "return" there goes back to where it was interrupted.
 //   minigame  { "id", "difficulty": 1..5, "prompt"?: text,
 //               "success"?: { "effects"?, "next"? }, "fail"?: { "effects"?, "next"? },
-//               "relief"?: 0..100, "heard"?: { "stat", "max": n }, "lines"?: [text] }
+//               "relief"?: 0..100, "heard"?: { "stat", "max": n }, "lines"?: [text],
+//               "questions"?: [{ "q", "good", "odd" }], "dilemmas"?: [{ "q", "a", "b" }] }
 //             The story only names the game and how hard it is. An outcome without "next" continues with the
 //             choice's own "next" (for a trigger: back to the interrupted scene).
 //             The last three are for a visit to the toilet ("sneak_a_pee"), where it matters how well the game
@@ -46,6 +47,8 @@
 //             loses that times the share the player managed (all of it for a win in any other game, none for a
 //             loss). "heard" raises a stat by "max" times how much was overheard (0 to 1), whatever the outcome:
 //             with "max": 10, every 10% heard is 1 point. "lines" is what the person outside the door says.
+//             "questions" is the small talk for "volley" (each with the sensible answer and the blurt);
+//             "dilemmas" the awkward choices for "on_the_spot" (two options, neither wrong). Both have built-ins.
 //             These come before the outcome's own effects. Being caught outright is the "fail" outcome.
 //   effect    { "stat", "add": n } | { "stat", "set": n } | { "fullness": n } | { "drink": n }
 //             | { "minutes": n } | { "clock": "HH:MM" } | { "flag": id, "value"?: bool (default true) } | { "void": true }

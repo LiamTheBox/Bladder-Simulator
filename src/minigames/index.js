@@ -26,8 +26,14 @@ import tiptoe from './tiptoe.js';
 import steadyTheSlosh from './steady_the_slosh.js';
 import thinkOfSomethingElse from './think_of_something_else.js';
 import sneakAPee from './sneak_a_pee.js';
+import pressureValve from './pressure_valve.js';
+import clenchSlider from './clench_slider.js';
+import brace from './brace.js';
+import volley from './volley.js';
+import onTheSpot from './on_the_spot.js';
 
-[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock, tiptoe, steadyTheSlosh, thinkOfSomethingElse, sneakAPee].forEach(registerMinigame);
+[mash, leaks, breathe, swipeAway, distractionPopups, tremorLock, tiptoe, steadyTheSlosh, thinkOfSomethingElse, sneakAPee,
+  pressureValve, clenchSlider, brace, volley, onTheSpot].forEach(registerMinigame);
 
 let current = null;      // the game that is running (or was last started and not yet cleaned up)
 let currentInfo = null;  // { id, difficulty, onResult } of that run
@@ -98,7 +104,7 @@ export function startMinigame(request = {}) {
   });
 
   st.minigame.timer = st.minigame.duration;
-  showMgPanel(true);
+  showMgPanel(true, Boolean(game.tall));
 
   const lines = game.prompts ?? [];
   const prompt = config.text.prompt ?? lines[Math.floor(Math.random() * lines.length)] ?? '';

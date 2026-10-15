@@ -366,7 +366,7 @@ export function createRunner(story, saved = null, random = Math.random) {
           taps: story.thoughts.taps ?? THOUGHT_DEFAULTS.taps, freeSeconds: story.thoughts.freeSeconds ?? THOUGHT_DEFAULTS.freeSeconds,
           lines: story.thoughts.lines, covered: availableChoices().map((c, i) => !state.cleared.includes(i)),
         } : null,
-        minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt, relief: state.minigame.spec.relief, lines: state.minigame.spec.lines } : null,
+        minigame: state.minigame ? { id: state.minigame.id, difficulty: state.minigame.difficulty, prompt: state.minigame.prompt, relief: state.minigame.spec.relief, lines: state.minigame.spec.lines, questions: state.minigame.spec.questions, dilemmas: state.minigame.spec.dilemmas } : null,
         stats: [...stats.values()].filter((s) => !s.hidden).map((s) => ({ id: s.id, label: s.label, icon: s.icon ?? '', value: state.stats[s.id], min: s.min, max: s.max })),
         fullness: state.fullness, voided: state.voided, accident: state.accident,
         leaks: state.leaks, leakLine: (state.leakCause === 'overflow' ? bladder.overflow?.bladder : state.leakCause === 'fail' ? bladder.leakOnFail?.bladder : null) ?? null,

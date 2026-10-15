@@ -190,7 +190,8 @@ function beginMinigame(request) {
   const playing = runner;
   const started = startMinigame({
     id: request.id, difficulty: request.difficulty, relief: request.relief,
-    text: { ...(request.prompt ? { prompt: request.prompt } : {}), ...(request.lines ? { lines: request.lines } : {}) },
+    text: { ...(request.prompt ? { prompt: request.prompt } : {}), ...(request.lines ? { lines: request.lines } : {}),
+      ...(request.questions ? { questions: request.questions } : {}), ...(request.dilemmas ? { dilemmas: request.dilemmas } : {}) },
     onResult: (result) => {
       toy.classList.remove('mg-active');
       if (result.cancelled || runner !== playing) return; // the story was left or reset mid-game

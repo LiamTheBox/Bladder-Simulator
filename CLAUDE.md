@@ -296,7 +296,7 @@ running (over the left column in free play, over the bladder's side in a story).
 `sim/interactions.js` (`poke`). Set the flag to `false` to get TAP TO START back and hide
 the tools. `tests/dev-mode.spec.js` covers it. When a new feature needs testing by hand, add a button there.
 
-## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance and drink sounds)
+## Sound effects (code-generated placeholders; the owner has heard the first batch, not yet the dance, drink, story or signature sounds)
 Every sound is made by Tone.js synths in `src/audio/engine.js`; there are no audio files. They are placeholders:
 a recorded clip can replace any one of them inside its `play…` / `update…` function without touching callers.
 - Slosh: `updateSlosh()` runs every frame from `src/main.js` and plays a "glug" (plus a splash while there is
@@ -314,7 +314,8 @@ a recorded clip can replace any one of them inside its `play…` / `update…` f
   ("plain", "fizzy", "thick", "hot") adds a fizz, lower slower gulps, or a slurp first.
 - Each synth has one voice and real Tone.js throws if a note starts at or before one already queued on it, so
   every new sound takes its start from `startTime(synth)`, which queues it just behind.
-- Minigames: quiet alarm (`TUNING.spikeAlarmLoudness`) on `minigameStarted`, win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
+- Minigames: quiet alarm (`TUNING.spikeAlarmLoudness`) on `minigameStarted`, then the game's own short signature
+  (`src/config/minigame_sounds.js`: a tune or filtered-noise bursts, `TUNING.minigameSignatureLoudness`), win jingle / "womp-womp" on `minigameEnded` (nothing when cancelled),
   and a tick for each of the last `TUNING.minigameTickLastSec` seconds (from the runner, which owns the countdown).
 - Squeeze: a creak as the band tightens, a squirt per `squirt` cue, a twang on `squeezeRelease`.
 - Character: squeak on a poke (thump and squeak on a different note each time), creak as a stretch is pulled further, boing on each hop landing, gurgle while a drink digests, sigh after a void that was not an accident, and

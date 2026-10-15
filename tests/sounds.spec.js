@@ -337,3 +337,18 @@ test('story mode: a blip for each new line, a click for a choice, notes for mete
   expect(errors).toEqual([]);
   await context.close();
 });
+
+test('every minigame has its own short signature after the alarm, quiet like the alarm', async ({ browser }) => {
+  const { context, pg, errors } = await openGame(browser, 390, 844);
+  await start(pg);
+  await pg.evaluate('st.volume=75; st.isClosed=true');
+  const ids = await pg.evaluate('minigameIds()');
+  for (const id of ids) {
+    await pg.evaluate(`window.__audio.length=0; window.__notes.length=0; startMinigame({ id: '${id}', practice: true })`);
+    expect(count(await pg.evaluate('window.__audio'), `sig-${id}`), `${id} has a signature`).toBeGreaterThan(0);
+    expect(await pg.evaluate(`window.__notes.filter((n) => n.sound === 'sig-${id}').every((n) => n.loud === TUNING.minigameSignatureLoudness)`)).toBe(true);
+    await pg.evaluate('endMinigame(false, true)');
+  }
+  expect(errors).toEqual([]);
+  await context.close();
+});

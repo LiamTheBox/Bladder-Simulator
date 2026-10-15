@@ -182,6 +182,8 @@ export const TUNING = {
   },
   // Games on trial: registered but not in simSpikePool, and offered under "Try a new minigame" in Settings.
   // Approving one = moving its id to simSpikePool. Empty = the Settings section is hidden.
+  minigameSignatureLoudness: 0.15, // each game's own short sound (config/minigame_sounds.js), quiet like the alarm
+  minigameSignatureDelay: 0.4,     // ...played this long after the alarm starts, so the two do not overlap
   practiceMinigames: ['sneak_a_pee', 'pressure_valve', 'clench_slider', 'brace', 'volley', 'on_the_spot'],
 
   // Stretch (pixels)

@@ -160,6 +160,8 @@ if (TUNING.developerMode) {
       play('Lock', 'lock', () => sound.playSnap(true)), play('Unlock', 'unlock', () => sound.playSnap(false))),
     el('div', 'dev-note', 'Minigame cues'),
     grid(play('Alarm', 'alarm', sound.playSpikeAlarm), play('Tick', 'tick', sound.playTick), play('Win', 'win', sound.playWin), play('Lose', 'lose', sound.playLose)),
+    el('div', 'dev-note', 'Each minigame\'s own sound (after the alarm)'),
+    grid(...minigameIds().map((id) => play(minigameNames[id]?.split(' (')[0] ?? id, `sig-${id}`, () => sound.playMinigameSignature(id)))),
     el('div', 'dev-note', 'Story mode cues'),
     grid(play('Text', 'story-text', sound.playStoryText), play('Choice', 'choice', sound.playChoice),
       play('Meter up', 'meter-up', () => sound.playMeter(true)), play('Meter down', 'meter-down', () => sound.playMeter(false)),
